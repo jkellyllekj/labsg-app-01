@@ -49,17 +49,26 @@ Never hardcode keys into code or commits.
   → include “(lengths)” annotations **when needed** to preserve clarity.
 
 ### 2026-01-06 — Do not trust LLM arithmetic for non-standard pools
-For custom pools, the model may output **internally inconsistent** distance/length math.  
-We will implement a **code-level validity gate** (validate; if invalid, re-prompt to repair).
+For custom pools, the model may output **internally inconsistent** distance/length math.
 
 ### 2026-01-06 — v1 UI input strategy (fast + swimmer-intuitive)
 - Pool selection uses **buttons** (25m / 50m / 25yd / Custom)
-- Distance uses a **slider** (500–10,000) snapping to **100**, with a numeric input kept in sync.
+- Distance uses a **slider** (500–10,000) snapping to **100**.
 
 ### 2026-01-06 — v1 scope discipline
 We are not building accounts, saving, season planning, multi-sport, watch integration, or workout libraries in v1.  
 We are building a **single-session generator** that is **pool-valid** and **coach-plausible**.
 
+### 2026-01-06 — Custom pools are deterministic-only in v1
+To guarantee pool-valid maths and speed, **custom pool workouts are generated deterministically**:
+- Exact if possible (even lengths)
+- Otherwise nearest valid even-length total (tie-break upward)
+Custom outputs include:
+- Total lengths
+- Ends-at-start-end indicator
+- Requested vs actual (when rounded)
+
 <!-- __END_DL_DECISIONS_DL100__ -->
+
 
 <!-- __END_FILE_DECISIONS_D000__ -->

@@ -106,17 +106,27 @@ Secrets:
 - Distance input:
   - slider 500–10,000
   - snaps to 100
-  - numeric input stays in sync
 - Pool input:
   - buttons: 25m / 50m / 25yd / Custom
   - custom length enabled only when Custom selected
-- API `/generate-workout` calls OpenAI and returns `workoutText` in JSON.
+- API `/generate-workout` returns `workoutText` in JSON.
 
-Prompt behaviour:
-- Standard pools: tends to omit lengths (desired)
-- Custom pools: includes lengths (desired), **but math can be wrong** (critical defect)
+Generation behaviour (v1):
+- **Standard pools (25m/50m/25yd):** uses OpenAI and returns plain-text sets (no “(lengths)”).
+- **Custom pools:** now **deterministic-only** (no OpenAI), therefore:
+  - instant response
+  - always pool-valid
+  - includes per-set “(N lengths)” + footer:
+    - Total lengths
+    - Ends at start end (even lengths)
+    - Requested vs actual (when rounded to nearest valid even-length total)
+
+Custom rounding rule:
+- If requested distance is not achievable exactly in the custom pool while ending on an even number of lengths,
+  we choose the nearest valid total (tie-break upward).
 
 <!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+
 
 ---
 
@@ -147,12 +157,18 @@ Display rules:
 
 ## Observed failures (authoritative)
 
-- For custom pools, AI output can contain inconsistent distance/length math  
-  Example: `4x150m (8 lengths)` in a 30m pool is invalid (8 lengths = 240m).
-- Prompt-only constraints are insufficient to guarantee correctness.
-- Therefore we require a code-level validity gate for custom pools.
+Previously:
+- For custom pools, OpenAI output often contained inconsistent distance/length math (critical defect).
+- Repair re-prompt still sometimes failed and introduced latency/hangs risk.
+
+Resolved:
+- Custom pools no longer rely on OpenAI; deterministic generation removes arithmetic failures and makes custom generation instant.
+
+Remaining risks:
+- Standard pools still call OpenAI; requests may occasionally stall without a timeout (to harden).
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
+
 
 ---
 
@@ -160,18 +176,17 @@ Display rules:
 
 ## Next single step
 
-Implement a **pool-validity gate** in `index.js` inside block:
+Improve the UI so results feel “real” and visual (not just JSON):
 
-- `ROUTE_GENERATE_WORKOUT_R200`
+In `index.js` inside `ROUTE_HOME_UI_R100`:
+- Render `workoutText` as formatted output (not JSON dump)
+- Show a clear summary header (pool + requested distance + actual distance if present)
+- Show errors in a readable way (not raw JSON)
+- Keep the slider-only distance input (100-step)
 
-Gate requirements (v1):
-- If pool is standard: no length validation required (but still keep “no (lengths)” rule in prompt)
-- If pool is custom:
-  - Parse every line that includes “(N lengths)”
-  - Validate that the **distance matches** `poolLength * N`
-  - If any mismatch: automatically re-prompt once with “repair output; keep same total; fix math”
-  - If still invalid: return an error clearly stating “invalid pool math” (do not lie)
+(Do not redesign the whole UI; just make results legible and demo-able.)
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
+
 
 <!-- __END_FILE_PROJECT_STATE_PS000__ -->

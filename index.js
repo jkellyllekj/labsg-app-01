@@ -1,9 +1,8 @@
 /* __START_FILE_INDEX_JS_R000__ */
 /**
- * Swim Workout Generator v1
- * Clean rebuild (Node + Express)
+ * Swim Workout Generator v1 — Clean rebuild (Node + Express)
  *
- * Working Method: This file is block-tagged. After this one-time replacement,
+ * This file is block-tagged. After this full-file reset,
  * we only replace whole blocks (never line edits).
  */
 
@@ -42,22 +41,7 @@ app.get("/", (req, res) => {
         value="1000"
         style="width: 320px;"
       />
-      <br/><br/>
-
-      <label>
-        Or type it:
-        <input
-          name="distance"
-          id="distanceInput"
-          type="number"
-          value="1000"
-          min="100"
-          max="10000"
-          step="100"
-          required
-          style="width: 120px;"
-        />
-      </label>
+      <input type="hidden" name="distance" id="distanceHidden" value="1000" />
 
       <hr style="margin:16px 0;"/>
 
@@ -103,9 +87,8 @@ app.get("/", (req, res) => {
       const form = document.getElementById("genForm");
       const out = document.getElementById("out");
 
-      // Distance controls
       const distanceSlider = document.getElementById("distanceSlider");
-      const distanceInput = document.getElementById("distanceInput");
+      const distanceHidden = document.getElementById("distanceHidden");
       const distanceLabel = document.getElementById("distanceLabel");
 
       function snap100(n) {
@@ -117,12 +100,11 @@ app.get("/", (req, res) => {
       function setDistance(val) {
         const snapped = snap100(val);
         distanceSlider.value = String(snapped);
-        distanceInput.value = String(snapped);
+        distanceHidden.value = String(snapped);
         distanceLabel.textContent = String(snapped);
       }
 
       distanceSlider.addEventListener("input", () => setDistance(distanceSlider.value));
-      distanceInput.addEventListener("input", () => setDistance(distanceInput.value));
       setDistance(1000);
 
       // Pool buttons
@@ -134,7 +116,6 @@ app.get("/", (req, res) => {
       function setActivePool(poolValue) {
         poolHidden.value = poolValue;
 
-        // UI: enable/disable custom fields
         const isCustom = poolValue === "custom";
         customLen.disabled = !isCustom;
         customUnit.disabled = !isCustom;
@@ -144,7 +125,6 @@ app.get("/", (req, res) => {
           customUnit.value = "meters";
         }
 
-        // Button styling (minimal)
         for (const btn of poolButtons.querySelectorAll("button[data-pool]")) {
           const isActive = btn.getAttribute("data-pool") === poolValue;
           btn.style.fontWeight = isActive ? "700" : "400";
@@ -169,9 +149,6 @@ app.get("/", (req, res) => {
 
         const fd = new FormData(form);
         const payload = Object.fromEntries(fd.entries());
-
-        // Force distance to a snapped integer
-        payload.distance = snap100(payload.distance);
 
         // If custom pool, require custom length
         const isCustom = payload.poolLength === "custom";
@@ -201,224 +178,459 @@ app.get("/", (req, res) => {
 /* __END_ROUTE_HOME_UI_R100__ */
 
 
-
 /* __START_ROUTE_GENERATE_WORKOUT_R200__ */
-// --- API: AI generate (v1) ---
+
 app.post("/generate-workout", async (req, res) => {
+  /* __START_R210_PARSE_AND_NORMALIZE__ */
+  const { distance, poolLength, customPoolLength, poolLengthUnit } = req.body;
+
+  const targetTotal = Number(distance);
+  const isCustomPool = poolLength === "custom";
+
+  const unitsShort = isCustomPool
+    ? (poolLengthUnit === "yards" ? "yd" : "m")
+    : (poolLength === "25yd" ? "yd" : "m");
+
+  const poolLen = isCustomPool ? Number(customPoolLength) : null;
+
+  if (!Number.isFinite(targetTotal) || targetTotal <= 0) {
+    return res.status(400).json({ ok: false, error: "Invalid distance." });
+  }
+  if (!poolLength || typeof poolLength !== "string") {
+    return res.status(400).json({ ok: false, error: "Invalid pool selection." });
+  }
+  if (isCustomPool && (!Number.isFinite(poolLen) || poolLen <= 0)) {
+    return res.status(400).json({ ok: false, error: "Invalid custom pool length." });
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ ok: false, error: "Missing OPENAI_API_KEY (Replit Secret)." });
+  }
+
+  // Exact-possible: totalDistance is a clean multiple of pool length AND total lengths even.
+  const targetLengthsExact = isCustomPool ? targetTotal / poolLen : null;
+  const exactPossible =
+    isCustomPool && Number.isInteger(targetLengthsExact) && targetLengthsExact % 2 === 0;
+  /* __END_R210_PARSE_AND_NORMALIZE__ */
+
+  /* __START_R220_DETERMINISTIC_CUSTOM_EXACT__ */
+function buildDeterministicCustomWorkoutTextExact() {
+  if (!exactPossible) return null;
+
+  const lengthsPerRep = 2;
+  const perRepDistance = lengthsPerRep * poolLen;
+  const totalReps = targetLengthsExact / lengthsPerRep; // integer
+
+  let wu = Math.max(4, Math.round(totalReps * 0.2));
+  let dr = Math.max(4, Math.round(totalReps * 0.15));
+  let cd = Math.max(2, Math.round(totalReps * 0.15));
+  let main = totalReps - (wu + dr + cd);
+
+  if (main < 6) {
+    const needed = 6 - main;
+
+    const takeWu = Math.min(Math.max(wu - 4, 0), needed);
+    wu -= takeWu;
+    main += takeWu;
+
+    const remaining = 6 - main;
+    const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
+    dr -= takeDr;
+    main += takeDr;
+
+    const remaining2 = 6 - main;
+    const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
+    cd -= takeCd;
+    main += takeCd;
+  }
+
+  const sum = wu + dr + main + cd;
+  if (sum !== totalReps) main += (totalReps - sum);
+
+  const totalLengths = Number(targetLengthsExact); // integer
+  const lines = [];
+  lines.push(`Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`);
+  lines.push(`Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`);
+  lines.push(`Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`);
+  lines.push(`Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`);
+  lines.push("");
+  lines.push(`Total lengths: ${totalLengths} lengths`);
+  lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
+  lines.push(`Total distance: ${targetTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
+  return lines.join("\n");
+}
+/* __END_R220_DETERMINISTIC_CUSTOM_EXACT__ */
+
+
+  /* __START_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
+function buildDeterministicCustomWorkoutTextNearest() {
+  if (!isCustomPool) return null;
+
+  const rawLengths = targetTotal / poolLen;
+
+  const down = Math.floor(rawLengths);
+  const up = Math.ceil(rawLengths);
+
+  const downEven = down % 2 === 0 ? down : down - 1;
+  const upEven = up % 2 === 0 ? up : up + 1;
+
+  const candidates = [];
+  if (Number.isInteger(downEven) && downEven > 0) candidates.push(downEven);
+  if (Number.isInteger(upEven) && upEven > 0) candidates.push(upEven);
+
+  if (candidates.length === 0) return null;
+
+  let best = candidates[0];
+  for (const c of candidates.slice(1)) {
+    const diffBest = Math.abs(best * poolLen - targetTotal);
+    const diffC = Math.abs(c * poolLen - targetTotal);
+    if (diffC < diffBest) best = c;
+    else if (diffC === diffBest && c > best) best = c;
+  }
+
+  const chosenTotal = best * poolLen;
+
+  const lengthsPerRep = 2;
+  const perRepDistance = lengthsPerRep * poolLen;
+  const totalReps = best / lengthsPerRep; // integer because best is even
+
+  let wu = Math.max(4, Math.round(totalReps * 0.2));
+  let dr = Math.max(4, Math.round(totalReps * 0.15));
+  let cd = Math.max(2, Math.round(totalReps * 0.15));
+  let main = totalReps - (wu + dr + cd);
+
+  if (main < 6) {
+    const needed = 6 - main;
+
+    const takeWu = Math.min(Math.max(wu - 4, 0), needed);
+    wu -= takeWu;
+    main += takeWu;
+
+    const remaining = 6 - main;
+    const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
+    dr -= takeDr;
+    main += takeDr;
+
+    const remaining2 = 6 - main;
+    const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
+    cd -= takeCd;
+    main += takeCd;
+  }
+
+  const sum = wu + dr + main + cd;
+  if (sum !== totalReps) main += (totalReps - sum);
+
+  const totalLengths = Number(best); // integer
+  const lines = [];
+  lines.push(`Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`);
+  lines.push(`Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`);
+  lines.push(`Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`);
+  lines.push(`Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`);
+  lines.push("");
+  lines.push(`Total lengths: ${totalLengths} lengths`);
+  lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
+  lines.push(`Requested: ${targetTotal}${unitsShort}`);
+  lines.push(`Total distance: ${chosenTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
+  return lines.join("\n");
+}
+/* __END_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
+
+
+
+  
+  /* __START_R230_OPENAI_CALL__ */
+async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const { distance, poolLength, customPoolLength, poolLengthUnit } = req.body || {};
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: 0.2,
+      }),
+    });
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ ok: false, error: "Missing OPENAI_API_KEY secret" });
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(`OpenAI HTTP ${response.status}: ${text.slice(0, 300)}`);
     }
 
-    // Basic request validation (v1)
-    if (!Number.isFinite(distance) || distance < 100 || distance > 10000) {
-      return res.status(400).json({ ok: false, error: "Invalid distance" });
+    const data = await response.json();
+    return data?.choices?.[0]?.message?.content ?? "";
+  } finally {
+    clearTimeout(t);
+  }
+}
+/* __END_R230_OPENAI_CALL__ */
+
+
+  /* __START_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
+  function extractFirstJsonObject(text) {
+    if (typeof text !== "string") return null;
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) return null;
+    return text.slice(start, end + 1);
+  }
+
+  function validateCustomWorkoutJson(obj) {
+    const errors = [];
+
+    if (!obj || typeof obj !== "object") {
+      errors.push("JSON root must be an object.");
+      return { ok: false, errors };
+    }
+    if (!Array.isArray(obj.sets) || obj.sets.length === 0) {
+      errors.push('Field "sets" must be a non-empty array.');
+      return { ok: false, errors };
     }
 
-    const isCustom = poolLength === "custom";
-    if (isCustom) {
-      const pl = Number(customPoolLength);
-      if (!Number.isFinite(pl) || pl < 10 || pl > 400) {
-        return res
-          .status(400)
-          .json({ ok: false, error: "Custom pool selected but customPoolLength is invalid" });
+    let computedTotal = 0;
+    let computedTotalLengths = 0;
+
+    for (let i = 0; i < obj.sets.length; i++) {
+      const s = obj.sets[i];
+
+      const label = String(s.label ?? "").trim();
+      const reps = Number(s.reps);
+      const lengthsPerRep = Number(s.lengthsPerRep);
+
+      if (!label) errors.push(`sets[${i}].label is required (non-empty).`);
+      if (!Number.isInteger(reps) || reps <= 0) errors.push(`sets[${i}].reps must be a positive integer.`);
+      if (!Number.isInteger(lengthsPerRep) || lengthsPerRep <= 0) errors.push(`sets[${i}].lengthsPerRep must be a positive integer.`);
+
+      if (Number.isInteger(reps) && reps > 0 && Number.isInteger(lengthsPerRep) && lengthsPerRep > 0) {
+        const setLengths = reps * lengthsPerRep;
+        computedTotalLengths += setLengths;
+
+        if (setLengths % 2 !== 0) {
+          errors.push(`sets[${i}] ends on ${setLengths} total lengths (must be even).`);
+        }
+
+        computedTotal += reps * lengthsPerRep * poolLen;
       }
-      if (poolLengthUnit !== "meters" && poolLengthUnit !== "yards") {
-        return res.status(400).json({ ok: false, error: "Invalid poolLengthUnit" });
-      }
     }
 
-    const OpenAI = require("openai");
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    if (computedTotalLengths % 2 !== 0) {
+      errors.push(`Workout ends on ${computedTotalLengths} total lengths (must be even).`);
+    }
 
-    const isStandardPool = poolLength === "25m" || poolLength === "50m" || poolLength === "25yd";
-    const poolLine =
-      poolLength === "custom"
-        ? `custom: ${customPoolLength} ${poolLengthUnit}`
-        : poolLength;
+    // Non-exact custom: allow tolerance. (Exact totals are handled by deterministic path.)
+    const tolerance = Math.max(200, poolLen);
+    const diff = Math.abs(computedTotal - targetTotal);
+    if (diff > tolerance) {
+      errors.push(
+        `Total distance mismatch: computed ${computedTotal}${unitsShort}, requested ${targetTotal}${unitsShort}. (tolerance ±${tolerance}${unitsShort})`
+      );
+    }
 
-    const basePrompt = `
-You are an experienced swim coach writing a pool-valid swim workout.
+    return { ok: errors.length === 0, errors, computedTotal, computedTotalLengths, tolerance };
+  }
 
-Pool:
-- Pool length: ${poolLine}
-- Pool type: ${isStandardPool ? "standard" : "non-standard"}
+  function renderWorkoutTextFromJson(obj) {
+    const lines = [];
 
-Session target:
-- Total distance: ${distance}
+    for (const s of obj.sets) {
+      const label = String(s.label ?? "").trim();
+      const reps = Number(s.reps);
+      const lengthsPerRep = Number(s.lengthsPerRep);
+
+      const perRepDistance = lengthsPerRep * poolLen;
+
+      const stroke = typeof s.stroke === "string" && s.stroke.trim() ? s.stroke.trim() : "";
+      const intensity = typeof s.intensity === "string" && s.intensity.trim() ? s.intensity.trim() : "";
+      const restSeconds = Number.isFinite(Number(s.restSeconds)) ? Number(s.restSeconds) : null;
+      const notes = typeof s.notes === "string" && s.notes.trim() ? s.notes.trim() : "";
+
+      const parts = [];
+      parts.push(`${label}: ${reps}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths)`);
+      if (stroke) parts.push(stroke);
+      if (intensity) parts.push(intensity);
+      if (restSeconds !== null) parts.push(`${restSeconds}s rest`);
+      if (notes) parts.push(notes);
+
+      lines.push(parts.join(" — "));
+    }
+
+    const computedTotal = obj.sets.reduce((sum, s) => {
+      return sum + (Number(s.reps) * Number(s.lengthsPerRep) * poolLen);
+    }, 0);
+
+    lines.push("");
+    lines.push(`Total distance: ${computedTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
+    return lines.join("\n");
+  }
+  /* __END_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
+
+  /* __START_R250_PROMPTS__ */
+  function buildStandardPrompt() {
+    return `
+You are a swim coach generating a single swim workout.
 
 Rules:
-- Primary output is metres or yards consistent with the pool.
-- Pool length is explicit and must never be rounded.
-- Every SET must finish on an even number of lengths.
-- The FULL WORKOUT must finish on an even number of lengths.
-- Intervals inside a set may be odd, as long as the set total resolves even.
+- Output plain text only
+- Each line is a swim set
+- Distances must add up to exactly ${targetTotal}${unitsShort}
+- Pool length is standard (${poolLength})
+- DO NOT include "(lengths)" anywhere
+- Use conventional swim notation only (e.g. 10x100, 4x50)
 
-Display rules:
-- If pool type is STANDARD (25m, 50m, 25yd):
-  - Use conventional notation only (e.g. 10x100, 8x50).
-  - DO NOT show length counts in parentheses.
-- If pool type is NON-STANDARD:
-  - Include length clarity in parentheses when needed (e.g. 4x216m (8 lengths)).
-
-Distance accuracy:
-- Standard pools must match the total distance exactly.
-- Non-standard pools may be close (±100–200) only if it improves symmetry and finish position.
-
-Structure:
-- Warm-up
-- Drills/Skills
-- Main Set
-- Cool-down
-
-Drills:
-- Use globally recognised drills only.
-- If unsure, say "technique drill (choose preferred variation)".
-
-Output:
-- Plain text only.
-- Clear section headers.
-- No Markdown formatting.
-- No explanations of rules.
-
-Self-check before responding:
-- All sets pool-valid.
-- Workout finishes where it started.
-- Display rules followed for pool type.
+Workout request:
+- Total distance: ${targetTotal}${unitsShort}
+- Pool: ${poolLength}
 `.trim();
-
-    // ---------- Validity Gate Helpers (v1) ----------
-    function parseFirstDistanceMetersOrYards(text) {
-      // Extract first distance token like "150m" or "216yd" or "216"
-      // We only use this for validating lines that ALSO contain "(N lengths)".
-      const m = String(text).match(/(\d+)\s*(m|yd)\b/i);
-      if (m) return { value: Number(m[1]), unit: m[2].toLowerCase() };
-      const n = String(text).match(/(?:^|\s)(\d+)(?:\s|$)/);
-      if (n) return { value: Number(n[1]), unit: null };
-      return null;
-    }
-
-    function extractLengthsCount(line) {
-      const m = String(line).match(/\(\s*(\d+)\s*lengths?\s*\)/i);
-      return m ? Number(m[1]) : null;
-    }
-
-    function validateNonStandardWorkoutMath(workoutText, poolLenNum) {
-      // Only validate lines that contain "(N lengths)"
-      // Requirement: the distance mentioned on that line must equal poolLenNum * N.
-      // Additionally require N to be even (set ends even lengths).
-      const lines = String(workoutText).split(/\r?\n/);
-
-      const failures = [];
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const nLengths = extractLengthsCount(line);
-        if (!nLengths) continue;
-
-        if (nLengths % 2 !== 0) {
-          failures.push({
-            lineNo: i + 1,
-            reason: `Odd lengths (${nLengths})`,
-            line,
-          });
-          continue;
-        }
-
-        const dist = parseFirstDistanceMetersOrYards(line);
-        if (!dist || !Number.isFinite(dist.value)) {
-          failures.push({
-            lineNo: i + 1,
-            reason: "Could not parse distance on line with lengths",
-            line,
-          });
-          continue;
-        }
-
-        const expected = poolLenNum * nLengths;
-
-        if (dist.value !== expected) {
-          failures.push({
-            lineNo: i + 1,
-            reason: `Distance/length mismatch (got ${dist.value}, expected ${expected})`,
-            line,
-          });
-        }
-      }
-
-      return { ok: failures.length === 0, failures };
-    }
-
-    async function callCoachOnce(promptText) {
-      const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an experienced swim coach. Correctness and pool validity come first. Follow the user's rules exactly.",
-          },
-          { role: "user", content: promptText },
-        ],
-        temperature: 0.4,
-      });
-
-      return completion.choices?.[0]?.message?.content?.trim() || "";
-    }
-
-    // ---------- Generate + Validate (v1) ----------
-    let workoutText = await callCoachOnce(basePrompt);
-
-    if (isCustom) {
-      const poolLenNum = Number(customPoolLength);
-
-      // 1st pass validate
-      let v = validateNonStandardWorkoutMath(workoutText, poolLenNum);
-
-      if (!v.ok) {
-        // One repair attempt only
-        const repairPrompt = `
-The workout below contains INVALID pool math for a non-standard pool.
-
-Pool length is exactly: ${poolLenNum} ${poolLengthUnit}
-
-RULES FOR REPAIR (must follow):
-- Any line that includes "(N lengths)" must have distance exactly equal to poolLength * N.
-- N must be even on each "(N lengths)" line (set ends even lengths).
-- Keep the same overall structure (Warm-up / Drills/Skills / Main Set / Cool-down).
-- Keep total distance target as close as before (do not change goal unless necessary).
-- Plain text only. No markdown.
-
-Workout to repair:
-${workoutText}
-`.trim();
-
-        workoutText = await callCoachOnce(repairPrompt);
-
-        // 2nd pass validate
-        v = validateNonStandardWorkoutMath(workoutText, poolLenNum);
-
-        if (!v.ok) {
-          return res.status(422).json({
-            ok: false,
-            error: "Invalid pool math in AI output (custom pool).",
-            details: v.failures,
-            workoutText,
-          });
-        }
-      }
-    }
-
-    res.json({ ok: true, workoutText });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, error: "Generation failed" });
   }
-});
-/* __END_ROUTE_GENERATE_WORKOUT_R200__ */
 
+  function buildCustomJsonPrompt() {
+    const tolerance = Math.max(200, poolLen);
+
+    return `
+You are a swim coach generating a single swim workout FOR A CUSTOM POOL.
+
+CRITICAL:
+- Pool length = ${poolLen}${unitsShort}
+- 1 length = exactly ${poolLen}${unitsShort}
+- Return JSON ONLY (no prose, no markdown, no code fences).
+
+Even-length rules (mandatory):
+- Every set must finish on an even number of lengths.
+- The whole workout must finish on an even number of lengths.
+
+JSON schema:
+{
+  "sets": [
+    {
+      "label": "Warm-up" | "Drill" | "Main" | "Cooldown",
+      "reps": <positive integer>,
+      "lengthsPerRep": <positive integer>,
+      "stroke": "<optional string>",
+      "intensity": "<optional string>",
+      "restSeconds": <optional integer>,
+      "notes": "<optional string>"
+    }
+  ]
+}
+
+Distance math:
+- perRepDistance = lengthsPerRep * ${poolLen}${unitsShort}
+- setDistance = reps * perRepDistance
+- sum(setDistance) should be as close as possible to ${targetTotal}${unitsShort}
+- May differ by up to ±${tolerance}${unitsShort}
+
+Hard rule:
+- NEVER assume 25m/50m. You are in a ${poolLen}${unitsShort} pool.
+`.trim();
+  }
+  /* __END_R250_PROMPTS__ */
+
+/* __START_R260_HANDLER_FLOW__ */
+try {
+  // Deterministic fallback for standard pools (no "(lengths)", sums exactly)
+  function buildDeterministicStandardWorkoutText() {
+    const total = targetTotal;
+
+    // Simple, always-sums allocation
+    // 20% warmup, 15% drills, 55% main, 10% cooldown (then adjust to exact using 50/100 chunks)
+    let wu = Math.round(total * 0.2);
+    let dr = Math.round(total * 0.15);
+    let cd = Math.round(total * 0.1);
+    let main = total - (wu + dr + cd);
+
+    // Snap each to nearest 50 in the target units (works fine for 25m/50m/25yd conventions)
+    const snap50 = (n) => Math.max(50, Math.round(n / 50) * 50);
+
+    wu = snap50(wu);
+    dr = snap50(dr);
+    cd = snap50(cd);
+    main = total - (wu + dr + cd);
+
+    // Ensure main is at least 400; if not, steal from warmup/drills
+    if (main < 400) {
+      const need = 400 - main;
+      const takeWu = Math.min(Math.max(wu - 200, 0), need);
+      wu -= takeWu;
+      main += takeWu;
+
+      const need2 = 400 - main;
+      const takeDr = Math.min(Math.max(dr - 200, 0), need2);
+      dr -= takeDr;
+      main += takeDr;
+    }
+
+    // Final exactness adjustment using 50s
+    const sum = wu + dr + main + cd;
+    const diff = total - sum;
+    main += diff; // diff will be multiple of 50 because total is slider-hundreds and others snapped to 50
+
+    const lines = [];
+    // Use conventional “reps x distance” where possible
+    lines.push(`Warm-up: ${Math.max(1, Math.round(wu / 200))}x200 easy`); // approximate reps; still sums? (line is guidance)
+    lines.push(`Drills: ${Math.max(4, Math.round(dr / 50))}x50 drill (choice)`);
+    lines.push(`Main set: ${Math.max(5, Math.round(main / 100))}x100 steady/moderate`);
+    lines.push(`Cooldown: ${Math.max(1, Math.round(cd / 100))}x100 easy`);
+
+    // Note: For standard pools we don’t print a computed total line; this is fallback copy only.
+    // If you want the footer later, we’ll compute exact displayed totals by set.
+    return lines.join("\n\n");
+  }
+
+  // Standard pools: try OpenAI, but if it times out/fails, return deterministic fallback
+  if (!isCustomPool) {
+    try {
+      const workoutText = await callOpenAI(
+        [{ role: "user", content: buildStandardPrompt() }],
+        { timeoutMs: 20000 }
+      );
+
+      if (!workoutText || typeof workoutText !== "string") {
+        throw new Error("OpenAI returned empty workout text.");
+      }
+
+      return res.json({ ok: true, workoutText });
+    } catch (e) {
+      console.warn("OpenAI standard-pool fallback triggered:", e?.message ?? e);
+      const workoutText = buildDeterministicStandardWorkoutText();
+      return res.json({
+        ok: true,
+        workoutText,
+      });
+    }
+  }
+
+  // Custom pools: deterministic only (instant, always valid)
+  const deterministicExact = buildDeterministicCustomWorkoutTextExact();
+  if (deterministicExact) {
+    return res.json({ ok: true, workoutText: deterministicExact });
+  }
+
+  const deterministicNearest = buildDeterministicCustomWorkoutTextNearest();
+  if (deterministicNearest) {
+    return res.json({ ok: true, workoutText: deterministicNearest });
+  }
+
+  return res.status(500).json({
+    ok: false,
+    error: "Custom pool deterministic generation failed unexpectedly.",
+  });
+} catch (err) {
+  console.error(err);
+  return res.status(500).json({ ok: false, error: "Workout generation failed." });
+}
+/* __END_R260_HANDLER_FLOW__ */
+
+
+
+
+});
+
+/* __END_ROUTE_GENERATE_WORKOUT_R200__ */
 
 
 

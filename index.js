@@ -212,6 +212,24 @@ app.post("/generate-workout", async (req, res) => {
       return res.status(500).json({ ok: false, error: "Missing OPENAI_API_KEY secret" });
     }
 
+    // Basic request validation (v1)
+    if (!Number.isFinite(distance) || distance < 100 || distance > 10000) {
+      return res.status(400).json({ ok: false, error: "Invalid distance" });
+    }
+
+    const isCustom = poolLength === "custom";
+    if (isCustom) {
+      const pl = Number(customPoolLength);
+      if (!Number.isFinite(pl) || pl < 10 || pl > 400) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Custom pool selected but customPoolLength is invalid" });
+      }
+      if (poolLengthUnit !== "meters" && poolLengthUnit !== "yards") {
+        return res.status(400).json({ ok: false, error: "Invalid poolLengthUnit" });
+      }
+    }
+
     const OpenAI = require("openai");
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -221,7 +239,7 @@ app.post("/generate-workout", async (req, res) => {
         ? `custom: ${customPoolLength} ${poolLengthUnit}`
         : poolLength;
 
-    const userPrompt = `
+    const basePrompt = `
 You are an experienced swim coach writing a pool-valid swim workout.
 
 Pool:
@@ -271,20 +289,128 @@ Self-check before responding:
 - Display rules followed for pool type.
 `.trim();
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an experienced swim coach. Correctness and pool validity come first. Follow the user's rules exactly.",
-        },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.4,
-    });
+    // ---------- Validity Gate Helpers (v1) ----------
+    function parseFirstDistanceMetersOrYards(text) {
+      // Extract first distance token like "150m" or "216yd" or "216"
+      // We only use this for validating lines that ALSO contain "(N lengths)".
+      const m = String(text).match(/(\d+)\s*(m|yd)\b/i);
+      if (m) return { value: Number(m[1]), unit: m[2].toLowerCase() };
+      const n = String(text).match(/(?:^|\s)(\d+)(?:\s|$)/);
+      if (n) return { value: Number(n[1]), unit: null };
+      return null;
+    }
 
-    const workoutText = completion.choices?.[0]?.message?.content?.trim() || "";
+    function extractLengthsCount(line) {
+      const m = String(line).match(/\(\s*(\d+)\s*lengths?\s*\)/i);
+      return m ? Number(m[1]) : null;
+    }
+
+    function validateNonStandardWorkoutMath(workoutText, poolLenNum) {
+      // Only validate lines that contain "(N lengths)"
+      // Requirement: the distance mentioned on that line must equal poolLenNum * N.
+      // Additionally require N to be even (set ends even lengths).
+      const lines = String(workoutText).split(/\r?\n/);
+
+      const failures = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const nLengths = extractLengthsCount(line);
+        if (!nLengths) continue;
+
+        if (nLengths % 2 !== 0) {
+          failures.push({
+            lineNo: i + 1,
+            reason: `Odd lengths (${nLengths})`,
+            line,
+          });
+          continue;
+        }
+
+        const dist = parseFirstDistanceMetersOrYards(line);
+        if (!dist || !Number.isFinite(dist.value)) {
+          failures.push({
+            lineNo: i + 1,
+            reason: "Could not parse distance on line with lengths",
+            line,
+          });
+          continue;
+        }
+
+        const expected = poolLenNum * nLengths;
+
+        if (dist.value !== expected) {
+          failures.push({
+            lineNo: i + 1,
+            reason: `Distance/length mismatch (got ${dist.value}, expected ${expected})`,
+            line,
+          });
+        }
+      }
+
+      return { ok: failures.length === 0, failures };
+    }
+
+    async function callCoachOnce(promptText) {
+      const completion = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an experienced swim coach. Correctness and pool validity come first. Follow the user's rules exactly.",
+          },
+          { role: "user", content: promptText },
+        ],
+        temperature: 0.4,
+      });
+
+      return completion.choices?.[0]?.message?.content?.trim() || "";
+    }
+
+    // ---------- Generate + Validate (v1) ----------
+    let workoutText = await callCoachOnce(basePrompt);
+
+    if (isCustom) {
+      const poolLenNum = Number(customPoolLength);
+
+      // 1st pass validate
+      let v = validateNonStandardWorkoutMath(workoutText, poolLenNum);
+
+      if (!v.ok) {
+        // One repair attempt only
+        const repairPrompt = `
+The workout below contains INVALID pool math for a non-standard pool.
+
+Pool length is exactly: ${poolLenNum} ${poolLengthUnit}
+
+RULES FOR REPAIR (must follow):
+- Any line that includes "(N lengths)" must have distance exactly equal to poolLength * N.
+- N must be even on each "(N lengths)" line (set ends even lengths).
+- Keep the same overall structure (Warm-up / Drills/Skills / Main Set / Cool-down).
+- Keep total distance target as close as before (do not change goal unless necessary).
+- Plain text only. No markdown.
+
+Workout to repair:
+${workoutText}
+`.trim();
+
+        workoutText = await callCoachOnce(repairPrompt);
+
+        // 2nd pass validate
+        v = validateNonStandardWorkoutMath(workoutText, poolLenNum);
+
+        if (!v.ok) {
+          return res.status(422).json({
+            ok: false,
+            error: "Invalid pool math in AI output (custom pool).",
+            details: v.failures,
+            workoutText,
+          });
+        }
+      }
+    }
+
     res.json({ ok: true, workoutText });
   } catch (err) {
     console.error(err);
@@ -292,6 +418,7 @@ Self-check before responding:
   }
 });
 /* __END_ROUTE_GENERATE_WORKOUT_R200__ */
+
 
 
 

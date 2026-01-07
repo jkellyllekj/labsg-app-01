@@ -115,12 +115,17 @@ Generation behaviour (v1):
   - Uses OpenAI
   - Returns plain-text workout sets
   - No “(lengths)” annotations
+  - No footer lines
 - **Custom pools:**
   - Deterministic-only (no OpenAI)
   - Instant response
   - Always pool-valid
   - Includes per-set “(N lengths)” where needed
-  - Includes footer metadata (total lengths, ends-at-start, total distance)
+  - Includes footer metadata lines:
+    - Total lengths
+    - Ends-at-start
+    - Total distance (actual)
+    - Requested (only when nearest-match logic is used)
 
 UI rendering:
 - `workoutText` is parsed and rendered as **set cards**
@@ -131,19 +136,22 @@ UI rendering:
 - Labels are normalised (e.g. “Drill set” → “Drill”, “Warm-up” → “Warm up”)
 - Unlabelled lines are grouped under the previous labelled section
 
-Totals:
-- A **Total** section renders after all sets
-- Total displays:
-  - Total distance (meters or yards)
-  - Total lengths (when computable)
-  - Ends-at-start indicator (for custom pools)
-- Totals are derived from deterministic footer lines or computed from set text
+Totals footer (stable behaviour):
+- A **Total** section renders after all sets as chips.
+- Chips include:
+  - Pool (e.g. 25m, 25yd, or “33m custom”)
+  - Requested (from the UI distance)
+  - Total (actual when available, otherwise equals requested)
+  - Total lengths (custom pools only, when provided)
+  - Ends-at-start (custom pools only), always displayed last when present
+- Standard pools show Total using the requested distance because standard output has no footer lines.
 
-Known issue:
-- Total footer chips intermittently revert to an older layout due to stale or partially updated UI render blocks.
-  This requires verification of `ROUTE_HOME_UI_JS_RENDER_CORE_R161` and server restart discipline.
+Known issue status:
+- Previous “Total footer rendering inconsistent / stale layout” issue is resolved by consolidating and repairing the render blocks and adding a safe totals fallback for standard pools.
 
 <!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+
+
 
 
 

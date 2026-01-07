@@ -3,7 +3,7 @@
 # Capisco — Working Method
 ## Structured Vibe Coding System
 
-Last updated: 2026-01-06  
+Last updated: 2026-01-07  
 Status: **Authoritative**
 
 ---
@@ -29,6 +29,7 @@ WM140 — ENVIRONMENT_REALITY_CHECK
 WM150 — DISCOVERY_AND_SEARCH_RULES
 WM160 — SPEC_VS_STATE_RULE
 WM170 — CHAT_HANDOVER_ARTIFACT
+WM180 — CONTEXT_SATURATION_AWARENESS
 ============================================================================
 -->
 
@@ -188,9 +189,23 @@ Tag formats:
   - no comments
   - must remain valid JSON
 
+### Block size split rule (MANDATORY)
+
+If a block grows large enough that it is awkward to paste, review, or reason about safely, it must be split into sub-blocks **before any further changes are made**.
+
+Rules:
+- Prefer multiple small sub-blocks over one large block
+- UI templates, long strings, and render logic must be split early
+- Do not add features to an oversized block
+- New sub-blocks must follow the numeric ID rule
+- Existing block numbers must never be renumbered
+
+This rule exists to prevent partial pastes, stale mixed versions, and silent regressions.
+
 This document follows its own rules.
 
 <!-- __END_WM_BLOCK_TAG_SYSTEM_WM060__ -->
+
 
 ---
 
@@ -403,5 +418,36 @@ Every **Pause In Action** must produce a canonical **Next Chat Handover Message*
 Without it, the pause is invalid.
 
 <!-- __END_CHAT_HANDOVER_ARTIFACT_WM170__ -->
+
+---
+
+<!-- __START_WM_CONTEXT_SATURATION_WM180__ -->
+
+## CONTEXT SATURATION AWARENESS (NEW)
+
+Chat-based work has **hard context limits**.
+
+Signals that saturation is approaching:
+- Noticeably slower responses
+- Repetition or loss of precision
+- Increased correction cycles
+- UI lag or delayed typing
+- Confusion about already-established facts
+
+Causes:
+- Long-lived conversations
+- High file-count reasoning
+- Dense architectural discussions
+- Accumulated implicit state
+
+Rules:
+- The assistant must **explicitly warn** when saturation is likely
+- Either party may invoke **Pause In Action** proactively
+- Saturation is not a failure  
+  **Ignoring it is**
+
+This block exists to normalise early resets rather than late recovery.
+
+<!-- __END_WM_CONTEXT_SATURATION_WM180__ -->
 
 <!-- __END_FILE_WM000__ -->

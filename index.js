@@ -266,8 +266,8 @@ app.get("/", (req, res) => {
   `;
   /* __END_ROUTE_HOME_UI_JS_PARSERS_R150__ */
 
-/* __START_ROUTE_HOME_UI_JS_RENDER_R160__ */
- /* __START_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
+  /* __START_ROUTE_HOME_UI_JS_RENDER_R160__ */
+  /* __START_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
   const HOME_JS_RENDER_CORE = `
       function clearUI() {
         summary.style.display = "none";
@@ -362,17 +362,6 @@ app.get("/", (req, res) => {
         return raw;
       }
 
-      function poolLenFromPayload(payload) {
-        if (payload.poolLength === "custom") {
-          const n = Number(payload.customPoolLength);
-          return Number.isFinite(n) && n > 0 ? n : null;
-        }
-        if (payload.poolLength === "25m") return 25;
-        if (payload.poolLength === "50m") return 50;
-        if (payload.poolLength === "25yd") return 25;
-        return null;
-      }
-
       function extractFooterInfo(footerLines) {
         const info = {
           totalLengthsLine: null,
@@ -416,23 +405,25 @@ app.get("/", (req, res) => {
 
         const chips = [];
 
+        // Pool and requested are allowed metadata.
         if (s.poolText) chips.push("Pool: " + s.poolText);
 
         if (Number.isFinite(s.requested)) {
           chips.push("Requested: " + String(s.requested) + String(s.units || ""));
         }
 
-        // Total distance is the actual, so we keep this and drop the separate "Actual" chip.
+        // Total is actual when present, otherwise requested.
         if (info.totalDistanceLine) {
           chips.push(info.totalDistanceLine.replace("Total distance:", "Total:").trim());
+        } else if (Number.isFinite(s.requested)) {
+          chips.push("Total: " + String(s.requested) + String(s.units || ""));
         }
 
         if (info.totalLengthsLine) chips.push(info.totalLengthsLine);
 
-        // Ends-at-start goes last, always.
+        // Always last.
         if (info.endsLine) chips.push(info.endsLine);
 
-        // De-dupe, preserve order.
         const seen = new Set();
         const deduped = [];
         for (const c of chips) {
@@ -462,8 +453,6 @@ app.get("/", (req, res) => {
       }
   `;
   /* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
-/* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
-
 
   /* __START_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
   const HOME_JS_RENDER_CARDS = `
@@ -557,8 +546,6 @@ app.get("/", (req, res) => {
 
   const HOME_JS_RENDER = HOME_JS_RENDER_CORE + HOME_JS_RENDER_CARDS;
   /* __END_ROUTE_HOME_UI_JS_RENDER_R160__ */
-
-
 
   /* __START_ROUTE_HOME_UI_JS_EVENTS_R170__ */
   const HOME_JS_EVENTS = `
@@ -704,22 +691,18 @@ app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_SEND_R200__ */
   res.send(
     HOME_HTML +
-    HOME_JS_OPEN +
-    HOME_JS_DOM +
-    HOME_JS_HELPERS +
-    HOME_JS_PARSERS +
-    HOME_JS_RENDER +
-    HOME_JS_EVENTS +
-    HOME_JS_INIT +
-    HOME_JS_CLOSE
+      HOME_JS_OPEN +
+      HOME_JS_DOM +
+      HOME_JS_HELPERS +
+      HOME_JS_PARSERS +
+      HOME_JS_RENDER +
+      HOME_JS_EVENTS +
+      HOME_JS_INIT +
+      HOME_JS_CLOSE,
   );
   /* __END_ROUTE_HOME_UI_SEND_R200__ */
 });
 /* __END_ROUTE_HOME_UI_R100__ */
-
-
-
-
 
 /* __START_ROUTE_GENERATE_WORKOUT_R200__ */
 
@@ -731,8 +714,12 @@ app.post("/generate-workout", async (req, res) => {
   const isCustomPool = poolLength === "custom";
 
   const unitsShort = isCustomPool
-    ? (poolLengthUnit === "yards" ? "yd" : "m")
-    : (poolLength === "25yd" ? "yd" : "m");
+    ? poolLengthUnit === "yards"
+      ? "yd"
+      : "m"
+    : poolLength === "25yd"
+      ? "yd"
+      : "m";
 
   const poolLen = isCustomPool ? Number(customPoolLength) : null;
 
@@ -740,179 +727,207 @@ app.post("/generate-workout", async (req, res) => {
     return res.status(400).json({ ok: false, error: "Invalid distance." });
   }
   if (!poolLength || typeof poolLength !== "string") {
-    return res.status(400).json({ ok: false, error: "Invalid pool selection." });
+    return res
+      .status(400)
+      .json({ ok: false, error: "Invalid pool selection." });
   }
   if (isCustomPool && (!Number.isFinite(poolLen) || poolLen <= 0)) {
-    return res.status(400).json({ ok: false, error: "Invalid custom pool length." });
+    return res
+      .status(400)
+      .json({ ok: false, error: "Invalid custom pool length." });
   }
   if (!process.env.OPENAI_API_KEY) {
-    return res.status(500).json({ ok: false, error: "Missing OPENAI_API_KEY (Replit Secret)." });
+    return res
+      .status(500)
+      .json({ ok: false, error: "Missing OPENAI_API_KEY (Replit Secret)." });
   }
 
   // Exact-possible: totalDistance is a clean multiple of pool length AND total lengths even.
   const targetLengthsExact = isCustomPool ? targetTotal / poolLen : null;
   const exactPossible =
-    isCustomPool && Number.isInteger(targetLengthsExact) && targetLengthsExact % 2 === 0;
+    isCustomPool &&
+    Number.isInteger(targetLengthsExact) &&
+    targetLengthsExact % 2 === 0;
   /* __END_R210_PARSE_AND_NORMALIZE__ */
 
   /* __START_R220_DETERMINISTIC_CUSTOM_EXACT__ */
-function buildDeterministicCustomWorkoutTextExact() {
-  if (!exactPossible) return null;
+  function buildDeterministicCustomWorkoutTextExact() {
+    if (!exactPossible) return null;
 
-  const lengthsPerRep = 2;
-  const perRepDistance = lengthsPerRep * poolLen;
-  const totalReps = targetLengthsExact / lengthsPerRep; // integer
+    const lengthsPerRep = 2;
+    const perRepDistance = lengthsPerRep * poolLen;
+    const totalReps = targetLengthsExact / lengthsPerRep; // integer
 
-  let wu = Math.max(4, Math.round(totalReps * 0.2));
-  let dr = Math.max(4, Math.round(totalReps * 0.15));
-  let cd = Math.max(2, Math.round(totalReps * 0.15));
-  let main = totalReps - (wu + dr + cd);
+    let wu = Math.max(4, Math.round(totalReps * 0.2));
+    let dr = Math.max(4, Math.round(totalReps * 0.15));
+    let cd = Math.max(2, Math.round(totalReps * 0.15));
+    let main = totalReps - (wu + dr + cd);
 
-  if (main < 6) {
-    const needed = 6 - main;
+    if (main < 6) {
+      const needed = 6 - main;
 
-    const takeWu = Math.min(Math.max(wu - 4, 0), needed);
-    wu -= takeWu;
-    main += takeWu;
+      const takeWu = Math.min(Math.max(wu - 4, 0), needed);
+      wu -= takeWu;
+      main += takeWu;
 
-    const remaining = 6 - main;
-    const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
-    dr -= takeDr;
-    main += takeDr;
+      const remaining = 6 - main;
+      const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
+      dr -= takeDr;
+      main += takeDr;
 
-    const remaining2 = 6 - main;
-    const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
-    cd -= takeCd;
-    main += takeCd;
-  }
-
-  const sum = wu + dr + main + cd;
-  if (sum !== totalReps) main += (totalReps - sum);
-
-  const totalLengths = Number(targetLengthsExact); // integer
-  const lines = [];
-  lines.push(`Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`);
-  lines.push(`Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`);
-  lines.push(`Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`);
-  lines.push(`Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`);
-  lines.push("");
-  lines.push(`Total lengths: ${totalLengths} lengths`);
-  lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
-  lines.push(`Total distance: ${targetTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
-  return lines.join("\n");
-}
-/* __END_R220_DETERMINISTIC_CUSTOM_EXACT__ */
-
-
-  /* __START_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
-function buildDeterministicCustomWorkoutTextNearest() {
-  if (!isCustomPool) return null;
-
-  const rawLengths = targetTotal / poolLen;
-
-  const down = Math.floor(rawLengths);
-  const up = Math.ceil(rawLengths);
-
-  const downEven = down % 2 === 0 ? down : down - 1;
-  const upEven = up % 2 === 0 ? up : up + 1;
-
-  const candidates = [];
-  if (Number.isInteger(downEven) && downEven > 0) candidates.push(downEven);
-  if (Number.isInteger(upEven) && upEven > 0) candidates.push(upEven);
-
-  if (candidates.length === 0) return null;
-
-  let best = candidates[0];
-  for (const c of candidates.slice(1)) {
-    const diffBest = Math.abs(best * poolLen - targetTotal);
-    const diffC = Math.abs(c * poolLen - targetTotal);
-    if (diffC < diffBest) best = c;
-    else if (diffC === diffBest && c > best) best = c;
-  }
-
-  const chosenTotal = best * poolLen;
-
-  const lengthsPerRep = 2;
-  const perRepDistance = lengthsPerRep * poolLen;
-  const totalReps = best / lengthsPerRep; // integer because best is even
-
-  let wu = Math.max(4, Math.round(totalReps * 0.2));
-  let dr = Math.max(4, Math.round(totalReps * 0.15));
-  let cd = Math.max(2, Math.round(totalReps * 0.15));
-  let main = totalReps - (wu + dr + cd);
-
-  if (main < 6) {
-    const needed = 6 - main;
-
-    const takeWu = Math.min(Math.max(wu - 4, 0), needed);
-    wu -= takeWu;
-    main += takeWu;
-
-    const remaining = 6 - main;
-    const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
-    dr -= takeDr;
-    main += takeDr;
-
-    const remaining2 = 6 - main;
-    const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
-    cd -= takeCd;
-    main += takeCd;
-  }
-
-  const sum = wu + dr + main + cd;
-  if (sum !== totalReps) main += (totalReps - sum);
-
-  const totalLengths = Number(best); // integer
-  const lines = [];
-  lines.push(`Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`);
-  lines.push(`Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`);
-  lines.push(`Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`);
-  lines.push(`Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`);
-  lines.push("");
-  lines.push(`Total lengths: ${totalLengths} lengths`);
-  lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
-  lines.push(`Requested: ${targetTotal}${unitsShort}`);
-  lines.push(`Total distance: ${chosenTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
-  return lines.join("\n");
-}
-/* __END_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
-
-
-
-  
-  /* __START_R230_OPENAI_CALL__ */
-async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.2,
-      }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      throw new Error(`OpenAI HTTP ${response.status}: ${text.slice(0, 300)}`);
+      const remaining2 = 6 - main;
+      const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
+      cd -= takeCd;
+      main += takeCd;
     }
 
-    const data = await response.json();
-    return data?.choices?.[0]?.message?.content ?? "";
-  } finally {
-    clearTimeout(t);
-  }
-}
-/* __END_R230_OPENAI_CALL__ */
+    const sum = wu + dr + main + cd;
+    if (sum !== totalReps) main += totalReps - sum;
 
+    const totalLengths = Number(targetLengthsExact); // integer
+    const lines = [];
+    lines.push(
+      `Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`,
+    );
+    lines.push(
+      `Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`,
+    );
+    lines.push(
+      `Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`,
+    );
+    lines.push(
+      `Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`,
+    );
+    lines.push("");
+    lines.push(`Total lengths: ${totalLengths} lengths`);
+    lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
+    lines.push(
+      `Total distance: ${targetTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
+    );
+    return lines.join("\n");
+  }
+  /* __END_R220_DETERMINISTIC_CUSTOM_EXACT__ */
+
+  /* __START_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
+  function buildDeterministicCustomWorkoutTextNearest() {
+    if (!isCustomPool) return null;
+
+    const rawLengths = targetTotal / poolLen;
+
+    const down = Math.floor(rawLengths);
+    const up = Math.ceil(rawLengths);
+
+    const downEven = down % 2 === 0 ? down : down - 1;
+    const upEven = up % 2 === 0 ? up : up + 1;
+
+    const candidates = [];
+    if (Number.isInteger(downEven) && downEven > 0) candidates.push(downEven);
+    if (Number.isInteger(upEven) && upEven > 0) candidates.push(upEven);
+
+    if (candidates.length === 0) return null;
+
+    let best = candidates[0];
+    for (const c of candidates.slice(1)) {
+      const diffBest = Math.abs(best * poolLen - targetTotal);
+      const diffC = Math.abs(c * poolLen - targetTotal);
+      if (diffC < diffBest) best = c;
+      else if (diffC === diffBest && c > best) best = c;
+    }
+
+    const chosenTotal = best * poolLen;
+
+    const lengthsPerRep = 2;
+    const perRepDistance = lengthsPerRep * poolLen;
+    const totalReps = best / lengthsPerRep; // integer because best is even
+
+    let wu = Math.max(4, Math.round(totalReps * 0.2));
+    let dr = Math.max(4, Math.round(totalReps * 0.15));
+    let cd = Math.max(2, Math.round(totalReps * 0.15));
+    let main = totalReps - (wu + dr + cd);
+
+    if (main < 6) {
+      const needed = 6 - main;
+
+      const takeWu = Math.min(Math.max(wu - 4, 0), needed);
+      wu -= takeWu;
+      main += takeWu;
+
+      const remaining = 6 - main;
+      const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
+      dr -= takeDr;
+      main += takeDr;
+
+      const remaining2 = 6 - main;
+      const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
+      cd -= takeCd;
+      main += takeCd;
+    }
+
+    const sum = wu + dr + main + cd;
+    if (sum !== totalReps) main += totalReps - sum;
+
+    const totalLengths = Number(best); // integer
+    const lines = [];
+    lines.push(
+      `Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`,
+    );
+    lines.push(
+      `Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`,
+    );
+    lines.push(
+      `Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`,
+    );
+    lines.push(
+      `Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`,
+    );
+    lines.push("");
+    lines.push(`Total lengths: ${totalLengths} lengths`);
+    lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
+    lines.push(`Requested: ${targetTotal}${unitsShort}`);
+    lines.push(
+      `Total distance: ${chosenTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
+    );
+    return lines.join("\n");
+  }
+  /* __END_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
+
+  /* __START_R230_OPENAI_CALL__ */
+  async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages,
+            temperature: 0.2,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(
+          `OpenAI HTTP ${response.status}: ${text.slice(0, 300)}`,
+        );
+      }
+
+      const data = await response.json();
+      return data?.choices?.[0]?.message?.content ?? "";
+    } finally {
+      clearTimeout(t);
+    }
+  }
+  /* __END_R230_OPENAI_CALL__ */
 
   /* __START_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
   function extractFirstJsonObject(text) {
@@ -946,15 +961,24 @@ async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
       const lengthsPerRep = Number(s.lengthsPerRep);
 
       if (!label) errors.push(`sets[${i}].label is required (non-empty).`);
-      if (!Number.isInteger(reps) || reps <= 0) errors.push(`sets[${i}].reps must be a positive integer.`);
-      if (!Number.isInteger(lengthsPerRep) || lengthsPerRep <= 0) errors.push(`sets[${i}].lengthsPerRep must be a positive integer.`);
+      if (!Number.isInteger(reps) || reps <= 0)
+        errors.push(`sets[${i}].reps must be a positive integer.`);
+      if (!Number.isInteger(lengthsPerRep) || lengthsPerRep <= 0)
+        errors.push(`sets[${i}].lengthsPerRep must be a positive integer.`);
 
-      if (Number.isInteger(reps) && reps > 0 && Number.isInteger(lengthsPerRep) && lengthsPerRep > 0) {
+      if (
+        Number.isInteger(reps) &&
+        reps > 0 &&
+        Number.isInteger(lengthsPerRep) &&
+        lengthsPerRep > 0
+      ) {
         const setLengths = reps * lengthsPerRep;
         computedTotalLengths += setLengths;
 
         if (setLengths % 2 !== 0) {
-          errors.push(`sets[${i}] ends on ${setLengths} total lengths (must be even).`);
+          errors.push(
+            `sets[${i}] ends on ${setLengths} total lengths (must be even).`,
+          );
         }
 
         computedTotal += reps * lengthsPerRep * poolLen;
@@ -962,7 +986,9 @@ async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
     }
 
     if (computedTotalLengths % 2 !== 0) {
-      errors.push(`Workout ends on ${computedTotalLengths} total lengths (must be even).`);
+      errors.push(
+        `Workout ends on ${computedTotalLengths} total lengths (must be even).`,
+      );
     }
 
     // Non-exact custom: allow tolerance. (Exact totals are handled by deterministic path.)
@@ -970,11 +996,17 @@ async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
     const diff = Math.abs(computedTotal - targetTotal);
     if (diff > tolerance) {
       errors.push(
-        `Total distance mismatch: computed ${computedTotal}${unitsShort}, requested ${targetTotal}${unitsShort}. (tolerance ±${tolerance}${unitsShort})`
+        `Total distance mismatch: computed ${computedTotal}${unitsShort}, requested ${targetTotal}${unitsShort}. (tolerance ±${tolerance}${unitsShort})`,
       );
     }
 
-    return { ok: errors.length === 0, errors, computedTotal, computedTotalLengths, tolerance };
+    return {
+      ok: errors.length === 0,
+      errors,
+      computedTotal,
+      computedTotalLengths,
+      tolerance,
+    };
   }
 
   function renderWorkoutTextFromJson(obj) {
@@ -987,13 +1019,22 @@ async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
 
       const perRepDistance = lengthsPerRep * poolLen;
 
-      const stroke = typeof s.stroke === "string" && s.stroke.trim() ? s.stroke.trim() : "";
-      const intensity = typeof s.intensity === "string" && s.intensity.trim() ? s.intensity.trim() : "";
-      const restSeconds = Number.isFinite(Number(s.restSeconds)) ? Number(s.restSeconds) : null;
-      const notes = typeof s.notes === "string" && s.notes.trim() ? s.notes.trim() : "";
+      const stroke =
+        typeof s.stroke === "string" && s.stroke.trim() ? s.stroke.trim() : "";
+      const intensity =
+        typeof s.intensity === "string" && s.intensity.trim()
+          ? s.intensity.trim()
+          : "";
+      const restSeconds = Number.isFinite(Number(s.restSeconds))
+        ? Number(s.restSeconds)
+        : null;
+      const notes =
+        typeof s.notes === "string" && s.notes.trim() ? s.notes.trim() : "";
 
       const parts = [];
-      parts.push(`${label}: ${reps}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths)`);
+      parts.push(
+        `${label}: ${reps}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths)`,
+      );
       if (stroke) parts.push(stroke);
       if (intensity) parts.push(intensity);
       if (restSeconds !== null) parts.push(`${restSeconds}s rest`);
@@ -1003,11 +1044,13 @@ async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
     }
 
     const computedTotal = obj.sets.reduce((sum, s) => {
-      return sum + (Number(s.reps) * Number(s.lengthsPerRep) * poolLen);
+      return sum + Number(s.reps) * Number(s.lengthsPerRep) * poolLen;
     }, 0);
 
     lines.push("");
-    lines.push(`Total distance: ${computedTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`);
+    lines.push(
+      `Total distance: ${computedTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
+    );
     return lines.join("\n");
   }
   /* __END_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
@@ -1073,110 +1116,112 @@ Hard rule:
   }
   /* __END_R250_PROMPTS__ */
 
-/* __START_R260_HANDLER_FLOW__ */
-try {
-  // Deterministic fallback for standard pools (no "(lengths)", sums exactly)
-  function buildDeterministicStandardWorkoutText() {
-    const total = targetTotal;
+  /* __START_R260_HANDLER_FLOW__ */
+  try {
+    // Deterministic fallback for standard pools (no "(lengths)", sums exactly)
+    function buildDeterministicStandardWorkoutText() {
+      const total = targetTotal;
 
-    // Simple, always-sums allocation
-    // 20% warmup, 15% drills, 55% main, 10% cooldown (then adjust to exact using 50/100 chunks)
-    let wu = Math.round(total * 0.2);
-    let dr = Math.round(total * 0.15);
-    let cd = Math.round(total * 0.1);
-    let main = total - (wu + dr + cd);
+      // Simple, always-sums allocation
+      // 20% warmup, 15% drills, 55% main, 10% cooldown (then adjust to exact using 50/100 chunks)
+      let wu = Math.round(total * 0.2);
+      let dr = Math.round(total * 0.15);
+      let cd = Math.round(total * 0.1);
+      let main = total - (wu + dr + cd);
 
-    // Snap each to nearest 50 in the target units (works fine for 25m/50m/25yd conventions)
-    const snap50 = (n) => Math.max(50, Math.round(n / 50) * 50);
+      // Snap each to nearest 50 in the target units (works fine for 25m/50m/25yd conventions)
+      const snap50 = (n) => Math.max(50, Math.round(n / 50) * 50);
 
-    wu = snap50(wu);
-    dr = snap50(dr);
-    cd = snap50(cd);
-    main = total - (wu + dr + cd);
+      wu = snap50(wu);
+      dr = snap50(dr);
+      cd = snap50(cd);
+      main = total - (wu + dr + cd);
 
-    // Ensure main is at least 400; if not, steal from warmup/drills
-    if (main < 400) {
-      const need = 400 - main;
-      const takeWu = Math.min(Math.max(wu - 200, 0), need);
-      wu -= takeWu;
-      main += takeWu;
+      // Ensure main is at least 400; if not, steal from warmup/drills
+      if (main < 400) {
+        const need = 400 - main;
+        const takeWu = Math.min(Math.max(wu - 200, 0), need);
+        wu -= takeWu;
+        main += takeWu;
 
-      const need2 = 400 - main;
-      const takeDr = Math.min(Math.max(dr - 200, 0), need2);
-      dr -= takeDr;
-      main += takeDr;
-    }
-
-    // Final exactness adjustment using 50s
-    const sum = wu + dr + main + cd;
-    const diff = total - sum;
-    main += diff; // diff will be multiple of 50 because total is slider-hundreds and others snapped to 50
-
-    const lines = [];
-    // Use conventional “reps x distance” where possible
-    lines.push(`Warm-up: ${Math.max(1, Math.round(wu / 200))}x200 easy`); // approximate reps; still sums? (line is guidance)
-    lines.push(`Drills: ${Math.max(4, Math.round(dr / 50))}x50 drill (choice)`);
-    lines.push(`Main set: ${Math.max(5, Math.round(main / 100))}x100 steady/moderate`);
-    lines.push(`Cooldown: ${Math.max(1, Math.round(cd / 100))}x100 easy`);
-
-    // Note: For standard pools we don’t print a computed total line; this is fallback copy only.
-    // If you want the footer later, we’ll compute exact displayed totals by set.
-    return lines.join("\n\n");
-  }
-
-  // Standard pools: try OpenAI, but if it times out/fails, return deterministic fallback
-  if (!isCustomPool) {
-    try {
-      const workoutText = await callOpenAI(
-        [{ role: "user", content: buildStandardPrompt() }],
-        { timeoutMs: 20000 }
-      );
-
-      if (!workoutText || typeof workoutText !== "string") {
-        throw new Error("OpenAI returned empty workout text.");
+        const need2 = 400 - main;
+        const takeDr = Math.min(Math.max(dr - 200, 0), need2);
+        dr -= takeDr;
+        main += takeDr;
       }
 
-      return res.json({ ok: true, workoutText });
-    } catch (e) {
-      console.warn("OpenAI standard-pool fallback triggered:", e?.message ?? e);
-      const workoutText = buildDeterministicStandardWorkoutText();
-      return res.json({
-        ok: true,
-        workoutText,
-      });
+      // Final exactness adjustment using 50s
+      const sum = wu + dr + main + cd;
+      const diff = total - sum;
+      main += diff; // diff will be multiple of 50 because total is slider-hundreds and others snapped to 50
+
+      const lines = [];
+      // Use conventional “reps x distance” where possible
+      lines.push(`Warm-up: ${Math.max(1, Math.round(wu / 200))}x200 easy`); // approximate reps; still sums? (line is guidance)
+      lines.push(
+        `Drills: ${Math.max(4, Math.round(dr / 50))}x50 drill (choice)`,
+      );
+      lines.push(
+        `Main set: ${Math.max(5, Math.round(main / 100))}x100 steady/moderate`,
+      );
+      lines.push(`Cooldown: ${Math.max(1, Math.round(cd / 100))}x100 easy`);
+
+      // Note: For standard pools we don’t print a computed total line; this is fallback copy only.
+      // If you want the footer later, we’ll compute exact displayed totals by set.
+      return lines.join("\n\n");
     }
+
+    // Standard pools: try OpenAI, but if it times out/fails, return deterministic fallback
+    if (!isCustomPool) {
+      try {
+        const workoutText = await callOpenAI(
+          [{ role: "user", content: buildStandardPrompt() }],
+          { timeoutMs: 20000 },
+        );
+
+        if (!workoutText || typeof workoutText !== "string") {
+          throw new Error("OpenAI returned empty workout text.");
+        }
+
+        return res.json({ ok: true, workoutText });
+      } catch (e) {
+        console.warn(
+          "OpenAI standard-pool fallback triggered:",
+          e?.message ?? e,
+        );
+        const workoutText = buildDeterministicStandardWorkoutText();
+        return res.json({
+          ok: true,
+          workoutText,
+        });
+      }
+    }
+
+    // Custom pools: deterministic only (instant, always valid)
+    const deterministicExact = buildDeterministicCustomWorkoutTextExact();
+    if (deterministicExact) {
+      return res.json({ ok: true, workoutText: deterministicExact });
+    }
+
+    const deterministicNearest = buildDeterministicCustomWorkoutTextNearest();
+    if (deterministicNearest) {
+      return res.json({ ok: true, workoutText: deterministicNearest });
+    }
+
+    return res.status(500).json({
+      ok: false,
+      error: "Custom pool deterministic generation failed unexpectedly.",
+    });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ ok: false, error: "Workout generation failed." });
   }
-
-  // Custom pools: deterministic only (instant, always valid)
-  const deterministicExact = buildDeterministicCustomWorkoutTextExact();
-  if (deterministicExact) {
-    return res.json({ ok: true, workoutText: deterministicExact });
-  }
-
-  const deterministicNearest = buildDeterministicCustomWorkoutTextNearest();
-  if (deterministicNearest) {
-    return res.json({ ok: true, workoutText: deterministicNearest });
-  }
-
-  return res.status(500).json({
-    ok: false,
-    error: "Custom pool deterministic generation failed unexpectedly.",
-  });
-} catch (err) {
-  console.error(err);
-  return res.status(500).json({ ok: false, error: "Workout generation failed." });
-}
-/* __END_R260_HANDLER_FLOW__ */
-
-
-
-
+  /* __END_R260_HANDLER_FLOW__ */
 });
 
 /* __END_ROUTE_GENERATE_WORKOUT_R200__ */
-
-
-
 
 /* __START_SERVER_LISTEN_R900__ */
 app.listen(PORT, () => {

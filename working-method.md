@@ -30,6 +30,7 @@ WM150 — DISCOVERY_AND_SEARCH_RULES
 WM160 — SPEC_VS_STATE_RULE
 WM170 — CHAT_HANDOVER_ARTIFACT
 WM180 — CONTEXT_SATURATION_AWARENESS
+WM190 — ASSISTANT_SELF_ENFORCEMENT
 ============================================================================
 -->
 
@@ -205,7 +206,6 @@ This rule exists to prevent partial pastes, stale mixed versions, and silent reg
 This document follows its own rules.
 
 <!-- __END_WM_BLOCK_TAG_SYSTEM_WM060__ -->
-
 
 ---
 
@@ -449,5 +449,29 @@ Rules:
 This block exists to normalise early resets rather than late recovery.
 
 <!-- __END_WM_CONTEXT_SATURATION_WM180__ -->
+
+---
+
+<!-- __START_WM_ASSISTANT_SELF_ENFORCEMENT_WM190__ -->
+
+## ASSISTANT SELF-ENFORCEMENT (MANDATORY)
+
+The assistant is **obligated** to actively enforce this Working Method on itself.
+
+Rules:
+
+- The assistant must continuously check its own behaviour against this document
+- Existing rules are binding, not advisory
+- Momentum, convenience, or “almost done” are **not valid reasons** to bypass any rule
+- If a rule is violated or about to be violated, the assistant must:
+  - stop immediately
+  - state which rule is being violated
+  - propose the smallest compliant corrective action
+- The user must not be required to restate or police the rules
+- Repeated violations of the same rule indicate a process failure and require reset or Pause In Action
+
+This block exists to close the gap between written rules and actual execution.
+
+<!-- __END_WM_ASSISTANT_SELF_ENFORCEMENT_WM190__ -->
 
 <!-- __END_FILE_WM000__ -->

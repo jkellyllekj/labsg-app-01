@@ -20,77 +20,127 @@ app.use(express.json());
 /* __START_ROUTE_HOME_UI_R100__ */
 // --- Minimal UI (v1) ---
 app.get("/", (req, res) => {
-  res.send(`
-    <h1>Swim Workout Generator v1</h1>
-    <p>Status: running</p>
+  /* __START_ROUTE_HOME_UI_HTML_R110__ */
+  const HOME_HTML = `
+    <h1 style="margin:0 0 6px 0;">Swim Workout Generator v1</h1>
+    <div style="margin:0 0 18px 0; color:#333;">Status: running</div>
 
-    <h2>Generate</h2>
-    <form id="genForm">
-      <h3>Distance</h3>
+    <div style="max-width:820px;">
+      <h2 style="margin:0 0 10px 0;">Generate</h2>
 
-      <label>
-        <strong id="distanceLabel">1000</strong> (m/yd)
-      </label>
-      <br/>
-      <input
-        id="distanceSlider"
-        type="range"
-        min="500"
-        max="10000"
-        step="100"
-        value="1000"
-        style="width: 320px;"
-      />
-      <input type="hidden" name="distance" id="distanceHidden" value="1000" />
+      <form id="genForm" style="padding:14px; border:1px solid #e2e2e2; border-radius:12px; background:#fff;">
+        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start;">
+          <div style="min-width:320px;">
+            <h3 style="margin:0 0 10px 0;">Distance</h3>
 
-      <hr style="margin:16px 0;"/>
+            <label style="display:block; margin-bottom:6px;">
+              <strong id="distanceLabel">1000</strong> <span style="color:#555;">(m or yd)</span>
+            </label>
 
-      <h3>Pool length</h3>
+            <input
+              id="distanceSlider"
+              type="range"
+              min="500"
+              max="10000"
+              step="100"
+              value="1000"
+              style="width: 320px;"
+            />
+            <input type="hidden" name="distance" id="distanceHidden" value="1000" />
+          </div>
 
-      <!-- Buttons drive the hidden field -->
-      <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
+          <div style="min-width:320px;">
+            <h3 style="margin:0 0 10px 0;">Pool length</h3>
 
-      <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button type="button" data-pool="25m">25m</button>
-        <button type="button" data-pool="50m">50m</button>
-        <button type="button" data-pool="25yd">25yd</button>
-        <button type="button" data-pool="custom">Custom</button>
+            <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
+
+            <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" data-pool="25m">25m</button>
+              <button type="button" data-pool="50m">50m</button>
+              <button type="button" data-pool="25yd">25yd</button>
+              <button type="button" data-pool="custom">Custom</button>
+            </div>
+
+            <div style="margin-top:12px;">
+              <label>
+                Custom pool length:
+                <input
+                  name="customPoolLength"
+                  id="customPoolLength"
+                  type="number"
+                  min="10"
+                  max="400"
+                  placeholder="e.g. 30"
+                  disabled
+                  style="width: 90px;"
+                />
+              </label>
+              <select name="poolLengthUnit" id="poolLengthUnit" disabled>
+                <option value="meters">meters</option>
+                <option value="yards">yards</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
+            Generate
+          </button>
+          <button id="copyBtn" type="button" style="margin-left:8px; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
+            Copy
+          </button>
+          <span id="statusPill" style="margin-left:10px; font-size:13px; color:#555;"></span>
+        </div>
+      </form>
+
+      <div id="resultWrap" style="margin-top:16px; padding:14px; background:#f6f6f6; border-radius:12px; border:1px solid #e7e7e7;">
+        <div id="summary" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+        <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+
+        <div id="cards" style="display:none;"></div>
+
+        <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+
+        <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
       </div>
+    </div>
+  `;
+  /* __END_ROUTE_HOME_UI_HTML_R110__ */
 
-      <div style="margin-top:12px;">
-        <label>
-          Custom pool length:
-          <input
-            name="customPoolLength"
-            id="customPoolLength"
-            type="number"
-            min="10"
-            max="400"
-            placeholder="e.g. 30"
-            disabled
-            style="width: 90px;"
-          />
-        </label>
-        <select name="poolLengthUnit" id="poolLengthUnit" disabled>
-          <option value="meters">meters</option>
-          <option value="yards">yards</option>
-        </select>
-      </div>
-
-      <br/>
-      <button type="submit">Generate</button>
-    </form>
-
-    <pre id="out" style="margin-top:16px; padding:12px; background:#f5f5f5; border-radius:8px; white-space:pre-wrap;"></pre>
-
+  /* __START_ROUTE_HOME_UI_JS_OPEN_R120__ */
+  const HOME_JS_OPEN = `
     <script>
+  `;
+  /* __END_ROUTE_HOME_UI_JS_OPEN_R120__ */
+
+  /* __START_ROUTE_HOME_UI_JS_DOM_R130__ */
+  const HOME_JS_DOM = `
       const form = document.getElementById("genForm");
-      const out = document.getElementById("out");
+
+      const summary = document.getElementById("summary");
+      const errorBox = document.getElementById("errorBox");
+      const statusPill = document.getElementById("statusPill");
+
+      const cards = document.getElementById("cards");
+      const footerBox = document.getElementById("footerBox");
+      const raw = document.getElementById("raw");
+
+      const copyBtn = document.getElementById("copyBtn");
 
       const distanceSlider = document.getElementById("distanceSlider");
       const distanceHidden = document.getElementById("distanceHidden");
       const distanceLabel = document.getElementById("distanceLabel");
 
+      const poolButtons = document.getElementById("poolButtons");
+      const poolHidden = document.getElementById("poolLengthHidden");
+      const customLen = document.getElementById("customPoolLength");
+      const customUnit = document.getElementById("poolLengthUnit");
+  `;
+  /* __END_ROUTE_HOME_UI_JS_DOM_R130__ */
+
+  /* __START_ROUTE_HOME_UI_JS_HELPERS_R140__ */
+  const HOME_JS_HELPERS = `
       function snap100(n) {
         const x = Number(n);
         if (!Number.isFinite(x)) return 1000;
@@ -104,15 +154,414 @@ app.get("/", (req, res) => {
         distanceLabel.textContent = String(snapped);
       }
 
-      distanceSlider.addEventListener("input", () => setDistance(distanceSlider.value));
-      setDistance(1000);
+      function unitShortFromPayload(payload) {
+        if (payload.poolLength === "custom") {
+          return payload.poolLengthUnit === "yards" ? "yd" : "m";
+        }
+        return payload.poolLength === "25yd" ? "yd" : "m";
+      }
 
-      // Pool buttons
-      const poolButtons = document.getElementById("poolButtons");
-      const poolHidden = document.getElementById("poolLengthHidden");
-      const customLen = document.getElementById("customPoolLength");
-      const customUnit = document.getElementById("poolLengthUnit");
+      function poolLabelFromPayload(payload) {
+        if (payload.poolLength !== "custom") return payload.poolLength;
+        const u = payload.poolLengthUnit === "yards" ? "yd" : "m";
+        return String(payload.customPoolLength) + u + " custom";
+      }
 
+      function safeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\\"", "&quot;");
+      }
+
+      function getWorkoutId(payload, workoutText) {
+        const base = JSON.stringify({ payload, workoutText });
+        let h = 0;
+        for (let i = 0; i < base.length; i++) {
+          h = (h * 31 + base.charCodeAt(i)) >>> 0;
+        }
+        return "w" + String(h);
+      }
+
+      function loadGoalsMap() {
+        try {
+          const rawStr = localStorage.getItem("swg_v1_goals");
+          if (!rawStr) return {};
+          const obj = JSON.parse(rawStr);
+          return (obj && typeof obj === "object") ? obj : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveGoalsMap(map) {
+        try {
+          localStorage.setItem("swg_v1_goals", JSON.stringify(map));
+        } catch {
+          // ignore
+        }
+      }
+  `;
+  /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
+
+  /* __START_ROUTE_HOME_UI_JS_PARSERS_R150__ */
+  const HOME_JS_PARSERS = `
+      function parseFooterDistances(workoutText) {
+        const result = { requested: null, total: null, units: null };
+        if (typeof workoutText !== "string") return result;
+
+        const req = workoutText.match(/\\bRequested:\\s*(\\d+)\\s*(m|yd)\\b/i);
+        const tot = workoutText.match(/\\bTotal distance:\\s*(\\d+)\\s*(m|yd)\\b/i);
+
+        if (req) {
+          result.requested = Number(req[1]);
+          result.units = req[2].toLowerCase();
+        }
+        if (tot) {
+          result.total = Number(tot[1]);
+          result.units = (result.units || tot[2]).toLowerCase();
+        }
+
+        return result;
+      }
+
+      function splitWorkout(workoutText) {
+        const lines = String(workoutText || "").split(/\\r?\\n/);
+
+        const setLines = [];
+        const footerLines = [];
+
+        const isFooterLine = (line) => {
+          const t = line.trim();
+          if (!t) return false;
+          return (
+            t.startsWith("Total lengths:") ||
+            t.startsWith("Ends at start end:") ||
+            t.startsWith("Requested:") ||
+            t.startsWith("Total distance:")
+          );
+        };
+
+        for (const line of lines) {
+          if (isFooterLine(line)) footerLines.push(line.trim());
+          else if (line.trim()) setLines.push(line);
+        }
+
+        return { setLines, footerLines };
+      }
+
+      function parseSetLine(line) {
+        const trimmed = String(line || "").trim();
+
+        const m = trimmed.match(/^([^:]{2,30}):\\s*(.+)$/);
+        if (m) {
+          const label = m[1].trim();
+          const body = m[2].trim();
+          return { label, body };
+        }
+
+        return { label: null, body: trimmed };
+      }
+  `;
+  /* __END_ROUTE_HOME_UI_JS_PARSERS_R150__ */
+
+/* __START_ROUTE_HOME_UI_JS_RENDER_R160__ */
+ /* __START_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
+  const HOME_JS_RENDER_CORE = `
+      function clearUI() {
+        summary.style.display = "none";
+        summary.innerHTML = "";
+
+        errorBox.style.display = "none";
+        errorBox.innerHTML = "";
+
+        cards.style.display = "none";
+        cards.innerHTML = "";
+
+        footerBox.style.display = "none";
+        footerBox.innerHTML = "";
+
+        raw.style.display = "none";
+        raw.textContent = "";
+
+        statusPill.textContent = "";
+        copyBtn.disabled = true;
+        copyBtn.dataset.copyText = "";
+
+        window.__swgSummary = null;
+      }
+
+      function renderError(title, details) {
+        const lines = [];
+        lines.push("<div style=\\"font-weight:700; color:#b00020; margin-bottom:6px;\\">" + safeHtml(title) + "</div>");
+
+        if (Array.isArray(details) && details.length) {
+          lines.push("<ul style=\\"margin:0; padding-left:18px;\\">");
+          for (const d of details) {
+            lines.push("<li style=\\"margin:4px 0;\\">" + safeHtml(String(d)) + "</li>");
+          }
+          lines.push("</ul>");
+        }
+
+        errorBox.innerHTML = lines.join("");
+        errorBox.style.display = "block";
+      }
+
+      function canonicalizeLabel(labelRaw) {
+        const raw = String(labelRaw || "").trim();
+        if (!raw) return null;
+
+        const key = raw.toLowerCase().replace(/\\s+/g, " ").trim();
+
+        const map = {
+          "warm-up": "Warm up",
+          "warm up": "Warm up",
+          "warmup": "Warm up",
+
+          "build": "Build",
+
+          "drill": "Drill",
+          "drills": "Drill",
+          "drill set": "Drill",
+
+          "kick": "Kick",
+          "kick set": "Kick",
+
+          "pull": "Pull",
+          "pull set": "Pull",
+
+          "main": "Main",
+          "main set": "Main",
+
+          "main 1": "Main 1",
+          "main1": "Main 1",
+          "main-1": "Main 1",
+
+          "main 2": "Main 2",
+          "main2": "Main 2",
+          "main-2": "Main 2",
+
+          "sprint": "Sprints",
+          "sprints": "Sprints",
+
+          "cooldown": "Cool down",
+          "cool down": "Cool down",
+          "cool-down": "Cool down"
+        };
+
+        if (map[key]) return map[key];
+
+        const m = key.match(/^(.+?)\\s+set$/);
+        if (m && m[1]) {
+          const base = m[1].trim();
+          if (map[base]) return map[base];
+          return base.charAt(0).toUpperCase() + base.slice(1);
+        }
+
+        return raw;
+      }
+
+      function poolLenFromPayload(payload) {
+        if (payload.poolLength === "custom") {
+          const n = Number(payload.customPoolLength);
+          return Number.isFinite(n) && n > 0 ? n : null;
+        }
+        if (payload.poolLength === "25m") return 25;
+        if (payload.poolLength === "50m") return 50;
+        if (payload.poolLength === "25yd") return 25;
+        return null;
+      }
+
+      function extractFooterInfo(footerLines) {
+        const info = {
+          totalLengthsLine: null,
+          endsLine: null,
+          totalDistanceLine: null
+        };
+
+        if (!Array.isArray(footerLines)) return info;
+
+        for (const line of footerLines) {
+          const t = String(line || "").trim();
+          if (!t) continue;
+
+          if (t.startsWith("Total lengths:")) info.totalLengthsLine = t;
+          else if (t.startsWith("Ends at start end:")) info.endsLine = t;
+          else if (t.startsWith("Total distance:")) info.totalDistanceLine = t;
+        }
+
+        return info;
+      }
+
+      // Summary is captured for footer only.
+      function captureSummary(payload, workoutText) {
+        const units = unitShortFromPayload(payload);
+        const requested = Number(payload.distance);
+
+        let poolText = "";
+        if (payload.poolLength === "custom") {
+          const u = payload.poolLengthUnit === "yards" ? "yd" : "m";
+          poolText = String(payload.customPoolLength) + u + " custom";
+        } else {
+          poolText = String(payload.poolLength);
+        }
+
+        window.__swgSummary = { units, requested, poolText };
+      }
+
+      function renderFooterTotalsAndMeta(footerLines) {
+        const s = window.__swgSummary || { units: "", requested: null, poolText: "" };
+        const info = extractFooterInfo(footerLines);
+
+        const chips = [];
+
+        if (s.poolText) chips.push("Pool: " + s.poolText);
+
+        if (Number.isFinite(s.requested)) {
+          chips.push("Requested: " + String(s.requested) + String(s.units || ""));
+        }
+
+        // Total distance is the actual, so we keep this and drop the separate "Actual" chip.
+        if (info.totalDistanceLine) {
+          chips.push(info.totalDistanceLine.replace("Total distance:", "Total:").trim());
+        }
+
+        if (info.totalLengthsLine) chips.push(info.totalLengthsLine);
+
+        // Ends-at-start goes last, always.
+        if (info.endsLine) chips.push(info.endsLine);
+
+        // De-dupe, preserve order.
+        const seen = new Set();
+        const deduped = [];
+        for (const c of chips) {
+          const k = String(c);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          deduped.push(k);
+        }
+
+        if (!deduped.length) {
+          footerBox.style.display = "none";
+          footerBox.innerHTML = "";
+          return;
+        }
+
+        const f = [];
+        f.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">Total</div>");
+        f.push("<div style=\\"display:flex; flex-wrap:wrap; gap:10px;\\">");
+
+        for (const c of deduped) {
+          f.push("<div style=\\"padding:6px 10px; border:1px solid #eee; border-radius:999px; background:#fafafa;\\">" + safeHtml(c) + "</div>");
+        }
+
+        f.push("</div>");
+        footerBox.innerHTML = f.join("");
+        footerBox.style.display = "block";
+      }
+  `;
+  /* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
+/* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
+
+
+  /* __START_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
+  const HOME_JS_RENDER_CARDS = `
+      function renderCards(payload, workoutText) {
+        const { setLines, footerLines } = splitWorkout(workoutText);
+
+        if (!setLines.length) {
+          cards.style.display = "none";
+          return false;
+        }
+
+        // Group into sections:
+        // - "Label: body" starts a new section
+        // - unlabelled lines append to previous section
+        const sections = [];
+        for (const line of setLines) {
+          const parsed = parseSetLine(line);
+          const labelCanon = canonicalizeLabel(parsed.label);
+
+          if (labelCanon) {
+            sections.push({ label: labelCanon, bodies: [parsed.body] });
+          } else if (sections.length) {
+            sections[sections.length - 1].bodies.push(parsed.body);
+          } else {
+            sections.push({ label: null, bodies: [parsed.body] });
+          }
+        }
+
+        const workoutId = getWorkoutId(payload, workoutText);
+        const goalsMap = loadGoalsMap();
+        const goalsForWorkout = goalsMap[workoutId] || {};
+
+        const html = [];
+        html.push("<div style=\\"font-weight:700; margin-bottom:10px;\\">Your Workout</div>");
+        html.push("<div style=\\"display:flex; flex-direction:column; gap:10px;\\">");
+
+        let idx = 0;
+        for (const s of sections) {
+          idx += 1;
+
+          const label = s.label ? s.label : ("Set " + idx);
+          const body = s.bodies.filter(Boolean).join("\\n");
+
+          const goalKey = String(idx);
+          const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
+
+          html.push("<div style=\\"background:#fff; border:1px solid #e7e7e7; border-radius:12px; padding:12px;\\">");
+          html.push("<div style=\\"min-width:0;\\">");
+          html.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">" + safeHtml(label) + "</div>");
+          html.push("<div style=\\"white-space:pre-wrap; line-height:1.35; color:#111;\\">" + safeHtml(body) + "</div>");
+          html.push("</div>");
+
+          html.push("<div style=\\"margin-top:10px;\\">");
+          html.push("<label style=\\"display:block; font-size:12px; color:#555; margin-bottom:4px;\\">Goal (optional)</label>");
+          html.push("<input data-goal-input=\\"" + safeHtml(goalKey) + "\\" value=\\"" + safeHtml(existingGoal) + "\\" placeholder=\\"Short goal for this set\\" style=\\"width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ddd; border-radius:10px;\\" />");
+          html.push("</div>");
+
+          html.push("</div>");
+        }
+
+        html.push("</div>");
+
+        cards.innerHTML = html.join("");
+        cards.style.display = "block";
+
+        const inputs = cards.querySelectorAll("input[data-goal-input]");
+        for (const inp of inputs) {
+          inp.addEventListener("input", () => {
+            const key = inp.getAttribute("data-goal-input");
+            const next = inp.value;
+
+            const m = loadGoalsMap();
+            if (!m[workoutId]) m[workoutId] = {};
+            m[workoutId][key] = next;
+            saveGoalsMap(m);
+          });
+        }
+
+        // Footer goes AFTER sets.
+        renderFooterTotalsAndMeta(footerLines);
+
+        return true;
+      }
+
+      // Alias expected by the submit handler.
+      function renderSummary(payload, workoutText) {
+        captureSummary(payload, workoutText);
+      }
+  `;
+  /* __END_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
+
+  const HOME_JS_RENDER = HOME_JS_RENDER_CORE + HOME_JS_RENDER_CARDS;
+  /* __END_ROUTE_HOME_UI_JS_RENDER_R160__ */
+
+
+
+  /* __START_ROUTE_HOME_UI_JS_EVENTS_R170__ */
+  const HOME_JS_EVENTS = `
       function setActivePool(poolValue) {
         poolHidden.value = poolValue;
 
@@ -129,9 +578,10 @@ app.get("/", (req, res) => {
           const isActive = btn.getAttribute("data-pool") === poolValue;
           btn.style.fontWeight = isActive ? "700" : "400";
           btn.style.border = isActive ? "2px solid #000" : "1px solid #999";
-          btn.style.borderRadius = "8px";
+          btn.style.borderRadius = "10px";
           btn.style.padding = "6px 10px";
           btn.style.background = isActive ? "#eee" : "#fff";
+          btn.style.cursor = "pointer";
         }
       }
 
@@ -141,20 +591,38 @@ app.get("/", (req, res) => {
         setActivePool(btn.getAttribute("data-pool"));
       });
 
-      setActivePool("25m");
+      copyBtn.addEventListener("click", async () => {
+        const text = copyBtn.dataset.copyText || "";
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          statusPill.textContent = "Copied.";
+          setTimeout(() => {
+            if (statusPill.textContent === "Copied.") statusPill.textContent = "";
+          }, 1200);
+        } catch {
+          statusPill.textContent = "Copy failed.";
+          setTimeout(() => {
+            if (statusPill.textContent === "Copy failed.") statusPill.textContent = "";
+          }, 1200);
+        }
+      });
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        out.textContent = "Generating...";
+        clearUI();
+
+        statusPill.textContent = "Generating...";
 
         const fd = new FormData(form);
         const payload = Object.fromEntries(fd.entries());
 
-        // If custom pool, require custom length
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
           if (!payload.customPoolLength) {
-            out.textContent = "Error: enter a custom pool length.";
+            statusPill.textContent = "";
+            renderError("Error", ["Enter a custom pool length."]);
             return;
           }
           payload.customPoolLength = Number(payload.customPoolLength);
@@ -163,19 +631,94 @@ app.get("/", (req, res) => {
           payload.poolLengthUnit = "meters";
         }
 
-        const res = await fetch("/generate-workout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        try {
+          const res = await fetch("/generate-workout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-        const data = await res.json();
-        out.textContent = JSON.stringify(data, null, 2);
+          let data = null;
+          try {
+            data = await res.json();
+          } catch {
+            // non-JSON response
+          }
+
+          if (!res.ok) {
+            statusPill.textContent = "";
+            const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
+            const details = (data && Array.isArray(data.details)) ? data.details : [];
+            renderError("Request failed", [msg, ...details].filter(Boolean));
+            return;
+          }
+
+          if (!data || data.ok !== true) {
+            statusPill.textContent = "";
+            const msg = data && data.error ? data.error : "Unknown error.";
+            const details = data && Array.isArray(data.details) ? data.details : [];
+            renderError("Generation failed", [msg, ...details].filter(Boolean));
+            return;
+          }
+
+          statusPill.textContent = "";
+
+          const workoutText = String(data.workoutText || "").trim();
+          renderSummary(payload, workoutText);
+
+          if (!workoutText) {
+            renderError("No workout returned", ["workoutText was empty."]);
+            return;
+          }
+
+          const ok = renderCards(payload, workoutText);
+          if (!ok) {
+            raw.textContent = workoutText;
+            raw.style.display = "block";
+          }
+
+          copyBtn.disabled = false;
+          copyBtn.dataset.copyText = workoutText;
+        } catch (err) {
+          statusPill.textContent = "";
+          renderError("Network error", [String(err && err.message ? err.message : err)]);
+        }
       });
+  `;
+  /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */
+
+  /* __START_ROUTE_HOME_UI_JS_INIT_R180__ */
+  const HOME_JS_INIT = `
+      distanceSlider.addEventListener("input", () => setDistance(distanceSlider.value));
+      setDistance(1000);
+      setActivePool("25m");
+  `;
+  /* __END_ROUTE_HOME_UI_JS_INIT_R180__ */
+
+  /* __START_ROUTE_HOME_UI_JS_CLOSE_R190__ */
+  const HOME_JS_CLOSE = `
     </script>
-  `);
+  `;
+  /* __END_ROUTE_HOME_UI_JS_CLOSE_R190__ */
+
+  /* __START_ROUTE_HOME_UI_SEND_R200__ */
+  res.send(
+    HOME_HTML +
+    HOME_JS_OPEN +
+    HOME_JS_DOM +
+    HOME_JS_HELPERS +
+    HOME_JS_PARSERS +
+    HOME_JS_RENDER +
+    HOME_JS_EVENTS +
+    HOME_JS_INIT +
+    HOME_JS_CLOSE
+  );
+  /* __END_ROUTE_HOME_UI_SEND_R200__ */
 });
 /* __END_ROUTE_HOME_UI_R100__ */
+
+
+
 
 
 /* __START_ROUTE_GENERATE_WORKOUT_R200__ */

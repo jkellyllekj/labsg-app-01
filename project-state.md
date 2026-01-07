@@ -109,23 +109,42 @@ Secrets:
 - Pool input:
   - buttons: 25m / 50m / 25yd / Custom
   - custom length enabled only when Custom selected
-- API `/generate-workout` returns `workoutText` in JSON.
 
 Generation behaviour (v1):
-- **Standard pools (25m/50m/25yd):** uses OpenAI and returns plain-text sets (no “(lengths)”).
-- **Custom pools:** now **deterministic-only** (no OpenAI), therefore:
-  - instant response
-  - always pool-valid
-  - includes per-set “(N lengths)” + footer:
-    - Total lengths
-    - Ends at start end (even lengths)
-    - Requested vs actual (when rounded to nearest valid even-length total)
+- **Standard pools (25m / 50m / 25yd):**
+  - Uses OpenAI
+  - Returns plain-text workout sets
+  - No “(lengths)” annotations
+- **Custom pools:**
+  - Deterministic-only (no OpenAI)
+  - Instant response
+  - Always pool-valid
+  - Includes per-set “(N lengths)” where needed
+  - Includes footer metadata (total lengths, ends-at-start, total distance)
 
-Custom rounding rule:
-- If requested distance is not achievable exactly in the custom pool while ending on an even number of lengths,
-  we choose the nearest valid total (tie-break upward).
+UI rendering:
+- `workoutText` is parsed and rendered as **set cards**
+- Each set renders as:
+  - Section label (Warm up, Drill, Main, Kick, Cool down, etc.)
+  - Set body text
+  - Optional per-set goal input (stored locally in browser)
+- Labels are normalised (e.g. “Drill set” → “Drill”, “Warm-up” → “Warm up”)
+- Unlabelled lines are grouped under the previous labelled section
+
+Totals:
+- A **Total** section renders after all sets
+- Total displays:
+  - Total distance (meters or yards)
+  - Total lengths (when computable)
+  - Ends-at-start indicator (for custom pools)
+- Totals are derived from deterministic footer lines or computed from set text
+
+Known issue:
+- Total footer chips intermittently revert to an older layout due to stale or partially updated UI render blocks.
+  This requires verification of `ROUTE_HOME_UI_JS_RENDER_CORE_R161` and server restart discipline.
 
 <!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+
 
 
 ---
@@ -176,17 +195,22 @@ Remaining risks:
 
 ## Next single step
 
-Improve the UI so results feel “real” and visual (not just JSON):
+Stabilise the Total footer rendering:
 
-In `index.js` inside `ROUTE_HOME_UI_R100`:
-- Render `workoutText` as formatted output (not JSON dump)
-- Show a clear summary header (pool + requested distance + actual distance if present)
-- Show errors in a readable way (not raw JSON)
-- Keep the slider-only distance input (100-step)
+- Verify the **exact contents** of:
+  - `ROUTE_HOME_UI_JS_RENDER_CORE_R161`
+  - `ROUTE_HOME_UI_JS_RENDER_CARDS_R162`
+- Ensure the Total section shows **only totals**:
+  - Total distance (m or yd)
+  - Total lengths (when applicable)
+  - Ends-at-start indicator (last item)
+- Remove Pool / Requested from Total footer
+- Confirm Replit is serving the latest `index.js` after changes
 
-(Do not redesign the whole UI; just make results legible and demo-able.)
+Proceed via **one full-block replacement only**.
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
+
 
 
 <!-- __END_FILE_PROJECT_STATE_PS000__ -->

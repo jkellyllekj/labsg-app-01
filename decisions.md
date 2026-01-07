@@ -60,15 +60,18 @@ We are not building accounts, saving, season planning, multi-sport, watch integr
 We are building a **single-session generator** that is **pool-valid** and **coach-plausible**.
 
 ### 2026-01-06 — Custom pools are deterministic-only in v1
-To guarantee pool-valid maths and speed, **custom pool workouts are generated deterministically**:
-- Exact if possible (even lengths)
-- Otherwise nearest valid even-length total (tie-break upward)
-Custom outputs include:
-- Total lengths
-- Ends-at-start-end indicator
-- Requested vs actual (when rounded)
+To guarantee pool-valid maths and speed, **custom pool workouts are generated deterministically**.
+
+### 2026-01-07 — UI renders workouts as structured set cards
+Workout output is rendered as **set cards** in the UI, not raw text:
+- Each set has a label, body, and optional per-set goal
+- Labels are normalised and grouped
+- Totals render as a separate section at the end
+
+This structure is considered **v1-stable**.
 
 <!-- __END_DL_DECISIONS_DL100__ -->
+
 
 
 <!-- __END_FILE_DECISIONS_D000__ -->

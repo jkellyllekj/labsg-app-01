@@ -2123,7 +2123,7 @@ app.post("/generate-workout", (req, res) => {
 
 
 /* __START_SERVER_LISTEN_R900__ */
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log("Server running on port " + String(PORT));
 });
 /* __END_SERVER_LISTEN_R900__ */

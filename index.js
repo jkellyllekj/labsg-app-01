@@ -482,15 +482,14 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForKey(key) {
-        // Match your earlier palette style
         const k = String(key || "");
-        if (k === "warm") return "background:#e9f8ef; border:1px solid #bfe8cd;";
-        if (k === "build") return "background:#eaf2ff; border:1px solid #bcd3ff;";
-        if (k === "drill") return "background:#f1edff; border:1px solid #d2c9ff;";
-        if (k === "kick") return "background:#fff4d6; border:1px solid #ffe3a1;";
-        if (k === "pull") return "background:#fff4d6; border:1px solid #ffe3a1;";
-        if (k === "main") return "background:#ffe6e6; border:1px solid #ffbdbd;";
-        if (k === "cool") return "background:#e8fbff; border:1px solid #b9ecff;";
+        if (k === "warm") return "background:linear-gradient(to right, #22c55e 4px, #f0fdf4 4px); border:1px solid #bbf7d0; border-left:4px solid #22c55e;";
+        if (k === "build") return "background:linear-gradient(to right, #3b82f6 4px, #eff6ff 4px); border:1px solid #bfdbfe; border-left:4px solid #3b82f6;";
+        if (k === "drill") return "background:linear-gradient(to right, #8b5cf6 4px, #f5f3ff 4px); border:1px solid #ddd6fe; border-left:4px solid #8b5cf6;";
+        if (k === "kick") return "background:linear-gradient(to right, #f59e0b 4px, #fffbeb 4px); border:1px solid #fde68a; border-left:4px solid #f59e0b;";
+        if (k === "pull") return "background:linear-gradient(to right, #f97316 4px, #fff7ed 4px); border:1px solid #fed7aa; border-left:4px solid #f97316;";
+        if (k === "main") return "background:linear-gradient(to right, #ef4444 4px, #fef2f2 4px); border:1px solid #fecaca; border-left:4px solid #ef4444;";
+        if (k === "cool") return "background:linear-gradient(to right, #06b6d4 4px, #ecfeff 4px); border:1px solid #a5f3fc; border-left:4px solid #06b6d4;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 

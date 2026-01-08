@@ -49,7 +49,7 @@ app.get("/", (req, res) => {
       }
     </style>
     <h1 style="margin:0 0 6px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
-    <div style="margin:0 0 18px 0; color:#666; font-size:14px;">Create coach-quality swim workouts in seconds</div>
+    <div style="margin:0 0 18px 0; color:#666; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#888; text-decoration:underline;">[Viewport Lab]</a></div>
 
     <div style="max-width:920px;">
       <form id="genForm" style="padding:20px; border:1px solid #e0e0e0; border-radius:16px; background:linear-gradient(180deg, #fafbfc 0%, #f3f4f6 100%); box-shadow:0 4px 16px rgba(0,0,0,0.06);">
@@ -1142,6 +1142,235 @@ ${HOME_JS_CLOSE}
   /* __END_ROUTE_HOME_UI_SEND_R195__ */
 });
 /* __END_ROUTE_HOME_UI_R100__ */
+
+/* __START_ROUTE_VIEWPORT_LAB_R175__ */
+app.get("/viewport-lab", (req, res) => {
+  const VIEWPORT_LAB_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Swim Workout Generator - Viewport Lab</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f8f9fa; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p  { margin: 0 0 14px; opacity: .75; max-width: 980px; }
+    h2 { margin: 18px 0 10px; font-size: 13px; opacity: .85; font-weight: 650; }
+    a.back { font-size: 13px; color: #666; text-decoration: underline; }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      margin: 10px 0 16px;
+    }
+
+    .row-pair {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      margin: 10px 0 16px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .row-wide {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0 16px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .frame {
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      width: var(--w, 390px);
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .bar {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 8px 10px;
+      font-size: 12px;
+      opacity:.88;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      background: #fff;
+      gap: 10px;
+      user-select: none;
+      cursor: grab;
+    }
+    .bar:active { cursor: grabbing; }
+
+    .meta { display:flex; align-items:center; gap: 8px; min-width: 0; }
+    .name { font-weight: 750; letter-spacing: 0.1px; }
+
+    .tag {
+      padding: 2px 8px;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 999px;
+      font-size: 11px;
+      opacity: .75;
+      white-space: nowrap;
+    }
+
+    .controls { display:flex; align-items:center; gap: 8px; white-space: nowrap; opacity: .95; }
+    .controls input[type="range"] { width: 120px; }
+    .controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+
+    iframe {
+      width: 100%;
+      height: var(--h, 760px);
+      border: 0;
+      display: block;
+      background: #e5edf5;
+    }
+
+    .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
+  </style>
+</head>
+<body>
+  <a class="back" href="/">Back to Generator</a>
+  <h1>Viewport Lab</h1>
+  <p>Test the Swim Workout Generator across multiple screen sizes. Use sliders to adjust widths. Drag frames to reorder.</p>
+
+  <h2>Mobile (3)</h2>
+  <div class="row" data-row="mobile">
+    <div class="frame" draggable="true" data-demo style="--w: 320px; --h: 700px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Small phone</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="280" max="420" step="1" value="320" data-width />
+          <span class="num"><span data-wout>320</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 390px; --h: 700px;">
+      <div class="bar">
+        <div class="meta"><span class="name">iPhone 14/15</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="360" max="430" step="1" value="390" data-width />
+          <span class="num"><span data-wout>390</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 430px; --h: 700px;">
+      <div class="bar">
+        <div class="meta"><span class="name">iPhone Plus/Max</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="400" max="500" step="1" value="430" data-width />
+          <span class="num"><span data-wout>430</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+  </div>
+
+  <h2>Tablet (2)</h2>
+  <div class="row-pair" data-row="tablet">
+    <div class="frame" draggable="true" data-demo style="--w: 768px; --h: 800px;">
+      <div class="bar">
+        <div class="meta"><span class="name">iPad Mini</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="640" max="900" step="1" value="768" data-width />
+          <span class="num"><span data-wout>768</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 1024px; --h: 800px;">
+      <div class="bar">
+        <div class="meta"><span class="name">iPad Pro</span><span class="tag">landscape</span></div>
+        <div class="controls">
+          <input type="range" min="900" max="1200" step="1" value="1024" data-width />
+          <span class="num"><span data-wout>1024</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+  </div>
+
+  <h2>Desktop (1)</h2>
+  <div class="row-wide">
+    <div class="frame" data-demo style="--w: 1366px; --h: 800px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Laptop</span><span class="tag">1366px</span></div>
+        <div class="controls">
+          <input type="range" min="1200" max="1600" step="1" value="1366" data-width />
+          <span class="num"><span data-wout>1366</span>px</span>
+        </div>
+      </div>
+      <iframe src="/"></iframe>
+    </div>
+  </div>
+
+  <script>
+    for (const frame of document.querySelectorAll('[data-demo]')) {
+      const range = frame.querySelector('[data-width]');
+      const wout = frame.querySelector('[data-wout]');
+      if (!range || !wout) continue;
+
+      const apply = (v) => {
+        frame.style.setProperty('--w', v + 'px');
+        wout.textContent = v;
+      };
+
+      apply(range.value);
+      range.addEventListener('input', (e) => apply(e.target.value));
+    }
+
+    let dragging = null;
+
+    document.addEventListener('dragstart', (e) => {
+      const frame = e.target.closest('.frame');
+      const row = e.target.closest('.row, .row-pair');
+      if (!frame || !row) return;
+      dragging = frame;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'drag');
+    });
+
+    document.addEventListener('dragover', (e) => {
+      const row = e.target.closest('.row, .row-pair');
+      if (!row || !dragging) return;
+      if (dragging.parentElement !== row) return;
+      e.preventDefault();
+
+      const over = e.target.closest('.frame');
+      if (!over || over === dragging) return;
+
+      const r = over.getBoundingClientRect();
+      const before = (e.clientX - r.left) < (r.width / 2);
+      row.insertBefore(dragging, before ? over : over.nextSibling);
+    });
+
+    document.addEventListener('dragend', () => {
+      dragging = null;
+    });
+  </script>
+</body>
+</html>`;
+
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.send(VIEWPORT_LAB_HTML);
+});
+/* __END_ROUTE_VIEWPORT_LAB_R175__ */
 
 /* __START_ROUTE_REROLL_SET_R180__ */
 app.post("/reroll-set", (req, res) => {

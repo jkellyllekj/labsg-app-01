@@ -28,24 +28,31 @@ app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_HTML_R110__ */
   const HOME_HTML = `
     <style>
-      @keyframes dolphin-swim {
-        0%, 100% { transform: translateX(0) rotate(0deg); }
-        25% { transform: translateX(4px) rotate(-5deg); }
-        50% { transform: translateX(8px) rotate(0deg); }
-        75% { transform: translateX(4px) rotate(5deg); }
+      @keyframes dolphin-jump {
+        0% { transform: translateY(0) rotate(0deg); }
+        20% { transform: translateY(-12px) rotate(-15deg); }
+        40% { transform: translateY(-20px) rotate(-10deg); }
+        60% { transform: translateY(-12px) rotate(5deg); }
+        80% { transform: translateY(-4px) rotate(0deg); }
+        100% { transform: translateY(0) rotate(0deg); }
       }
-      .dolphin-swim {
+      .dolphin-jump {
         display: inline-block;
-        animation: dolphin-swim 0.8s ease-in-out infinite;
+        animation: dolphin-jump 0.7s ease-in-out infinite;
+      }
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .workout-fade-in {
+        animation: fade-in-up 0.3s ease-out forwards;
       }
     </style>
-    <h1 style="margin:0 0 6px 0;">Swim Workout Generator v1</h1>
-    <div style="margin:0 0 18px 0; color:#333;">Status: running</div>
+    <h1 style="margin:0 0 6px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
+    <div style="margin:0 0 18px 0; color:#666; font-size:14px;">Create coach-quality swim workouts in seconds</div>
 
     <div style="max-width:920px;">
-      <h2 style="margin:0 0 10px 0;">Generate</h2>
-
-      <form id="genForm" style="padding:14px; border:1px solid #e2e2e2; border-radius:12px; background:#fff;">
+      <form id="genForm" style="padding:20px; border:1px solid #e0e0e0; border-radius:16px; background:linear-gradient(180deg, #fafbfc 0%, #f3f4f6 100%); box-shadow:0 4px 16px rgba(0,0,0,0.06);">
         <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start;">
           <div style="min-width:320px;">
             <h3 style="margin:0 0 10px 0;">Distance</h3>
@@ -1011,7 +1018,8 @@ app.get("/", (req, res) => {
         e.preventDefault();
         clearUI();
 
-        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;"><span class="dolphin-swim">🐬</span> Generating...</span>';
+        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;"><span class="dolphin-jump">🐬</span> Generating...</span>';
+        const loaderStartTime = Date.now();
 
         const payload = formToPayload();
 
@@ -1057,20 +1065,38 @@ app.get("/", (req, res) => {
             return;
           }
 
-          statusPill.innerHTML = "";
-
           const workoutText = String(data.workoutText || "").trim();
 
           if (!workoutText) {
+            statusPill.innerHTML = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
+
+          // Ensure loader shows for at least 1 second
+          const elapsed = Date.now() - loaderStartTime;
+          const minDelay = Math.max(0, 1000 - elapsed);
+
+          await new Promise(r => setTimeout(r, minDelay));
+          statusPill.innerHTML = "";
+
+          // Hide cards initially for fade-in effect
+          cards.style.opacity = "0";
+          cards.style.transform = "translateY(12px)";
+          cards.style.transition = "none";
 
           const ok = renderAll(payload, workoutText);
           if (!ok) {
             raw.textContent = workoutText;
             raw.style.display = "block";
           }
+
+          // Trigger fade-in animation
+          requestAnimationFrame(() => {
+            cards.style.transition = "opacity 0.3s ease-out, transform 0.3s ease-out";
+            cards.style.opacity = "1";
+            cards.style.transform = "translateY(0)";
+          });
 
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);

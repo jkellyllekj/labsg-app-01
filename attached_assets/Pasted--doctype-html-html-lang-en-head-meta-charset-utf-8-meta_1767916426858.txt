@@ -1,0 +1,255 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Capisco — Viewport Lab</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p  { margin: 0 0 14px; opacity: .75; max-width: 980px; }
+    h2 { margin: 18px 0 10px; font-size: 13px; opacity: .85; font-weight: 650; }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      margin: 10px 0 16px;
+    }
+
+    /* Pair row: keep the two together; scroll if needed */
+    .row-pair {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      margin: 10px 0 16px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Single-wide rows (1920, 4K) */
+    .row-wide {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0 16px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .frame {
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      width: var(--w, 390px);
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .bar {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 8px 10px;
+      font-size: 12px;
+      opacity:.88;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      background: #fff;
+      gap: 10px;
+      user-select: none;
+      cursor: grab;
+    }
+    .bar:active { cursor: grabbing; }
+
+    .meta { display:flex; align-items:center; gap: 8px; min-width: 0; }
+    .name { font-weight: 750; letter-spacing: 0.1px; }
+
+    .tag {
+      padding: 2px 8px;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 999px;
+      font-size: 11px;
+      opacity: .75;
+      white-space: nowrap;
+    }
+
+    .controls { display:flex; align-items:center; gap: 8px; white-space: nowrap; opacity: .95; }
+    .controls input[type="range"] { width: 120px; }
+    .controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+
+    iframe {
+      width: 100%;
+      height: var(--h, 760px);
+      border: 0;
+      display: block;
+      background: #e5edf5;
+    }
+
+    .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
+  </style>
+</head>
+<body>
+  <h1>Capisco — Viewport Lab</h1>
+  <p>Centered rows + draggable frames + width sliders. Use this to tune breakpoints without endless resizing/screenshots.</p>
+
+  <!-- ROW 1: small/common (4) -->
+  <h2>Small / common (4)</h2>
+  <div class="row" data-row="small">
+    <div class="frame" draggable="true" data-demo style="--w: 320px; --h: 740px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Small phone</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="280" max="520" step="1" value="320" data-width />
+          <span class="num"><span data-wout>320</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 390px; --h: 740px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Modern phone</span><span class="tag">portrait</span></div>
+        <div class="controls">
+          <input type="range" min="320" max="620" step="1" value="390" data-width />
+          <span class="num"><span data-wout>390</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 844px; --h: 520px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Phone</span><span class="tag">landscape</span></div>
+        <div class="controls">
+          <input type="range" min="700" max="980" step="1" value="844" data-width />
+          <span class="num"><span data-wout>844</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 768px; --h: 900px;">
+      <div class="bar">
+        <div class="meta"><span class="name">Tablet</span><span class="tag">portrait-ish</span></div>
+        <div class="controls">
+          <input type="range" min="640" max="1024" step="1" value="768" data-width />
+          <span class="num"><span data-wout>768</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+  </div>
+  <div class="hint">Drag a frame by its header to reorder within the row. Use the slider to “nudge” widths.</div>
+
+  <!-- ROW 2: 1024 + 1366 -->
+  <h2>Desktop pair (2)</h2>
+  <div class="row-pair" data-row="pair">
+    <div class="frame" draggable="true" data-demo style="--w: 1024px; --h: 900px;">
+      <div class="bar">
+        <div class="meta"><span class="name">1024</span><span class="tag">small laptop</span></div>
+        <div class="controls">
+          <input type="range" min="900" max="1366" step="1" value="1024" data-width />
+          <span class="num"><span data-wout>1024</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+
+    <div class="frame" draggable="true" data-demo style="--w: 1366px; --h: 980px;">
+      <div class="bar">
+        <div class="meta"><span class="name">1366</span><span class="tag">laptop</span></div>
+        <div class="controls">
+          <input type="range" min="1200" max="1800" step="1" value="1366" data-width />
+          <span class="num"><span data-wout>1366</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+  </div>
+  <div class="hint">This row stays together; it scrolls horizontally if your scaling makes it tight.</div>
+
+  <!-- ROW 3: 1920 alone -->
+  <h2>Desktop (1)</h2>
+  <div class="row-wide">
+    <div class="frame" data-demo style="--w: 1920px; --h: 980px;">
+      <div class="bar">
+        <div class="meta"><span class="name">1920</span><span class="tag">desktop</span></div>
+        <div class="controls">
+          <input type="range" min="1600" max="2560" step="1" value="1920" data-width />
+          <span class="num"><span data-wout>1920</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+  </div>
+
+  <!-- ROW 4: 4K alone -->
+  <h2>4K (1)</h2>
+  <div class="row-wide">
+    <div class="frame" data-demo style="--w: 3840px; --h: 980px;">
+      <div class="bar">
+        <div class="meta"><span class="name">3840</span><span class="tag">4K</span></div>
+        <div class="controls">
+          <input type="range" min="2560" max="3840" step="1" value="3840" data-width />
+          <span class="num"><span data-wout>3840</span>px</span>
+        </div>
+      </div>
+      <iframe src="./demo.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Width sliders
+    for (const frame of document.querySelectorAll('[data-demo]')) {
+      const range = frame.querySelector('[data-width]');
+      const wout = frame.querySelector('[data-wout]');
+      if (!range || !wout) continue;
+
+      const apply = (v) => {
+        frame.style.setProperty('--w', v + 'px');
+        wout.textContent = v;
+      };
+
+      apply(range.value);
+      range.addEventListener('input', (e) => apply(e.target.value));
+    }
+
+    // Drag reorder within .row or .row-pair only (no cross-row moves)
+    let dragging = null;
+
+    document.addEventListener('dragstart', (e) => {
+      const frame = e.target.closest('.frame');
+      const row = e.target.closest('.row, .row-pair');
+      if (!frame || !row) return;
+      dragging = frame;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'drag');
+    });
+
+    document.addEventListener('dragover', (e) => {
+      const row = e.target.closest('.row, .row-pair');
+      if (!row || !dragging) return;
+      if (dragging.parentElement !== row) return;
+      e.preventDefault();
+
+      const over = e.target.closest('.frame');
+      if (!over || over === dragging) return;
+
+      const r = over.getBoundingClientRect();
+      const before = (e.clientX - r.left) < (r.width / 2);
+      row.insertBefore(dragging, before ? over : over.nextSibling);
+    });
+
+    document.addEventListener('dragend', () => {
+      dragging = null;
+    });
+  </script>
+</body>
+</html>

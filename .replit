@@ -40,10 +40,10 @@ args = "Swim Workout Generator"
 name = "Swim Workout Generator"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node index.js"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"

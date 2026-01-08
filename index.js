@@ -469,6 +469,48 @@ app.get("/", (req, res) => {
         return raw;
       }
 
+      function getEffortLevel(label, body) {
+        const text = (String(label || "") + " " + String(body || "")).toLowerCase();
+        
+        // Warm-up and cool-down are always easy (green)
+        if (text.includes("warm") || text.includes("cool")) return "easy";
+        
+        // Sprint keywords (red)
+        const sprintWords = ["sprint", "all out", "max effort", "race pace", "100%"];
+        for (const w of sprintWords) if (text.includes(w)) return "sprint";
+        
+        // Hard keywords (orange)
+        const hardWords = ["fast", "strong", "hard", "best average", "race", "threshold"];
+        for (const w of hardWords) if (text.includes(w)) return "hard";
+        
+        // Moderate-high keywords (yellow)
+        const modHighWords = ["descend", "build", "negative split", "push"];
+        for (const w of modHighWords) if (text.includes(w)) return "mod-high";
+        
+        // Moderate keywords (blue)
+        const modWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
+        for (const w of modWords) if (text.includes(w)) return "moderate";
+        
+        // Easy keywords (green)
+        const easyWords = ["easy", "relaxed", "recovery", "loosen"];
+        for (const w of easyWords) if (text.includes(w)) return "easy";
+        
+        // Default: moderate for technique sets, hard for main
+        if (text.includes("main")) return "hard";
+        return "moderate";
+      }
+
+      function colorStyleForEffort(effort) {
+        // Effort-based colors: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
+        if (effort === "easy") return "background:linear-gradient(to right, #22c55e 4px, #f0fdf4 4px); border:1px solid #bbf7d0; border-left:4px solid #22c55e;";
+        if (effort === "moderate") return "background:linear-gradient(to right, #3b82f6 4px, #eff6ff 4px); border:1px solid #bfdbfe; border-left:4px solid #3b82f6;";
+        if (effort === "mod-high") return "background:linear-gradient(to right, #eab308 4px, #fefce8 4px); border:1px solid #fde047; border-left:4px solid #eab308;";
+        if (effort === "hard") return "background:linear-gradient(to right, #f97316 4px, #fff7ed 4px); border:1px solid #fed7aa; border-left:4px solid #f97316;";
+        if (effort === "sprint") return "background:linear-gradient(to right, #ef4444 4px, #fef2f2 4px); border:1px solid #fecaca; border-left:4px solid #ef4444;";
+        return "background:#fff; border:1px solid #e7e7e7;";
+      }
+
+      // Keep old functions for compatibility but mark deprecated
       function labelColorKey(label) {
         const k = String(label || "").toLowerCase();
         if (k.includes("warm")) return "warm";
@@ -705,8 +747,8 @@ app.get("/", (req, res) => {
           const goalKey = String(idx);
           const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
 
-          const colorKey = labelColorKey(label);
-          const boxStyle = colorStyleForKey(colorKey);
+          const effortLevel = getEffortLevel(label, body);
+          const boxStyle = colorStyleForEffort(effortLevel);
 
           html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px;">');
 
@@ -823,6 +865,15 @@ app.get("/", (req, res) => {
               }
 
               bodyEl.textContent = nextBody;
+
+              // Update card color based on new effort level
+              const cardContainer = bodyEl.closest('[style*="border-radius:12px"]');
+              if (cardContainer) {
+                const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
+                const newEffort = getEffortLevel(label, nextBody);
+                const newStyle = colorStyleForEffort(newEffort);
+                cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;";
+              }
             } catch (e) {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
             } finally {
@@ -1249,7 +1300,7 @@ app.post("/reroll-set", (req, res) => {
           const d200 = snapToPoolMultiple(200, base);
           if (d200 > 0) add(1, d200, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
-          if (d50 > 0) add(4, d50, stroke + " build easy", restSecondsFor("build", d50, opts));
+          if (d50 > 0) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
           const d25 = snapToPoolMultiple(25, base);
           if (d25 > 0) add(4, d25, "choice drill", restSecondsFor("drill", d25, opts));
         },
@@ -1318,7 +1369,7 @@ app.post("/reroll-set", (req, res) => {
       const finNote = hasFins ? " with fins" : "";
 
       const kickDescriptions = [
-        "kick steady", "kick choice", "kick fast", "kick build", "kick strong", "kick easy"
+        "kick steady", "kick choice", "kick fast", "kick build", "kick strong", "kick relaxed"
       ];
       const desc = kickDescriptions[seed % kickDescriptions.length] + finNote;
 
@@ -1347,7 +1398,7 @@ app.post("/reroll-set", (req, res) => {
       const padNote = hasPaddles ? " with paddles" : "";
 
       const pullDescriptions = [
-        "pull steady", "pull strong", "pull build", "pull descend", "pull smooth", "pull easy"
+        "pull steady", "pull strong", "pull build", "pull descend", "pull smooth", "pull relaxed"
       ];
       const desc = pullDescriptions[seed % pullDescriptions.length] + padNote;
 
@@ -1417,9 +1468,10 @@ app.post("/reroll-set", (req, res) => {
 
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "easy drill" :
-        k2.includes("kick") ? "easy kick" :
-        k2.includes("pull") ? "easy pull" :
+        k2.includes("drill") ? "drill swim" :
+        k2.includes("kick") ? "kick relaxed" :
+        k2.includes("pull") ? "pull relaxed" :
+        k2.includes("build") ? (stroke + " build") :
         (stroke + " easy");
 
       while (remaining >= (d200 || base) && d200 > 0 && remaining % d200 === 0 && remaining >= d200) {
@@ -1805,9 +1857,10 @@ app.post("/generate-workout", (req, res) => {
 
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "easy drill" :
-        k2.includes("kick") ? "easy kick" :
-        k2.includes("pull") ? "easy pull" :
+        k2.includes("drill") ? "drill swim" :
+        k2.includes("kick") ? "kick relaxed" :
+        k2.includes("pull") ? "pull relaxed" :
+        k2.includes("build") ? (stroke + " build") :
         (stroke + " easy");
 
       while (remainingObj.value >= (d200 || base) && d200 > 0 && remainingObj.value % d200 === 0 && remainingObj.value >= d200) {
@@ -1872,7 +1925,7 @@ app.post("/generate-workout", (req, res) => {
 
       if (choice === 0) {
         if (d200 > 0) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
-        if (d50 > 0) add(lines, remainingObj, 4, d50, stroke + " build easy", restSecondsFor("build", d50));
+        if (d50 > 0) add(lines, remainingObj, 4, d50, stroke + " build", restSecondsFor("build", d50));
         if (d25 > 0) add(lines, remainingObj, 4, d25, "choice drill", restSecondsFor("drill", d25));
       } else if (choice === 1) {
         const d300 = snapToPoolMultiple(300, base);

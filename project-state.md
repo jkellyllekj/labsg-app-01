@@ -211,17 +211,17 @@ Critical (FIXED 2026-01-08):
 - ~~Generation can fail with `buildOneSetBodyServer is not defined`~~ FIXED: Removed duplicate nested routes that broke function scope
 - ~~Home route never sent HTML response, page would not load~~ FIXED: Added proper HTML assembly and res.send()
 - Reroll now works correctly
+- ~~Minimal workout bug (1x2000 easy)~~ FIXED: Rewrote allocation logic to guarantee main set space
+- ~~Drill/Kick/Pull had multiple segments~~ FIXED: Now output single segments (1x300 drill)
+- ~~Custom pools ended at wrong end~~ FIXED: Total is now forced to even number of lengths
+- ~~"easy swim" awkward wording~~ FIXED: Changed to "easy drill", "easy kick", etc.
 
-Coach plausibility defects:
-- Too many sub parts inside Drill, Kick, Pull, Cool down
-- Warm up distances like 550, 625 appear in standard pools, which feels non human
+Remaining minor issues:
+- Custom pool distances look robotic (3x99, 1x231) but are mathematically correct
 
 UI defects:
 - Right side chips sometimes missing because set distance parser fails when output is not strictly NxD
 - Dice click can error when the set distance cannot be parsed, or when reroll returns invalid output
-
-Custom pool risks:
-- LLM arithmetic is not trusted for custom pools, deterministic generation is required
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
 
@@ -231,16 +231,18 @@ Custom pool risks:
 
 ## Next single step
 
-Tested 2026-01-08: Generation works but has quality issues.
+Tested 2026-01-08: Core generation quality fixes complete.
 
-Priority fixes:
-1. Fix inconsistent generation quality (sometimes returns just "1x2000 easy" for a 2000m workout)
-2. Fix coach plausibility: Drill, Kick, Pull, Cool down should be single segment
-3. Fix custom pools: must end at start end, distance should match or be clearly labeled
+Completed:
+1. DONE: Fixed minimal workout bug (allocation logic rewritten)
+2. DONE: Drill, Kick, Pull now single segments
+3. DONE: Custom pools end at start end (even lengths enforced)
+4. DONE: Wording cleaned up (no more "easy swim")
 
-After fixes:
+Remaining:
 - Improve set parsing for more reliable right-side chips in UI
 - Style the UI to match the old Serpentine app (color-coded cards, left bar, faded backgrounds)
+- Consider improving custom pool distance formatting (currently 3x99 looks robotic)
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 

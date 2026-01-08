@@ -1370,9 +1370,9 @@ app.post("/reroll-set", (req, res) => {
 
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "easy swim" :
-        k2.includes("kick") ? "easy swim" :
-        k2.includes("pull") ? "easy swim" :
+        k2.includes("drill") ? "easy drill" :
+        k2.includes("kick") ? "easy kick" :
+        k2.includes("pull") ? "easy pull" :
         (stroke + " easy");
 
       while (remaining >= (d200 || base) && d200 > 0 && remaining % d200 === 0 && remaining >= d200) {
@@ -1758,9 +1758,9 @@ app.post("/generate-workout", (req, res) => {
 
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "easy swim" :
-        k2.includes("kick") ? "easy swim" :
-        k2.includes("pull") ? "easy swim" :
+        k2.includes("drill") ? "easy drill" :
+        k2.includes("kick") ? "easy kick" :
+        k2.includes("pull") ? "easy pull" :
         (stroke + " easy");
 
       while (remainingObj.value >= (d200 || base) && d200 > 0 && remainingObj.value % d200 === 0 && remainingObj.value >= d200) {
@@ -1854,37 +1854,22 @@ app.post("/generate-workout", (req, res) => {
     }
 
     if (k.includes("drill")) {
-      const d50 = snapToPoolMultiple(50, base);
-      const d25 = snapToPoolMultiple(25, base);
-
-      if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, "drill swim technique", restSecondsFor("drill", d50));
-      if (d25 > 0 && remainingObj.value >= d25 * 12) add(lines, remainingObj, 12, d25, "choice drill", restSecondsFor("drill", d25));
-
-      if (!fillEasy(lines, remainingObj, "drill", stroke)) return null;
+      const dist = remainingObj.value;
+      add(lines, remainingObj, 1, dist, "choice drill focus technique", 0);
       return lines.join("\n");
     }
 
     if (k.includes("kick")) {
-      const d50 = snapToPoolMultiple(50, base);
-      const d100 = snapToPoolMultiple(100, base);
+      const dist = remainingObj.value;
       const finNote = hasFins ? " with fins" : "";
-
-      if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, "kick steady" + finNote, restSecondsFor("kick", d50));
-      if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, "kick strong" + finNote, restSecondsFor("kick", d100));
-
-      if (!fillEasy(lines, remainingObj, "kick", stroke)) return null;
+      add(lines, remainingObj, 1, dist, "kick choice" + finNote, 0);
       return lines.join("\n");
     }
 
     if (k.includes("pull")) {
-      const d100 = snapToPoolMultiple(100, base);
-      const d200 = snapToPoolMultiple(200, base);
+      const dist = remainingObj.value;
       const padNote = hasPaddles ? " with paddles" : "";
-
-      if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, "pull steady" + padNote, restSecondsFor("pull", d200));
-      if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, "pull strong" + padNote, restSecondsFor("pull", d100));
-
-      if (!fillEasy(lines, remainingObj, "pull", stroke)) return null;
+      add(lines, remainingObj, 1, dist, "pull steady" + padNote, 0);
       return lines.join("\n");
     }
 
@@ -1932,7 +1917,10 @@ app.post("/generate-workout", (req, res) => {
 
   function buildWorkout({ targetTotal, poolLen, unitsShort, poolLabel, thresholdPace, opts, seed }) {
     const base = poolLen;
-    const total = snapToPoolMultiple(targetTotal, base);
+    const rawTotal = snapToPoolMultiple(targetTotal, base);
+    const lengths = Math.round(rawTotal / base);
+    const evenLengths = lengths % 2 === 0 ? lengths : lengths + 1;
+    const total = evenLengths * base;
 
     const paceSec = parsePaceToSecondsPer100(thresholdPace);
 
@@ -1942,55 +1930,55 @@ app.post("/generate-workout", (req, res) => {
     const wantBuild = total >= snapToPoolMultiple(1200, base);
     const wantDrill = true;
 
-    const warmTarget = pickFromTypical(total, base, [400, 600, 800, 1000], 0.18);
-    const coolTarget = pickFromTypical(total, base, [200, 300, 400, 500], 0.08);
+    const minMainPct = 0.30;
+    const minMain = snapToPoolMultiple(Math.round(total * minMainPct), base);
 
-    let remaining = total;
+    const warmTarget = snapToPoolMultiple(Math.round(total * 0.15), base);
+    const coolTarget = snapToPoolMultiple(Math.round(total * 0.08), base);
+
+    const availableForAncillary = total - minMain - coolTarget;
 
     const sets = [];
 
-    const warm = snapToPoolMultiple(warmTarget, base);
-    sets.push({ label: "Warm up", dist: warm });
-    remaining -= warm;
+    const warm = Math.min(warmTarget, snapToPoolMultiple(Math.round(availableForAncillary * 0.35), base));
+    sets.push({ label: "Warm up", dist: Math.max(warm, base * 4) });
+    let usedAncillary = sets[0].dist;
 
-    if (wantBuild) {
-      const build = snapToPoolMultiple(pickFromTypical(total, base, [200, 300, 400, 500], 0.08), base);
-      sets.push({ label: "Build", dist: Math.min(build, Math.max(base * 8, remaining - coolTarget)) });
-      remaining -= sets[sets.length - 1].dist;
+    if (wantBuild && usedAncillary + base * 4 <= availableForAncillary) {
+      const build = snapToPoolMultiple(Math.round(total * 0.08), base);
+      const d = Math.min(build, availableForAncillary - usedAncillary);
+      if (d >= base * 4) {
+        sets.push({ label: "Build", dist: d });
+        usedAncillary += d;
+      }
     }
 
-    if (wantDrill) {
-      const drill = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
-      const d = Math.min(drill, Math.max(base * 8, remaining - coolTarget));
-      sets.push({ label: "Drill", dist: d });
-      remaining -= d;
+    if (wantDrill && usedAncillary + base * 4 <= availableForAncillary) {
+      const drill = snapToPoolMultiple(Math.round(total * 0.12), base);
+      const d = Math.min(drill, availableForAncillary - usedAncillary);
+      if (d >= base * 4) {
+        sets.push({ label: "Drill", dist: d });
+        usedAncillary += d;
+      }
     }
 
-    if (includeKick) {
-      const kick = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
-      const d = Math.min(kick, Math.max(base * 8, remaining - coolTarget));
-      sets.push({ label: "Kick", dist: d });
-      remaining -= d;
-    } else if (includePull) {
-      const pull = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
-      const d = Math.min(pull, Math.max(base * 8, remaining - coolTarget));
-      sets.push({ label: "Pull", dist: d });
-      remaining -= d;
+    if (includeKick && usedAncillary + base * 4 <= availableForAncillary) {
+      const kick = snapToPoolMultiple(Math.round(total * 0.12), base);
+      const d = Math.min(kick, availableForAncillary - usedAncillary);
+      if (d >= base * 4) {
+        sets.push({ label: "Kick", dist: d });
+        usedAncillary += d;
+      }
+    } else if (includePull && usedAncillary + base * 4 <= availableForAncillary) {
+      const pull = snapToPoolMultiple(Math.round(total * 0.12), base);
+      const d = Math.min(pull, availableForAncillary - usedAncillary);
+      if (d >= base * 4) {
+        sets.push({ label: "Pull", dist: d });
+        usedAncillary += d;
+      }
     }
 
-    const cool = snapToPoolMultiple(coolTarget, base);
-    remaining -= cool;
-
-    const mainTotal = remaining;
-
-    if (mainTotal <= 0) {
-      return {
-        text:
-          "Warm up: 1x" + String(total) + " easy\n\n" +
-          "Requested: " + String(total) + String(unitsShort) + "\n" +
-          "Total distance: " + String(total) + String(unitsShort) + " (pool: " + String(poolLabel) + ")"
-      };
-    }
+    const mainTotal = total - usedAncillary - coolTarget;
 
     if (mainTotal >= snapToPoolMultiple(2400, base)) {
       const m1 = snapToPoolMultiple(Math.round(mainTotal * 0.55), base);
@@ -2001,7 +1989,7 @@ app.post("/generate-workout", (req, res) => {
       sets.push({ label: "Main", dist: snapToPoolMultiple(mainTotal, base) });
     }
 
-    sets.push({ label: "Cool down", dist: cool });
+    sets.push({ label: "Cool down", dist: coolTarget });
 
     const lines = [];
 

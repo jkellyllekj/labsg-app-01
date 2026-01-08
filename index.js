@@ -884,6 +884,10 @@ app.get("/", (req, res) => {
         setActivePool(btn.getAttribute("data-pool"));
       });
 
+      distanceSlider.addEventListener("input", (e) => {
+        setDistance(e.target.value);
+      });
+
       toggleAdvanced.addEventListener("click", () => {
         const open = advancedWrap.style.display !== "none";
         if (open) {
@@ -1854,22 +1858,89 @@ app.post("/generate-workout", (req, res) => {
     }
 
     if (k.includes("drill")) {
-      const dist = remainingObj.value;
-      add(lines, remainingObj, 1, dist, "choice drill focus technique", 0);
+      const d50 = snapToPoolMultiple(50, base);
+      const d25 = snapToPoolMultiple(25, base);
+      const remaining = remainingObj.value;
+
+      // Calculate how many reps of each distance fit
+      if (d50 > 0) {
+        const maxReps = Math.floor(remaining / d50);
+        if (maxReps >= 6) {
+          add(lines, remainingObj, 6, d50, "25 drill 25 swim", restSecondsFor("drill", d50));
+        } else if (maxReps >= 4) {
+          add(lines, remainingObj, 4, d50, "choice drill", restSecondsFor("drill", d50));
+        } else if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d50, "drill focus technique", restSecondsFor("drill", d50));
+        }
+      }
+      // Fill remaining with 25s if needed
+      if (d25 > 0 && remainingObj.value >= d25 * 4) {
+        const reps25 = Math.min(8, Math.floor(remainingObj.value / d25));
+        if (reps25 >= 4) {
+          add(lines, remainingObj, reps25, d25, "catchup drill", restSecondsFor("drill", d25));
+        }
+      }
+
+      if (!fillEasy(lines, remainingObj, "drill", stroke)) return null;
       return lines.join("\n");
     }
 
     if (k.includes("kick")) {
-      const dist = remainingObj.value;
+      const d100 = snapToPoolMultiple(100, base);
+      const d50 = snapToPoolMultiple(50, base);
+      const d75 = snapToPoolMultiple(75, base);
       const finNote = hasFins ? " with fins" : "";
-      add(lines, remainingObj, 1, dist, "kick choice" + finNote, 0);
+      const remaining = remainingObj.value;
+
+      // Prefer 100s, then 75s, then 50s - always break into at least 2 reps
+      if (d100 > 0) {
+        const maxReps = Math.floor(remaining / d100);
+        if (maxReps >= 4) {
+          add(lines, remainingObj, 4, d100, "kick steady" + finNote, restSecondsFor("kick", d100));
+        } else if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d100, "kick choice" + finNote, restSecondsFor("kick", d100));
+        }
+      }
+      if (d75 > 0 && remainingObj.value >= d75 * 2) {
+        const maxReps = Math.min(4, Math.floor(remainingObj.value / d75));
+        if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d75, "kick build" + finNote, restSecondsFor("kick", d75));
+        }
+      }
+      if (d50 > 0 && remainingObj.value >= d50 * 2) {
+        const maxReps = Math.min(6, Math.floor(remainingObj.value / d50));
+        if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d50, "kick fast" + finNote, restSecondsFor("kick", d50));
+        }
+      }
+
+      if (!fillEasy(lines, remainingObj, "kick", stroke)) return null;
       return lines.join("\n");
     }
 
     if (k.includes("pull")) {
-      const dist = remainingObj.value;
+      const d100 = snapToPoolMultiple(100, base);
+      const d50 = snapToPoolMultiple(50, base);
       const padNote = hasPaddles ? " with paddles" : "";
-      add(lines, remainingObj, 1, dist, "pull steady" + padNote, 0);
+      const remaining = remainingObj.value;
+
+      // Prefer 100s, then 50s - always break into at least 2 reps
+      if (d100 > 0) {
+        const maxReps = Math.floor(remaining / d100);
+        if (maxReps >= 4) {
+          add(lines, remainingObj, 4, d100, "pull steady" + padNote, restSecondsFor("pull", d100));
+        } else if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d100, "pull strong" + padNote, restSecondsFor("pull", d100));
+        }
+      }
+      if (d50 > 0 && remainingObj.value >= d50 * 2) {
+        const maxReps = Math.min(6, Math.floor(remainingObj.value / d50));
+        if (maxReps >= 2) {
+          add(lines, remainingObj, maxReps, d50, "pull build" + padNote, restSecondsFor("pull", d50));
+        }
+      }
+
+      if (!fillEasy(lines, remainingObj, "pull", stroke)) return null;
       return lines.join("\n");
     }
 

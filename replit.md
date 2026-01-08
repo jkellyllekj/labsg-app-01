@@ -29,6 +29,10 @@ Additional project-specific preferences:
 - Pool selection via buttons (25m, 50m, 25yd, Custom)
 - Distance selection via slider (500-10000, snapping to 100)
 - Chips-based UI for workout display with reroll functionality
+- Effort-based color system: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
+- Dolphin loading animation during workout generation
+- Dice emoji button for rerolling individual sets
+- Advanced options with grid layout: strokes on left, equipment on right
 
 ### Backend
 - Express 5.x server on port 5000 (or PORT env variable)
@@ -45,6 +49,9 @@ Additional project-specific preferences:
 - **Clean rebuild over refactor**: Started fresh rather than modifying legacy prototype
 - **Coach plausibility**: Workouts should feel human-written, not algorithmically generated
 - **Custom pool caution**: LLM arithmetic for custom pool lengths cannot be fully trusted - validation required
+- **Effort-based colors**: Colors indicate intensity (not set type) - green=easy, red=sprint
+- **Freestyle default**: Warm-up, main, and cool-down default to freestyle when available
+- **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
 
 ## External Dependencies
 

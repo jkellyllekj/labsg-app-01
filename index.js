@@ -27,6 +27,18 @@ app.use(express.json());
 app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_HTML_R110__ */
   const HOME_HTML = `
+    <style>
+      @keyframes dolphin-swim {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        25% { transform: translateX(4px) rotate(-5deg); }
+        50% { transform: translateX(8px) rotate(0deg); }
+        75% { transform: translateX(4px) rotate(5deg); }
+      }
+      .dolphin-swim {
+        display: inline-block;
+        animation: dolphin-swim 0.8s ease-in-out infinite;
+      }
+    </style>
     <h1 style="margin:0 0 6px 0;">Swim Workout Generator v1</h1>
     <div style="margin:0 0 18px 0; color:#333;">Status: running</div>
 
@@ -108,80 +120,82 @@ app.get("/", (req, res) => {
               </button>
             </div>
 
-            <div id="advancedWrap" style="display:none; margin-top:10px; padding:10px; border:1px solid #eee; border-radius:12px; background:#fafafa;">
-              <div style="font-weight:700; margin-bottom:8px;">Strokes I can swim</div>
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid #ddd; border-radius:12px; background:#fafafa;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                  <div style="font-weight:700; margin-bottom:8px; color:#222;">Strokes</div>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="stroke_freestyle" checked />
+                    Freestyle
+                  </label>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="stroke_backstroke" />
+                    Backstroke
+                  </label>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="stroke_breaststroke" />
+                    Breaststroke
+                  </label>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="stroke_butterfly" />
+                    Butterfly
+                  </label>
+                </div>
+                <div>
+                  <div style="font-weight:700; margin-bottom:8px; color:#222;">Equipment</div>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="equip_fins" />
+                    Fins
+                  </label>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="equip_paddles" />
+                    Paddles
+                  </label>
+                  <div style="height:14px;"></div>
+                  <div style="font-weight:700; margin-bottom:6px; color:#222;">Include sets</div>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="includeKick" checked />
+                    Kick
+                  </label>
+                  <label style="display:block; margin:6px 0;">
+                    <input type="checkbox" name="includePull" />
+                    Pull
+                  </label>
+                </div>
+              </div>
 
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="stroke_freestyle" checked />
-                Freestyle
-              </label>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="stroke_backstroke" />
-                Backstroke
-              </label>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="stroke_breaststroke" />
-                Breaststroke
-              </label>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="stroke_butterfly" />
-                Butterfly
-              </label>
+              <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                  <div style="font-weight:700; margin-bottom:6px; color:#222;">Focus area</div>
+                  <select name="focus" id="focus" style="padding:8px 10px; border-radius:10px; border:1px solid #bbb; width:100%; font-size:14px;">
+                    <option value="allround">All round</option>
+                    <option value="endurance">Endurance</option>
+                    <option value="threshold">Threshold</option>
+                    <option value="sprint">Sprint</option>
+                    <option value="technique">Technique</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-weight:700; margin-bottom:6px; color:#222;">Rest preference</div>
+                  <select name="restPref" id="restPref" style="padding:8px 10px; border-radius:10px; border:1px solid #bbb; width:100%; font-size:14px;">
+                    <option value="balanced">Balanced</option>
+                    <option value="short">Short rest</option>
+                    <option value="moderate">Moderate rest</option>
+                    <option value="more">More rest</option>
+                  </select>
+                </div>
+              </div>
 
-              <div style="height:10px;"></div>
-
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="includeKick" checked />
-                Include a kick set
-              </label>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="includePull" />
-                Include a pull set
-              </label>
-
-              <div style="height:10px;"></div>
-
-              <div style="font-weight:700; margin-bottom:6px;">Equipment</div>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="equip_fins" />
-                Fins
-              </label>
-              <label style="display:block; margin:6px 0;">
-                <input type="checkbox" name="equip_paddles" />
-                Paddles
-              </label>
-
-              <div style="height:10px;"></div>
-
-              <div style="font-weight:700; margin-bottom:6px;">Focus area</div>
-              <select name="focus" id="focus" style="padding:6px 8px; border-radius:10px; border:1px solid #ccc; width: 220px;">
-                <option value="allround">All round</option>
-                <option value="endurance">Endurance</option>
-                <option value="threshold">Threshold</option>
-                <option value="sprint">Sprint</option>
-                <option value="technique">Technique</option>
-              </select>
-
-              <div style="height:10px;"></div>
-
-              <div style="font-weight:700; margin-bottom:6px;">Rest preference</div>
-              <select name="restPref" id="restPref" style="padding:6px 8px; border-radius:10px; border:1px solid #ccc; width: 220px;">
-                <option value="balanced">Balanced</option>
-                <option value="short">Short rest</option>
-                <option value="moderate">Moderate rest</option>
-                <option value="more">More rest</option>
-              </select>
-
-              <div style="height:10px;"></div>
-
-              <div style="font-weight:700; margin-bottom:6px;">Notes (optional)</div>
-              <textarea
-                name="notes"
-                id="notes"
-                rows="3"
-                placeholder="e.g. I cannot do breaststroke kick, I want to work on freestyle sprinting, shoulder is sore"
-                style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ccc; border-radius:10px; resize:vertical;"
-              ></textarea>
+              <div style="margin-top:14px;">
+                <div style="font-weight:700; margin-bottom:6px; color:#222;">Notes (optional)</div>
+                <textarea
+                  name="notes"
+                  id="notes"
+                  rows="3"
+                  placeholder="e.g. I cannot do breaststroke kick, I want to work on freestyle sprinting, shoulder is sore"
+                  style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #bbb; border-radius:10px; resize:vertical; font-size:14px;"
+                ></textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -420,7 +434,7 @@ app.get("/", (req, res) => {
         raw.style.display = "none";
         raw.textContent = "";
 
-        statusPill.textContent = "";
+        statusPill.innerHTML = "";
         copyBtn.disabled = true;
         copyBtn.dataset.copyText = "";
 
@@ -760,8 +774,8 @@ app.get("/", (req, res) => {
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
-              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:12px;">' +
-              'Dice' +
+              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:14px;" title="Reroll this set">' +
+              '🎲' +
             "</button>"
           );
           html.push("</div>");
@@ -878,7 +892,7 @@ app.get("/", (req, res) => {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
             } finally {
               btn.disabled = false;
-              btn.textContent = "Dice";
+              btn.textContent = "🎲";
             }
           });
         }
@@ -957,12 +971,12 @@ app.get("/", (req, res) => {
           await navigator.clipboard.writeText(text);
           statusPill.textContent = "Copied.";
           setTimeout(() => {
-            if (statusPill.textContent === "Copied.") statusPill.textContent = "";
+            if (statusPill.textContent === "Copied.") statusPill.innerHTML = "";
           }, 1200);
         } catch {
           statusPill.textContent = "Copy failed.";
           setTimeout(() => {
-            if (statusPill.textContent === "Copy failed.") statusPill.textContent = "";
+            if (statusPill.textContent === "Copy failed.") statusPill.innerHTML = "";
           }, 1200);
         }
       });
@@ -991,14 +1005,14 @@ app.get("/", (req, res) => {
         e.preventDefault();
         clearUI();
 
-        statusPill.textContent = "Generating...";
+        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;"><span class="dolphin-swim">🐬</span> Generating...</span>';
 
         const payload = formToPayload();
 
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
           if (!payload.customPoolLength) {
-            statusPill.textContent = "";
+            statusPill.innerHTML = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
           }
@@ -1024,20 +1038,20 @@ app.get("/", (req, res) => {
           }
 
           if (!res.ok) {
-            statusPill.textContent = "";
+            statusPill.innerHTML = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
             return;
           }
 
           if (!data || data.ok !== true) {
-            statusPill.textContent = "";
+            statusPill.innerHTML = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
             return;
           }
 
-          statusPill.textContent = "";
+          statusPill.innerHTML = "";
 
           const workoutText = String(data.workoutText || "").trim();
 
@@ -1058,7 +1072,7 @@ app.get("/", (req, res) => {
           copyBtn.disabled = false;
           copyBtn.dataset.copyText = workoutText;
         } catch (err) {
-          statusPill.textContent = "";
+          statusPill.innerHTML = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }
       });
@@ -1211,9 +1225,9 @@ app.post("/reroll-set", (req, res) => {
 
     if (!allowed.length) return "freestyle";
 
-    // Bias by label
+    // Bias by label - warm-up, main, and build should default to freestyle
     const k = String(label || "").toLowerCase();
-    if (k.includes("main") || k.includes("build")) {
+    if (k.includes("warm") || k.includes("main") || k.includes("build") || k.includes("cool")) {
       if (allowed.includes("freestyle")) return "freestyle";
     }
 
@@ -1294,8 +1308,9 @@ app.post("/reroll-set", (req, res) => {
 
     // Choose patterns
     if (k.includes("warm")) {
-      // Prefer 200 + 4x50 style over odd 1x550
+      // Warm-up varies 1-3 segments for variety
       const options = [
+        // 3 segments: swim + build + drill
         () => {
           const d200 = snapToPoolMultiple(200, base);
           if (d200 > 0) add(1, d200, stroke + " easy", 0);
@@ -1304,22 +1319,50 @@ app.post("/reroll-set", (req, res) => {
           const d25 = snapToPoolMultiple(25, base);
           if (d25 > 0) add(4, d25, "choice drill", restSecondsFor("drill", d25, opts));
         },
+        // 2 segments: swim + build
         () => {
           const d300 = snapToPoolMultiple(300, base);
           if (d300 > 0) add(1, d300, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
         },
+        // 3 segments: swim + kick + drill
         () => {
           const d100 = snapToPoolMultiple(100, base);
           if (d100 > 0) add(2, d100, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(4, d50, "kick easy", restSecondsFor("kick", d50, opts));
           if (d50 > 0) add(4, d50, "drill swim", restSecondsFor("drill", d50, opts));
+        },
+        // 1 segment: simple long swim (for short warm-ups)
+        () => {
+          const d400 = snapToPoolMultiple(400, base);
+          if (d400 > 0 && remaining >= d400) add(1, d400, stroke + " easy", 0);
+        },
+        // 2 segments: broken swim
+        () => {
+          const d100 = snapToPoolMultiple(100, base);
+          if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " easy", restSecondsFor("warm", d100, opts));
+          const d50 = snapToPoolMultiple(50, base);
+          if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
         }
       ];
 
       options[seed % options.length]();
+
+      // Fallback: if pattern didn't add anything, add a simple swim
+      if (lines.length === 0 && remaining > 0) {
+        const d100 = snapToPoolMultiple(100, base);
+        const d50 = snapToPoolMultiple(50, base);
+        if (d100 > 0 && remaining >= d100) {
+          const reps = Math.min(4, Math.floor(remaining / d100));
+          if (reps > 0) add(reps, d100, stroke + " easy", 0);
+        }
+        if (d50 > 0 && remaining >= d50 && lines.length === 0) {
+          const reps = Math.min(6, Math.floor(remaining / d50));
+          if (reps > 0) add(reps, d50, stroke + " easy", 0);
+        }
+      }
 
       // Fill remaining with easy swim in 100s or 50s, not weird singles.
       fillEasy();

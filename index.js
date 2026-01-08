@@ -1289,9 +1289,23 @@ app.post("/reroll-set", (req, res) => {
     if (k.includes("drill")) {
       const d50 = snapToPoolMultiple(50, base);
       const d25 = snapToPoolMultiple(25, base);
+      const d75 = snapToPoolMultiple(75, base);
 
-      if (d50 > 0 && remaining >= d50 * 8) add(8, d50, "drill swim technique", restSecondsFor("drill", d50, opts));
-      if (d25 > 0 && remaining >= d25 * 12) add(12, d25, "choice drill", restSecondsFor("drill", d25, opts));
+      const drillDescriptions = [
+        "25 drill 25 swim", "choice drill", "drill focus technique",
+        "catchup drill", "fingertip drag drill", "fist drill"
+      ];
+      const desc = drillDescriptions[seed % drillDescriptions.length];
+
+      // Try to fill with reasonable reps based on what fits
+      if (d50 > 0 && remaining >= d50 * 2) {
+        const reps = Math.min(8, Math.floor(remaining / d50));
+        if (reps >= 2) add(reps, d50, desc, restSecondsFor("drill", d50, opts));
+      }
+      if (d25 > 0 && remaining >= d25 * 4) {
+        const reps = Math.min(12, Math.floor(remaining / d25));
+        if (reps >= 4) add(reps, d25, drillDescriptions[(seed + 1) % drillDescriptions.length], restSecondsFor("drill", d25, opts));
+      }
 
       fillEasy("drill");
       return lines.join("\n");
@@ -1299,23 +1313,53 @@ app.post("/reroll-set", (req, res) => {
 
     if (k.includes("kick")) {
       const d50 = snapToPoolMultiple(50, base);
+      const d75 = snapToPoolMultiple(75, base);
       const d100 = snapToPoolMultiple(100, base);
-
       const finNote = hasFins ? " with fins" : "";
-      if (d50 > 0 && remaining >= d50 * 8) add(8, d50, "kick steady" + finNote, restSecondsFor("kick", d50, opts));
-      if (d100 > 0 && remaining >= d100 * 4) add(4, d100, "kick strong" + finNote, restSecondsFor("kick", d100, opts));
+
+      const kickDescriptions = [
+        "kick steady", "kick choice", "kick fast", "kick build", "kick strong", "kick easy"
+      ];
+      const desc = kickDescriptions[seed % kickDescriptions.length] + finNote;
+
+      // Try to fill with reasonable reps based on what fits
+      if (d100 > 0 && remaining >= d100 * 2) {
+        const reps = Math.min(6, Math.floor(remaining / d100));
+        if (reps >= 2) add(reps, d100, desc, restSecondsFor("kick", d100, opts));
+      }
+      if (d75 > 0 && remaining >= d75 * 2) {
+        const reps = Math.min(4, Math.floor(remaining / d75));
+        if (reps >= 2) add(reps, d75, kickDescriptions[(seed + 1) % kickDescriptions.length] + finNote, restSecondsFor("kick", d75, opts));
+      }
+      if (d50 > 0 && remaining >= d50 * 2) {
+        const reps = Math.min(8, Math.floor(remaining / d50));
+        if (reps >= 2) add(reps, d50, kickDescriptions[(seed + 2) % kickDescriptions.length] + finNote, restSecondsFor("kick", d50, opts));
+      }
 
       fillEasy("kick");
       return lines.join("\n");
     }
 
     if (k.includes("pull")) {
+      const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
-      const d200 = snapToPoolMultiple(200, base);
-
+      const d150 = snapToPoolMultiple(150, base);
       const padNote = hasPaddles ? " with paddles" : "";
-      if (d200 > 0 && remaining >= d200 * 3) add(3, d200, "pull steady" + padNote, restSecondsFor("pull", d200, opts));
-      if (d100 > 0 && remaining >= d100 * 6) add(6, d100, "pull strong" + padNote, restSecondsFor("pull", d100, opts));
+
+      const pullDescriptions = [
+        "pull steady", "pull strong", "pull build", "pull descend", "pull smooth", "pull easy"
+      ];
+      const desc = pullDescriptions[seed % pullDescriptions.length] + padNote;
+
+      // Try to fill with reasonable reps based on what fits
+      if (d100 > 0 && remaining >= d100 * 2) {
+        const reps = Math.min(6, Math.floor(remaining / d100));
+        if (reps >= 2) add(reps, d100, desc, restSecondsFor("pull", d100, opts));
+      }
+      if (d50 > 0 && remaining >= d50 * 2) {
+        const reps = Math.min(8, Math.floor(remaining / d50));
+        if (reps >= 2) add(reps, d50, pullDescriptions[(seed + 1) % pullDescriptions.length] + padNote, restSecondsFor("pull", d50, opts));
+      }
 
       fillEasy("pull");
       return lines.join("\n");

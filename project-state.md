@@ -231,18 +231,20 @@ UI defects:
 
 ## Next single step
 
-Tested 2026-01-08: Core generation quality fixes complete.
+Tested 2026-01-08: All core fixes complete.
 
 Completed:
 1. DONE: Fixed minimal workout bug (allocation logic rewritten)
-2. DONE: Drill, Kick, Pull now single segments
+2. DONE: Drill/Kick/Pull now use proper rep structures (6x50 drill, 4x75 kick)
 3. DONE: Custom pools end at start end (even lengths enforced)
 4. DONE: Wording cleaned up (no more "easy swim")
+5. DONE: Fixed slider bug (distance label now updates when slider moves)
+6. DONE: Serpentine-style UI with color-coded cards and left accent bars
 
 Remaining:
 - Improve set parsing for more reliable right-side chips in UI
-- Style the UI to match the old Serpentine app (color-coded cards, left bar, faded backgrounds)
 - Consider improving custom pool distance formatting (currently 3x99 looks robotic)
+- Premium features: temperature option for more varied workout structures (pyramids, etc.)
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 

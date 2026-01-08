@@ -4,7 +4,7 @@
 
 Project: Swim Workout Generator  
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
-Last updated: 2026-01-06  
+Last updated: 2026-01-08  
 Status: **Authoritative**
 
 ---
@@ -29,9 +29,9 @@ PS090 — NEXT_SINGLE_STEP
 ## If this is a new chat, read this first
 
 This file is the sole source of truth for the current state of the project.  
-Repo/file truth overrides chat memory.
+Repo and file truth overrides chat memory.
 
-If anything here is unclear or stale: **STOP and update this file first.**
+If anything here is unclear or stale, stop and update this file first.
 
 <!-- __END_PS_READ_FIRST_PS010__ -->
 
@@ -41,13 +41,14 @@ If anything here is unclear or stale: **STOP and update this file first.**
 
 ## Current Phase
 
-**v1 Build + Validity Hardening**
+**v1 Coach Plausibility plus Validity Hardening**
 
 Purpose:
 - Keep a minimal working app running in Replit
-- Generate workouts via OpenAI
-- Enforce pool-valid structure (especially for non-standard pools)
-- Prevent “nice-looking but wrong” workouts
+- Generate coach plausible workouts that feel human
+- Keep pool valid structure, especially for custom pools
+- Keep output parseable, so UI chips and reroll work reliably
+- Add optional pacing and time estimates, without breaking basic mode
 
 <!-- __END_PS_CURRENT_PHASE_PS020__ -->
 
@@ -57,12 +58,11 @@ Purpose:
 
 ## What is frozen
 
-- No stack decisions beyond current Replit v1 (no Expo/React Native decision yet)
-- No accounts / saving / sharing
+- No stack changes beyond current Replit v1 (single file Node and Express)
+- No accounts, saving, sharing, library ingestion
 - No season planner
-- No workout library ingestion
-- No dice “reroll” work (parked)
-- No multi-sport expansion
+- No multi sport expansion
+- No paywall implementation yet, only design intent
 
 <!-- __END_PS_FROZEN_PS030__ -->
 
@@ -73,10 +73,13 @@ Purpose:
 ## What is allowed
 
 - UI refinements inside `index.js` (still minimal)
-- Prompt contract refinements
-- Add a code-level validity gate for pool correctness
-- Add logging for debugging (temporary, removed when stable)
-- Update `project-state.md` + `decisions.md` as we proceed
+- Prompt and contract refinements
+- Add validity gates for pool correctness
+- Add deterministic fallbacks where LLM can fail
+- Add reroll logic, but it must never break generation
+- Add optional advanced options UI, default stays basic
+- Add temporary logging for debugging, remove when stable
+- Update `project-state.md`, `decisions.md`, `working-method.md` as we proceed
 
 <!-- __END_PS_ALLOWED_PS040__ -->
 
@@ -86,7 +89,7 @@ Purpose:
 
 ## Active files
 
-- `index.js` (authoritative runtime: UI + API)
+- `index.js` (authoritative runtime, UI plus API)
 - `project-state.md` (this file)
 - `decisions.md`
 - `working-method.md`
@@ -102,79 +105,63 @@ Secrets:
 
 ## Current system snapshot (what works today)
 
+App:
 - Replit app runs and serves a minimal UI.
-- Distance input:
-  - slider 500–10,000
-  - snaps to 100
-- Pool input:
-  - buttons: 25m / 50m / 25yd / Custom
-  - custom length enabled only when Custom selected
 
-Generation behaviour (v1):
-- **Standard pools (25m / 50m / 25yd):**
-  - Uses OpenAI
-  - Returns plain-text workout sets
-  - No “(lengths)” annotations
-  - No footer lines
-- **Custom pools:**
-  - Deterministic-only (no OpenAI)
-  - Instant response
-  - Always pool-valid
-  - Includes per-set “(N lengths)” where needed
-  - Includes footer metadata lines:
-    - Total lengths
-    - Ends-at-start
-    - Total distance (actual)
-    - Requested (only when nearest-match logic is used)
+Inputs:
+- Distance slider 500 to 10000, snaps to 100
+- Pool buttons: 25m, 50m, 25yd, Custom
+- Custom length enabled only when Custom selected
+- Optional threshold pace per 100 input exists in UI
+- Advanced options section exists as a collapsible area
+
+Generation behaviour:
+- Standard pools use OpenAI for structure and variety, then a validity gate runs
+- Custom pools should be deterministic only for pool validity and speed
 
 UI rendering:
-- `workoutText` is parsed and rendered as **set cards**
-- Each set renders as:
-  - Section label (Warm up, Drill, Main, Kick, Cool down, etc.)
-  - Set body text
-  - Optional per-set goal input (stored locally in browser)
-- Labels are normalised (e.g. “Drill set” → “Drill”, “Warm-up” → “Warm up”)
-- Unlabelled lines are grouped under the previous labelled section
+- `workoutText` is parsed and rendered as set cards
+- Each set card includes label, body, Dice reroll, and optional goal input stored locally
+- Set cards are colour coded by set type
+- Total section renders after all sets as chips
 
-Totals footer (stable behaviour):
-- A **Total** section renders after all sets as chips.
-- Chips include:
-  - Pool (e.g. 25m, 25yd, or “33m custom”)
-  - Requested (from the UI distance)
-  - Total (actual when available, otherwise equals requested)
-  - Total lengths (custom pools only, when provided)
-  - Ends-at-start (custom pools only), always displayed last when present
-- Standard pools show Total using the requested distance because standard output has no footer lines.
-
-Known issue status:
-- Previous “Total footer rendering inconsistent / stale layout” issue is resolved by consolidating and repairing the render blocks and adding a safe totals fallback for standard pools.
+Intended UI chips:
+- Right side chips per set should include distance, and if threshold pace is provided, an estimated time
+- Total section chips should include pool, requested, total, total lengths if present, ends at start end if present
 
 <!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
-
-
-
-
 
 ---
 
 <!-- __START_PS_INVARIANTS_PS070__ -->
 
-## Known constraints / invariants (must always be true)
+## Known constraints and invariants (must always be true)
 
-Pool rules:
-- Pool length is explicit and first-class
-- Standard pools: 25m / 50m / 25yd
+Coach plausibility rules:
+- Workouts should look like a real coach wrote them
+- Warm up and cool down should exist by default
+- Drill, Kick, Pull, Cool down are almost always single segment
+- Warm up is one segment or two segments, not many
+- Main can be one segment or two segments, more only when it is a clearly structured set
+- Avoid weird non standard distances that feel unnatural in standard pools, prefer round numbers
+- For large workouts, structure can expand, but it must still read like a coached session
+
+Output parse contract:
+- Each segment must use NxD format like 8x50, 4x100, 1x400
+- Segment lines must remain parseable so the UI can compute distance chips and reroll distance targets
+- Do not rely on free form comma number ladders for v1
+
+Pool and validity rules:
+- Pool length is explicit and first class
+- Standard pools: 25m, 50m, 25yd
 - Custom pools: any length in meters or yards
+- Every set ends at the start end, and the full workout ends at the start end
+- Standard pools must match requested total exactly
+- Custom pools may choose nearest even length total when exact is impossible, and must label requested versus total
 
-Validity rules:
-- Every **SET** must finish on an even number of lengths
-- Full workout must finish on an even number of lengths
-- Standard pools must match total distance exactly
-- Custom pools may be “close” (±100–200) only if required for symmetry/end-position
-
-Display rules:
-- Standard pools: use conventional notation (e.g. 10x100); no “(lengths)”
-- Custom pools: include “(lengths)” only when needed for clarity
+Timing rules:
+- If threshold pace per 100 is provided, the UI should estimate set time and total time
+- Rest defaults are allowed, but should be coach plausible and vary by intensity
 
 <!-- __END_PS_INVARIANTS_PS070__ -->
 
@@ -184,18 +171,22 @@ Display rules:
 
 ## Observed failures (authoritative)
 
-Previously:
-- For custom pools, OpenAI output often contained inconsistent distance/length math (critical defect).
-- Repair re-prompt still sometimes failed and introduced latency/hangs risk.
+Critical:
+- Generation can fail with `buildOneSetBodyServer is not defined`
+- Reroll frequently fails to produce a valid replacement set
 
-Resolved:
-- Custom pools no longer rely on OpenAI; deterministic generation removes arithmetic failures and makes custom generation instant.
+Coach plausibility defects:
+- Too many sub parts inside Drill, Kick, Pull, Cool down
+- Warm up distances like 550, 625 appear in standard pools, which feels non human
 
-Remaining risks:
-- Standard pools still call OpenAI; requests may occasionally stall without a timeout (to harden).
+UI defects:
+- Right side chips sometimes missing because set distance parser fails when output is not strictly NxD
+- Dice click can error when the set distance cannot be parsed, or when reroll returns invalid output
+
+Custom pool risks:
+- LLM arithmetic is not trusted for custom pools, deterministic generation is required
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
-
 
 ---
 
@@ -203,22 +194,15 @@ Remaining risks:
 
 ## Next single step
 
-Stabilise the Total footer rendering:
+Fix the generation runtime error:
 
-- Verify the **exact contents** of:
-  - `ROUTE_HOME_UI_JS_RENDER_CORE_R161`
-  - `ROUTE_HOME_UI_JS_RENDER_CARDS_R162`
-- Ensure the Total section shows **only totals**:
-  - Total distance (m or yd)
-  - Total lengths (when applicable)
-  - Ends-at-start indicator (last item)
-- Remove Pool / Requested from Total footer
-- Confirm Replit is serving the latest `index.js` after changes
+- In `index.js`, find any reference to `buildOneSetBodyServer`
+- Ensure the called function exists in server scope, and the name matches exactly
+- Replace the call or define the function, but do the smallest change possible
+- Confirm Generate works end to end again before touching reroll or workout style
 
-Proceed via **one full-block replacement only**.
+Proceed via one full block replacement only.
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
-
-
 
 <!-- __END_FILE_PROJECT_STATE_PS000__ -->

@@ -1,9 +1,15 @@
 /* __START_FILE_INDEX_JS_R000__ */
 /**
- * Swim Workout Generator v1 — Clean rebuild (Node + Express)
+ * Swim Workout Generator v1
+ * Node + Express single-file app
  *
- * This file is block-tagged. After this full-file reset,
- * we only replace whole blocks (never line edits).
+ * Block-tagged. Edit by replacing whole blocks only.
+ *
+ * Notes:
+ * - No em dashes in UI copy.
+ * - Distances snap to pool multiples.
+ * - Always generates a human-style workout structure.
+ * - Optional threshold pace enables time estimates.
  */
 
 /* __START_IMPORTS_R010__ */
@@ -18,14 +24,13 @@ app.use(express.json());
 /* __END_APP_SETUP_R020__ */
 
 /* __START_ROUTE_HOME_UI_R100__ */
-// --- Minimal UI (v1) ---
 app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_HTML_R110__ */
   const HOME_HTML = `
     <h1 style="margin:0 0 6px 0;">Swim Workout Generator v1</h1>
     <div style="margin:0 0 18px 0; color:#333;">Status: running</div>
 
-    <div style="max-width:820px;">
+    <div style="max-width:920px;">
       <h2 style="margin:0 0 10px 0;">Generate</h2>
 
       <form id="genForm" style="padding:14px; border:1px solid #e2e2e2; border-radius:12px; background:#fff;">
@@ -49,7 +54,7 @@ app.get("/", (req, res) => {
             <input type="hidden" name="distance" id="distanceHidden" value="1000" />
           </div>
 
-          <div style="min-width:320px;">
+          <div style="min-width:360px;">
             <h3 style="margin:0 0 10px 0;">Pool length</h3>
 
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
@@ -80,6 +85,104 @@ app.get("/", (req, res) => {
                 <option value="yards">yards</option>
               </select>
             </div>
+
+            <div style="margin-top:12px;">
+              <label style="display:block; font-weight:600; margin-bottom:4px;">
+                Threshold pace (per 100, optional) Example 1:20
+              </label>
+              <input
+                name="thresholdPace"
+                id="thresholdPace"
+                type="text"
+                placeholder="e.g. 1:30"
+                style="width: 120px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
+              />
+              <div style="margin-top:6px; font-size:12px; color:#666;">
+                If set, the app estimates times per set and total. It assumes freestyle threshold pace.
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
+                ▶ Advanced options
+              </button>
+            </div>
+
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:10px; border:1px solid #eee; border-radius:12px; background:#fafafa;">
+              <div style="font-weight:700; margin-bottom:8px;">Strokes I can swim</div>
+
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="stroke_freestyle" checked />
+                Freestyle
+              </label>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="stroke_backstroke" />
+                Backstroke
+              </label>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="stroke_breaststroke" />
+                Breaststroke
+              </label>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="stroke_butterfly" />
+                Butterfly
+              </label>
+
+              <div style="height:10px;"></div>
+
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="includeKick" checked />
+                Include a kick set
+              </label>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="includePull" />
+                Include a pull set
+              </label>
+
+              <div style="height:10px;"></div>
+
+              <div style="font-weight:700; margin-bottom:6px;">Equipment</div>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="equip_fins" />
+                Fins
+              </label>
+              <label style="display:block; margin:6px 0;">
+                <input type="checkbox" name="equip_paddles" />
+                Paddles
+              </label>
+
+              <div style="height:10px;"></div>
+
+              <div style="font-weight:700; margin-bottom:6px;">Focus area</div>
+              <select name="focus" id="focus" style="padding:6px 8px; border-radius:10px; border:1px solid #ccc; width: 220px;">
+                <option value="allround">All round</option>
+                <option value="endurance">Endurance</option>
+                <option value="threshold">Threshold</option>
+                <option value="sprint">Sprint</option>
+                <option value="technique">Technique</option>
+              </select>
+
+              <div style="height:10px;"></div>
+
+              <div style="font-weight:700; margin-bottom:6px;">Rest preference</div>
+              <select name="restPref" id="restPref" style="padding:6px 8px; border-radius:10px; border:1px solid #ccc; width: 220px;">
+                <option value="balanced">Balanced</option>
+                <option value="short">Short rest</option>
+                <option value="moderate">Moderate rest</option>
+                <option value="more">More rest</option>
+              </select>
+
+              <div style="height:10px;"></div>
+
+              <div style="font-weight:700; margin-bottom:6px;">Notes (optional)</div>
+              <textarea
+                name="notes"
+                id="notes"
+                rows="3"
+                placeholder="e.g. I cannot do breaststroke kick, I want to work on freestyle sprinting, shoulder is sore"
+                style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ccc; border-radius:10px; resize:vertical;"
+              ></textarea>
+            </div>
           </div>
         </div>
 
@@ -95,7 +198,6 @@ app.get("/", (req, res) => {
       </form>
 
       <div id="resultWrap" style="margin-top:16px; padding:14px; background:#f6f6f6; border-radius:12px; border:1px solid #e7e7e7;">
-        <div id="summary" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <div id="cards" style="display:none;"></div>
@@ -117,8 +219,6 @@ app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_JS_DOM_R130__ */
   const HOME_JS_DOM = `
       const form = document.getElementById("genForm");
-
-      const summary = document.getElementById("summary");
       const errorBox = document.getElementById("errorBox");
       const statusPill = document.getElementById("statusPill");
 
@@ -136,6 +236,11 @@ app.get("/", (req, res) => {
       const poolHidden = document.getElementById("poolLengthHidden");
       const customLen = document.getElementById("customPoolLength");
       const customUnit = document.getElementById("poolLengthUnit");
+
+      const thresholdPace = document.getElementById("thresholdPace");
+
+      const toggleAdvanced = document.getElementById("toggleAdvanced");
+      const advancedWrap = document.getElementById("advancedWrap");
   `;
   /* __END_ROUTE_HOME_UI_JS_DOM_R130__ */
 
@@ -154,6 +259,43 @@ app.get("/", (req, res) => {
         distanceLabel.textContent = String(snapped);
       }
 
+      function safeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function parsePaceToSecondsPer100(s) {
+        const t = String(s || "").trim();
+        if (!t) return null;
+
+        // Accept 1:30 or 90
+        if (/^\\d{1,2}:\\d{2}$/.test(t)) {
+          const parts = t.split(":");
+          const mm = Number(parts[0]);
+          const ss = Number(parts[1]);
+          if (!Number.isFinite(mm) || !Number.isFinite(ss)) return null;
+          return (mm * 60) + ss;
+        }
+
+        if (/^\\d{2,3}$/.test(t)) {
+          const v = Number(t);
+          if (!Number.isFinite(v) || v <= 0) return null;
+          return v;
+        }
+
+        return null;
+      }
+
+      function fmtMmSs(totalSeconds) {
+        const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
+        const mm = Math.floor(s / 60);
+        const ss = s % 60;
+        return String(mm) + ":" + String(ss).padStart(2, "0");
+      }
+
       function unitShortFromPayload(payload) {
         if (payload.poolLength === "custom") {
           return payload.poolLengthUnit === "yards" ? "yd" : "m";
@@ -167,20 +309,18 @@ app.get("/", (req, res) => {
         return String(payload.customPoolLength) + u + " custom";
       }
 
-      function safeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll("\\"", "&quot;");
+      function fnv1a(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
       }
 
       function getWorkoutId(payload, workoutText) {
-        const base = JSON.stringify({ payload, workoutText });
-        let h = 0;
-        for (let i = 0; i < base.length; i++) {
-          h = (h * 31 + base.charCodeAt(i)) >>> 0;
-        }
+        const base = JSON.stringify({ payload: payload, workoutText: workoutText });
+        const h = fnv1a(base);
         return "w" + String(h);
       }
 
@@ -199,33 +339,32 @@ app.get("/", (req, res) => {
         try {
           localStorage.setItem("swg_v1_goals", JSON.stringify(map));
         } catch {
-          // ignore
         }
+      }
+
+      function loadLastWorkoutFingerprint() {
+        try {
+          return localStorage.getItem("swg_v1_last_fp") || "";
+        } catch {
+          return "";
+        }
+      }
+
+      function saveLastWorkoutFingerprint(fp) {
+        try {
+          localStorage.setItem("swg_v1_last_fp", String(fp || ""));
+        } catch {
+        }
+      }
+
+      function fingerprintWorkoutText(text) {
+        return String(fnv1a(String(text || "")));
       }
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 
   /* __START_ROUTE_HOME_UI_JS_PARSERS_R150__ */
   const HOME_JS_PARSERS = `
-      function parseFooterDistances(workoutText) {
-        const result = { requested: null, total: null, units: null };
-        if (typeof workoutText !== "string") return result;
-
-        const req = workoutText.match(/\\bRequested:\\s*(\\d+)\\s*(m|yd)\\b/i);
-        const tot = workoutText.match(/\\bTotal distance:\\s*(\\d+)\\s*(m|yd)\\b/i);
-
-        if (req) {
-          result.requested = Number(req[1]);
-          result.units = req[2].toLowerCase();
-        }
-        if (tot) {
-          result.total = Number(tot[1]);
-          result.units = (result.units || tot[2]).toLowerCase();
-        }
-
-        return result;
-      }
-
       function splitWorkout(workoutText) {
         const lines = String(workoutText || "").split(/\\r?\\n/);
 
@@ -233,34 +372,33 @@ app.get("/", (req, res) => {
         const footerLines = [];
 
         const isFooterLine = (line) => {
-          const t = line.trim();
+          const t = String(line || "").trim();
           if (!t) return false;
           return (
             t.startsWith("Total lengths:") ||
             t.startsWith("Ends at start end:") ||
             t.startsWith("Requested:") ||
-            t.startsWith("Total distance:")
+            t.startsWith("Total distance:") ||
+            t.startsWith("Est total time:")
           );
         };
 
         for (const line of lines) {
-          if (isFooterLine(line)) footerLines.push(line.trim());
-          else if (line.trim()) setLines.push(line);
+          if (isFooterLine(line)) footerLines.push(String(line || "").trim());
+          else if (String(line || "").trim()) setLines.push(String(line || ""));
         }
 
-        return { setLines, footerLines };
+        return { setLines: setLines, footerLines: footerLines };
       }
 
       function parseSetLine(line) {
         const trimmed = String(line || "").trim();
-
         const m = trimmed.match(/^([^:]{2,30}):\\s*(.+)$/);
         if (m) {
           const label = m[1].trim();
           const body = m[2].trim();
-          return { label, body };
+          return { label: label, body: body };
         }
-
         return { label: null, body: trimmed };
       }
   `;
@@ -270,9 +408,6 @@ app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
   const HOME_JS_RENDER_CORE = `
       function clearUI() {
-        summary.style.display = "none";
-        summary.innerHTML = "";
-
         errorBox.style.display = "none";
         errorBox.innerHTML = "";
 
@@ -318,55 +453,70 @@ app.get("/", (req, res) => {
           "warm-up": "Warm up",
           "warm up": "Warm up",
           "warmup": "Warm up",
-
           "build": "Build",
-
           "drill": "Drill",
           "drills": "Drill",
-          "drill set": "Drill",
-
           "kick": "Kick",
-          "kick set": "Kick",
-
           "pull": "Pull",
-          "pull set": "Pull",
-
           "main": "Main",
-          "main set": "Main",
-
           "main 1": "Main 1",
-          "main1": "Main 1",
-          "main-1": "Main 1",
-
           "main 2": "Main 2",
-          "main2": "Main 2",
-          "main-2": "Main 2",
-
-          "sprint": "Sprints",
-          "sprints": "Sprints",
-
           "cooldown": "Cool down",
-          "cool down": "Cool down",
-          "cool-down": "Cool down"
+          "cool down": "Cool down"
         };
 
         if (map[key]) return map[key];
-
-        const m = key.match(/^(.+?)\\s+set$/);
-        if (m && m[1]) {
-          const base = m[1].trim();
-          if (map[base]) return map[base];
-          return base.charAt(0).toUpperCase() + base.slice(1);
-        }
-
         return raw;
+      }
+
+      function labelColorKey(label) {
+        const k = String(label || "").toLowerCase();
+        if (k.includes("warm")) return "warm";
+        if (k.includes("build")) return "build";
+        if (k.includes("drill")) return "drill";
+        if (k.includes("kick")) return "kick";
+        if (k.includes("pull")) return "pull";
+        if (k.includes("main")) return "main";
+        if (k.includes("cool")) return "cool";
+        return "neutral";
+      }
+
+      function colorStyleForKey(key) {
+        // Match your earlier palette style
+        const k = String(key || "");
+        if (k === "warm") return "background:#e9f8ef; border:1px solid #bfe8cd;";
+        if (k === "build") return "background:#eaf2ff; border:1px solid #bcd3ff;";
+        if (k === "drill") return "background:#f1edff; border:1px solid #d2c9ff;";
+        if (k === "kick") return "background:#fff4d6; border:1px solid #ffe3a1;";
+        if (k === "pull") return "background:#fff4d6; border:1px solid #ffe3a1;";
+        if (k === "main") return "background:#ffe6e6; border:1px solid #ffbdbd;";
+        if (k === "cool") return "background:#e8fbff; border:1px solid #b9ecff;";
+        return "background:#fff; border:1px solid #e7e7e7;";
+      }
+
+      function captureSummary(payload, workoutText) {
+        const units = unitShortFromPayload(payload);
+        const requested = Number(payload.distance);
+
+        const poolText = poolLabelFromPayload(payload);
+
+        const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
+        window.__swgSummary = {
+          units: units,
+          requested: requested,
+          poolText: poolText,
+          paceSec: paceSec,
+          workoutText: String(workoutText || "")
+        };
       }
 
       function extractFooterInfo(footerLines) {
         const info = {
           totalLengthsLine: null,
           endsLine: null,
-          totalDistanceLine: null
+          requestedLine: null,
+          totalDistanceLine: null,
+          estTotalTimeLine: null
         };
 
         if (!Array.isArray(footerLines)) return info;
@@ -377,52 +527,31 @@ app.get("/", (req, res) => {
 
           if (t.startsWith("Total lengths:")) info.totalLengthsLine = t;
           else if (t.startsWith("Ends at start end:")) info.endsLine = t;
+          else if (t.startsWith("Requested:")) info.requestedLine = t;
           else if (t.startsWith("Total distance:")) info.totalDistanceLine = t;
+          else if (t.startsWith("Est total time:")) info.estTotalTimeLine = t;
         }
 
         return info;
       }
 
-      // Summary is captured for footer only.
-      function captureSummary(payload, workoutText) {
-        const units = unitShortFromPayload(payload);
-        const requested = Number(payload.distance);
-
-        let poolText = "";
-        if (payload.poolLength === "custom") {
-          const u = payload.poolLengthUnit === "yards" ? "yd" : "m";
-          poolText = String(payload.customPoolLength) + u + " custom";
-        } else {
-          poolText = String(payload.poolLength);
-        }
-
-        window.__swgSummary = { units, requested, poolText };
-      }
-
       function renderFooterTotalsAndMeta(footerLines) {
-        const s = window.__swgSummary || { units: "", requested: null, poolText: "" };
+        const s = window.__swgSummary || { units: "", requested: null, poolText: "", paceSec: null };
         const info = extractFooterInfo(footerLines);
 
         const chips = [];
 
-        // Pool and requested are allowed metadata.
         if (s.poolText) chips.push("Pool: " + s.poolText);
 
-        if (Number.isFinite(s.requested)) {
-          chips.push("Requested: " + String(s.requested) + String(s.units || ""));
-        }
+        if (info.requestedLine) chips.push(info.requestedLine);
+        else if (Number.isFinite(s.requested)) chips.push("Requested: " + String(s.requested) + String(s.units || ""));
 
-        // Total is actual when present, otherwise requested.
-        if (info.totalDistanceLine) {
-          chips.push(info.totalDistanceLine.replace("Total distance:", "Total:").trim());
-        } else if (Number.isFinite(s.requested)) {
-          chips.push("Total: " + String(s.requested) + String(s.units || ""));
-        }
+        if (info.totalDistanceLine) chips.push(info.totalDistanceLine.replace("Total distance:", "Total:").trim());
+        else if (Number.isFinite(s.requested)) chips.push("Total: " + String(s.requested) + String(s.units || ""));
 
         if (info.totalLengthsLine) chips.push(info.totalLengthsLine);
-
-        // Always last.
         if (info.endsLine) chips.push(info.endsLine);
+        if (info.estTotalTimeLine) chips.push(info.estTotalTimeLine);
 
         const seen = new Set();
         const deduped = [];
@@ -456,17 +585,84 @@ app.get("/", (req, res) => {
 
   /* __START_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
   const HOME_JS_RENDER_CARDS = `
+      function computeSetDistanceFromBody(body) {
+        const t = String(body || "");
+
+        // Support x and ×
+        const re = /(\\d+)\\s*[x×]\\s*(\\d+)\\s*(m|yd)?/gi;
+
+        let sum = 0;
+        let m;
+        while ((m = re.exec(t)) !== null) {
+          const reps = Number(m[1]);
+          const dist = Number(m[2]);
+          if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
+        }
+
+        // Also support single swims like "600 easy" without 1x
+        // Only if no NxD was found.
+        if (sum === 0) {
+          const one = t.match(/(^|\\s)(\\d{2,5})(\\s*(m|yd))?(\\s|$)/);
+          if (one) {
+            const v = Number(one[2]);
+            if (Number.isFinite(v) && v >= 50) sum = v;
+          }
+        }
+
+        return sum > 0 ? sum : null;
+      }
+
+      function computeRestSecondsFromBody(body) {
+        // Sum an estimate of rest for repeats where "rest 15s" appears.
+        const t = String(body || "");
+        const reSeg = /(\\d+)\\s*[x×]\\s*(\\d+)[^\\n]*?rest\\s*(\\d+)\\s*s/gi;
+        let sum = 0;
+        let m;
+        while ((m = reSeg.exec(t)) !== null) {
+          const reps = Number(m[1]);
+          const rest = Number(m[3]);
+          if (Number.isFinite(reps) && reps >= 2 && Number.isFinite(rest) && rest >= 0) {
+            sum += (reps - 1) * rest;
+          }
+        }
+        return sum;
+      }
+
+      function estimateSwimSeconds(body, paceSecPer100, label) {
+        if (!Number.isFinite(paceSecPer100) || paceSecPer100 <= 0) return null;
+
+        const dist = computeSetDistanceFromBody(body);
+        if (!Number.isFinite(dist) || dist <= 0) return null;
+
+        const k = String(label || "").toLowerCase();
+
+        // Multipliers relative to threshold pace
+        // Warm up slower, drills slower, main around threshold, sprint slightly faster but more rest.
+        let mult = 1.15;
+        if (k.includes("warm")) mult = 1.25;
+        else if (k.includes("build")) mult = 1.18;
+        else if (k.includes("drill")) mult = 1.30;
+        else if (k.includes("kick")) mult = 1.38;
+        else if (k.includes("pull")) mult = 1.25;
+        else if (k.includes("main")) mult = 1.05;
+        else if (k.includes("cool")) mult = 1.35;
+
+        const swim = (dist / 100) * paceSecPer100 * mult;
+
+        const rest = computeRestSecondsFromBody(body);
+        return swim + rest;
+      }
+
       function renderCards(payload, workoutText) {
-        const { setLines, footerLines } = splitWorkout(workoutText);
+        const parts = splitWorkout(workoutText);
+        const setLines = parts.setLines || [];
+        const footerLines = parts.footerLines || [];
 
         if (!setLines.length) {
           cards.style.display = "none";
           return false;
         }
 
-        // Group into sections:
-        // - "Label: body" starts a new section
-        // - unlabelled lines append to previous section
         const sections = [];
         for (const line of setLines) {
           const parsed = parseSetLine(line);
@@ -485,29 +681,69 @@ app.get("/", (req, res) => {
         const goalsMap = loadGoalsMap();
         const goalsForWorkout = goalsMap[workoutId] || {};
 
+        const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
+
         const html = [];
-        html.push("<div style=\\"font-weight:700; margin-bottom:10px;\\">Your Workout</div>");
-        html.push("<div style=\\"display:flex; flex-direction:column; gap:10px;\\">");
+        html.push('<div style="font-weight:700; margin-bottom:10px;">Your Workout</div>');
+        html.push('<div style="display:flex; flex-direction:column; gap:10px;">');
 
         let idx = 0;
+
         for (const s of sections) {
           idx += 1;
 
           const label = s.label ? s.label : ("Set " + idx);
           const body = s.bodies.filter(Boolean).join("\\n");
 
+          const setDist = computeSetDistanceFromBody(body);
+
+          const estSec = estimateSwimSeconds(body, paceSec, label);
+
+          const rightChips = [];
+          if (Number.isFinite(setDist)) rightChips.push(String(setDist));
+          if (Number.isFinite(estSec)) rightChips.push("Est: " + fmtMmSs(estSec));
+
           const goalKey = String(idx);
           const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
 
-          html.push("<div style=\\"background:#fff; border:1px solid #e7e7e7; border-radius:12px; padding:12px;\\">");
-          html.push("<div style=\\"min-width:0;\\">");
-          html.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">" + safeHtml(label) + "</div>");
-          html.push("<div style=\\"white-space:pre-wrap; line-height:1.35; color:#111;\\">" + safeHtml(body) + "</div>");
+          const colorKey = labelColorKey(label);
+          const boxStyle = colorStyleForKey(colorKey);
+
+          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px;">');
+
+          html.push('<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">');
+
+          html.push('<div style="min-width:0; flex:1;">');
+          html.push('<div style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:10px;">');
+          html.push('<span>' + safeHtml(label) + '</span>');
+          html.push(
+            '<button type="button" data-reroll-set="' +
+              safeHtml(String(idx)) +
+              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:12px;">' +
+              'Dice' +
+            "</button>"
+          );
+          html.push("</div>");
+          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" style="white-space:pre-wrap; line-height:1.35; color:#111;">' + safeHtml(body) + "</div>");
           html.push("</div>");
 
-          html.push("<div style=\\"margin-top:10px;\\">");
-          html.push("<label style=\\"display:block; font-size:12px; color:#555; margin-bottom:4px;\\">Goal (optional)</label>");
-          html.push("<input data-goal-input=\\"" + safeHtml(goalKey) + "\\" value=\\"" + safeHtml(existingGoal) + "\\" placeholder=\\"Short goal for this set\\" style=\\"width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ddd; border-radius:10px;\\" />");
+          html.push('<div style="flex:0 0 auto; display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end; max-width:260px;">');
+          for (const chip of rightChips) {
+            html.push('<div style="padding:6px 10px; border:1px solid #eee; border-radius:999px; background:#fafafa; font-size:13px;">' + safeHtml(chip) + "</div>");
+          }
+          html.push("</div>");
+
+          html.push("</div>");
+
+          html.push('<div style="margin-top:10px;">');
+          html.push('<label style="display:block; font-size:12px; color:#555; margin-bottom:4px;">Goal (optional)</label>');
+          html.push(
+            '<input data-goal-input="' +
+              safeHtml(goalKey) +
+              '" value="' +
+              safeHtml(existingGoal) +
+              '" placeholder="Short goal for this set" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ddd; border-radius:10px;" />'
+          );
           html.push("</div>");
 
           html.push("</div>");
@@ -531,20 +767,90 @@ app.get("/", (req, res) => {
           });
         }
 
-        // Footer goes AFTER sets.
+        const rerollButtons = cards.querySelectorAll("button[data-reroll-set]");
+        for (const btn of rerollButtons) {
+          btn.addEventListener("click", async () => {
+            const setIndex = Number(btn.getAttribute("data-reroll-set"));
+            const bodyEl = cards.querySelector('[data-set-body="' + String(setIndex) + '"]');
+            if (!bodyEl) return;
+
+            const currentBody = bodyEl.textContent || "";
+            const currentDist = computeSetDistanceFromBody(currentBody);
+
+            if (!Number.isFinite(currentDist)) {
+              renderError("Cannot reroll this set", ["Set distance could not be parsed. Ensure it contains NxD segments like 8x50, 4x100, or a single distance like 600."]);
+              return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Rolling";
+
+            try {
+              const res = await fetch("/reroll-set", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  poolLength: payload.poolLength,
+                  poolLengthUnit: payload.poolLengthUnit,
+                  customPoolLength: payload.customPoolLength,
+                  thresholdPace: payload.thresholdPace || "",
+                  focus: payload.focus || "allround",
+                  restPref: payload.restPref || "balanced",
+                  includeKick: !!payload.includeKick,
+                  includePull: !!payload.includePull,
+                  equip_fins: !!payload.equip_fins,
+                  equip_paddles: !!payload.equip_paddles,
+                  stroke_freestyle: !!payload.stroke_freestyle,
+                  stroke_backstroke: !!payload.stroke_backstroke,
+                  stroke_breaststroke: !!payload.stroke_breaststroke,
+                  stroke_butterfly: !!payload.stroke_butterfly,
+                  label: (sections[setIndex - 1] && sections[setIndex - 1].label) ? sections[setIndex - 1].label : null,
+                  targetDistance: currentDist,
+                  avoidText: currentBody
+                }),
+              });
+
+              const data = await res.json().catch(() => null);
+              if (!res.ok || !data || data.ok !== true) {
+                const msg = data && data.error ? data.error : ("HTTP " + res.status);
+                renderError("Reroll failed", [msg]);
+                return;
+              }
+
+              const nextBody = String(data.setBody || "").trim();
+              if (!nextBody) {
+                renderError("Reroll failed", ["Empty set returned."]);
+                return;
+              }
+
+              bodyEl.textContent = nextBody;
+            } catch (e) {
+              renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
+            } finally {
+              btn.disabled = false;
+              btn.textContent = "Dice";
+            }
+          });
+        }
+
         renderFooterTotalsAndMeta(footerLines);
 
         return true;
       }
-
-      // Alias expected by the submit handler.
-      function renderSummary(payload, workoutText) {
-        captureSummary(payload, workoutText);
-      }
   `;
   /* __END_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
 
-  const HOME_JS_RENDER = HOME_JS_RENDER_CORE + HOME_JS_RENDER_CARDS;
+  /* __START_ROUTE_HOME_UI_JS_RENDER_GLUE_R163__ */
+  const HOME_JS_RENDER_GLUE = `
+      function renderAll(payload, workoutText) {
+        captureSummary(payload, workoutText);
+        const ok = renderCards(payload, workoutText);
+        return ok;
+      }
+  `;
+  /* __END_ROUTE_HOME_UI_JS_RENDER_GLUE_R163__ */
+
+  const HOME_JS_RENDER = HOME_JS_RENDER_CORE + HOME_JS_RENDER_CARDS + HOME_JS_RENDER_GLUE;
   /* __END_ROUTE_HOME_UI_JS_RENDER_R160__ */
 
   /* __START_ROUTE_HOME_UI_JS_EVENTS_R170__ */
@@ -578,6 +884,17 @@ app.get("/", (req, res) => {
         setActivePool(btn.getAttribute("data-pool"));
       });
 
+      toggleAdvanced.addEventListener("click", () => {
+        const open = advancedWrap.style.display !== "none";
+        if (open) {
+          advancedWrap.style.display = "none";
+          toggleAdvanced.textContent = "▶ Advanced options";
+        } else {
+          advancedWrap.style.display = "block";
+          toggleAdvanced.textContent = "▼ Advanced options";
+        }
+      });
+
       copyBtn.addEventListener("click", async () => {
         const text = copyBtn.dataset.copyText || "";
         if (!text) return;
@@ -596,14 +913,33 @@ app.get("/", (req, res) => {
         }
       });
 
+      function formToPayload() {
+        const fd = new FormData(form);
+        const payload = Object.fromEntries(fd.entries());
+
+        // Normalize checkboxes (present => "on")
+        const boolNames = [
+          "stroke_freestyle",
+          "stroke_backstroke",
+          "stroke_breaststroke",
+          "stroke_butterfly",
+          "includeKick",
+          "includePull",
+          "equip_fins",
+          "equip_paddles"
+        ];
+        for (const n of boolNames) payload[n] = payload[n] === "on";
+
+        return payload;
+      }
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         clearUI();
 
         statusPill.textContent = "Generating...";
 
-        const fd = new FormData(form);
-        const payload = Object.fromEntries(fd.entries());
+        const payload = formToPayload();
 
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
@@ -619,50 +955,51 @@ app.get("/", (req, res) => {
         }
 
         try {
+          const lastFp = loadLastWorkoutFingerprint();
+
           const res = await fetch("/generate-workout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, lastWorkoutFp: lastFp })
           });
 
           let data = null;
           try {
             data = await res.json();
           } catch {
-            // non-JSON response
           }
 
           if (!res.ok) {
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
-            const details = (data && Array.isArray(data.details)) ? data.details : [];
-            renderError("Request failed", [msg, ...details].filter(Boolean));
+            renderError("Request failed", [msg].filter(Boolean));
             return;
           }
 
           if (!data || data.ok !== true) {
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
-            const details = data && Array.isArray(data.details) ? data.details : [];
-            renderError("Generation failed", [msg, ...details].filter(Boolean));
+            renderError("Generation failed", [msg].filter(Boolean));
             return;
           }
 
           statusPill.textContent = "";
 
           const workoutText = String(data.workoutText || "").trim();
-          renderSummary(payload, workoutText);
 
           if (!workoutText) {
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
 
-          const ok = renderCards(payload, workoutText);
+          const ok = renderAll(payload, workoutText);
           if (!ok) {
             raw.textContent = workoutText;
             raw.style.display = "block";
           }
+
+          const fp = fingerprintWorkoutText(workoutText);
+          saveLastWorkoutFingerprint(fp);
 
           copyBtn.disabled = false;
           copyBtn.dataset.copyText = workoutText;
@@ -674,13 +1011,153 @@ app.get("/", (req, res) => {
   `;
   /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */
 
-  /* __START_ROUTE_HOME_UI_JS_INIT_R180__ */
-  const HOME_JS_INIT = `
-      distanceSlider.addEventListener("input", () => setDistance(distanceSlider.value));
-      setDistance(1000);
-      setActivePool("25m");
-  `;
-  /* __END_ROUTE_HOME_UI_JS_INIT_R180__ */
+/* __START_ROUTE_REROLL_SET_R180__ */
+app.post("/reroll-set", (req, res) => {
+  const body = req.body || {};
+
+  const poolLength = body.poolLength;
+  const poolLengthUnit = body.poolLengthUnit;
+  const customPoolLength = body.customPoolLength;
+
+  const label = typeof body.label === "string" ? body.label : "";
+  const targetDistance = Number(body.targetDistance);
+
+  if (!Number.isFinite(targetDistance) || targetDistance <= 0) {
+    return res.status(400).json({ ok: false, error: "Invalid targetDistance." });
+  }
+  if (!poolLength || typeof poolLength !== "string") {
+    return res.status(400).json({ ok: false, error: "Invalid pool selection." });
+  }
+
+  const isCustomPool = poolLength === "custom";
+  const unitsShort = isCustomPool
+    ? (poolLengthUnit === "yards" ? "yd" : "m")
+    : (poolLength === "25yd" ? "yd" : "m");
+
+  const poolLen =
+    isCustomPool
+      ? Number(customPoolLength)
+      : (poolLength === "25m" ? 25 : poolLength === "50m" ? 50 : poolLength === "25yd" ? 25 : null);
+
+  if (!Number.isFinite(poolLen) || poolLen <= 0) {
+    return res.status(400).json({ ok: false, error: "Invalid pool length." });
+  }
+
+  const avoidText = typeof body.avoidText === "string" ? body.avoidText.trim() : "";
+
+  function nowSeed() {
+    const a = Date.now() >>> 0;
+    const b = Math.floor(Math.random() * 0xffffffff) >>> 0;
+    return (a ^ b) >>> 0;
+  }
+
+  function snap(n) {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v <= 0) return 0;
+    return Math.round(v / poolLen) * poolLen;
+  }
+
+  function distOf(text) {
+    const t = String(text || "");
+    const re = /(\d+)\s*[x×]\s*(\d+)\s*(m|yd)?/gi;
+    let sum = 0;
+    let m;
+    while ((m = re.exec(t)) !== null) {
+      const reps = Number(m[1]);
+      const dist = Number(m[2]);
+      if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
+    }
+    return sum;
+  }
+
+  function mk(reps, dist, note, restSec) {
+    let out = String(reps) + "x" + String(dist) + " " + String(note || "").trim();
+    if (Number.isFinite(restSec) && restSec > 0) out += " rest " + String(restSec) + "s";
+    return out;
+  }
+
+  const L = String(label || "").toLowerCase();
+  const target = snap(targetDistance);
+
+  const d50 = snap(50);
+  const d100 = snap(100);
+  const d200 = snap(200);
+  const d400 = snap(400);
+
+  const seed = nowSeed();
+  const variant = seed % 3;
+
+  function oneLineForLabel() {
+    // All outputs are NxD so the UI can always parse distance and show chips.
+    if (L.includes("warm")) {
+      if (target >= snap(600) && d400 > 0 && d50 > 0 && (target - d400) % d50 === 0) {
+        const rem = target - d400;
+        const reps = rem / d50;
+        return mk(1, d400, "freestyle easy", 0) + "\n" + mk(reps, d50, "freestyle build easy", 15);
+      }
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "freestyle easy", 0);
+      if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "freestyle easy", 0);
+    }
+
+    if (L.includes("build")) {
+      if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "freestyle build", 15);
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "freestyle descend", 15);
+    }
+
+    if (L.includes("drill")) {
+      if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "drill swim technique", 20);
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "drill swim technique", 20);
+    }
+
+    if (L.includes("kick")) {
+      if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "kick steady", 15);
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "kick strong", 20);
+    }
+
+    if (L.includes("pull")) {
+      if (d200 > 0 && target % d200 === 0) return mk(target / d200, d200, "pull steady", 15);
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "pull strong", 15);
+    }
+
+    if (L.includes("cool")) {
+      if (d200 > 0 && target % d200 === 0) return mk(target / d200, d200, "easy mixed", 0);
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "easy mixed", 0);
+    }
+
+    // Main
+    if (variant === 0) {
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "freestyle steady", 20);
+    } else if (variant === 1) {
+      if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "freestyle best average", 20);
+    } else {
+      if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "freestyle fast", 30);
+    }
+
+    // Last resort
+    if (d50 > 0 && target % d50 === 0) return mk(target / d50, d50, "freestyle steady", 20);
+    if (d100 > 0 && target % d100 === 0) return mk(target / d100, d100, "freestyle steady", 20);
+
+    return mk(1, target, "freestyle steady", 20);
+  }
+
+  const candidate = String(oneLineForLabel()).trim();
+
+  if (!candidate) return res.status(500).json({ ok: false, error: "Reroll failed to build a set." });
+
+  // Avoid exact repeat if possible with a tiny tweak
+  let out = candidate;
+  if (avoidText && out === avoidText) {
+    if (d50 > 0 && target % d50 === 0) out = mk(target / d50, d50, "freestyle steady", 15);
+  }
+
+  if (distOf(out) !== target) {
+    return res.status(500).json({ ok: false, error: "Reroll failed to produce a replacement set." });
+  }
+
+  return res.json({ ok: true, setText: out });
+});
+/* __END_ROUTE_REROLL_SET_R180__ */
+
 
   /* __START_ROUTE_HOME_UI_JS_CLOSE_R190__ */
   const HOME_JS_CLOSE = `
@@ -688,544 +1165,1529 @@ app.get("/", (req, res) => {
   `;
   /* __END_ROUTE_HOME_UI_JS_CLOSE_R190__ */
 
-  /* __START_ROUTE_HOME_UI_SEND_R200__ */
-  res.send(
-    HOME_HTML +
-      HOME_JS_OPEN +
-      HOME_JS_DOM +
-      HOME_JS_HELPERS +
-      HOME_JS_PARSERS +
-      HOME_JS_RENDER +
-      HOME_JS_EVENTS +
-      HOME_JS_INIT +
-      HOME_JS_CLOSE,
-  );
-  /* __END_ROUTE_HOME_UI_SEND_R200__ */
+  /* __START_ROUTE_GENERATE_WORKOUT_R200__ */
+  app.post("/generate-workout", (req, res) => {
+    /* __START_R210_PARSE_VALIDATE_R210__ */
+    let payload = null;
+
+    try {
+      payload = req.body || {};
+    } catch {
+      payload = {};
+    }
+
+    const distanceRaw = payload.distance;
+    const poolLength = payload.poolLength;
+    const customPoolLength = payload.customPoolLength;
+    const poolLengthUnit = payload.poolLengthUnit;
+    const lastWorkoutFp = typeof payload.lastWorkoutFp === "string" ? payload.lastWorkoutFp : "";
+
+    const distance = Number(distanceRaw);
+
+    if (!Number.isFinite(distance) || distance <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid distance." });
+    }
+    if (!poolLength || typeof poolLength !== "string") {
+      return res.status(400).json({ ok: false, error: "Invalid pool selection." });
+    }
+
+    const isCustomPool = poolLength === "custom";
+
+    const unitsShort = isCustomPool
+      ? (poolLengthUnit === "yards" ? "yd" : "m")
+      : (poolLength === "25yd" ? "yd" : "m");
+
+    const poolLen =
+      isCustomPool
+        ? Number(customPoolLength)
+        : (poolLength === "25m" ? 25 : poolLength === "50m" ? 50 : poolLength === "25yd" ? 25 : null);
+
+    if (!Number.isFinite(poolLen) || poolLen <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid pool length." });
+    }
+
+    const poolLabel = isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength);
+    /* __END_R210_PARSE_VALIDATE_R210__ */
+
+    /* __START_R220_OPTIONS_NORMALIZE_R220__ */
+    function b(v) {
+      return v === true || v === "true" || v === "on" || v === 1;
+    }
+
+    function normalizeOptions(p) {
+      const strokes = {
+        freestyle: b(p.stroke_freestyle),
+        backstroke: b(p.stroke_backstroke),
+        breaststroke: b(p.stroke_breaststroke),
+        butterfly: b(p.stroke_butterfly)
+      };
+
+      const anyStroke =
+        strokes.freestyle || strokes.backstroke || strokes.breaststroke || strokes.butterfly;
+
+      if (!anyStroke) strokes.freestyle = true;
+
+      return {
+        focus: typeof p.focus === "string" ? p.focus : "allround",
+        restPref: typeof p.restPref === "string" ? p.restPref : "balanced",
+        includeKick: p.includeKick === undefined ? true : b(p.includeKick),
+        includePull: b(p.includePull),
+        fins: b(p.equip_fins),
+        paddles: b(p.equip_paddles),
+        strokes,
+        notes: typeof p.notes === "string" ? p.notes.trim() : ""
+      };
+    }
+
+    const opts = normalizeOptions(payload);
+    /* __END_R220_OPTIONS_NORMALIZE_R220__ */
+
+    /* __START_R230_UTILS_HASH_SEED_R230__ */
+    function nowSeed() {
+      const a = Date.now() >>> 0;
+      const c = Math.floor(Math.random() * 0xffffffff) >>> 0;
+      return (a ^ c) >>> 0;
+    }
+
+    function fnv1a32(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    }
+
+    function fingerprintWorkoutText(workoutText) {
+      return String(fnv1a32(String(workoutText || "")));
+    }
+
+    function snapToPoolMultiple(dist, poolLen2) {
+      const d = Number(dist);
+      if (!Number.isFinite(d) || d <= 0) return 0;
+
+      const base = Number(poolLen2);
+      if (!Number.isFinite(base) || base <= 0) return d;
+
+      return Math.round(d / base) * base;
+    }
+    /* __END_R230_UTILS_HASH_SEED_R230__ */
+
+    /* __START_R240_PACE_AND_ESTIMATE_R240__ */
+    function parsePaceToSecondsPer100(s) {
+      const t = String(s || "").trim();
+      if (!t) return null;
+
+      if (/^\d{1,2}:\d{2}$/.test(t)) {
+        const parts = t.split(":");
+        const mm = Number(parts[0]);
+        const ss = Number(parts[1]);
+        if (!Number.isFinite(mm) || !Number.isFinite(ss)) return null;
+        return (mm * 60) + ss;
+      }
+
+      if (/^\d{2,3}$/.test(t)) {
+        const v = Number(t);
+        if (!Number.isFinite(v) || v <= 0) return null;
+        return v;
+      }
+
+      return null;
+    }
+
+    function fmtMmSs(totalSeconds) {
+      const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
+      const mm = Math.floor(s / 60);
+      const ss = s % 60;
+      return String(mm) + ":" + String(ss).padStart(2, "0");
+    }
+
+    function paceMultiplierForLabel(label) {
+      const k = String(label || "").toLowerCase();
+      if (k.includes("warm")) return 1.25;
+      if (k.includes("build")) return 1.18;
+      if (k.includes("drill")) return 1.30;
+      if (k.includes("kick")) return 1.38;
+      if (k.includes("pull")) return 1.25;
+      if (k.includes("main")) return 1.05;
+      if (k.includes("cool")) return 1.35;
+      return 1.15;
+    }
+
+    function computeSetDistanceFromBody(body) {
+      const t = String(body || "");
+      const re = /(\d+)\s*[x×]\s*(\d+)\s*(m|yd)?/gi;
+
+      let sum = 0;
+      let m;
+      while ((m = re.exec(t)) !== null) {
+        const reps = Number(m[1]);
+        const dist = Number(m[2]);
+        if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
+      }
+
+      if (sum === 0) {
+        const one = t.match(/(^|\s)(\d{2,5})(\s*(m|yd))?(\s|$)/);
+        if (one) {
+          const v = Number(one[2]);
+          if (Number.isFinite(v) && v >= 50) sum = v;
+        }
+      }
+
+      return sum > 0 ? sum : null;
+    }
+
+    function computeRestSecondsFromBody(body) {
+      const t = String(body || "");
+      const reSeg = /(\d+)\s*[x×]\s*(\d+)[^\n]*?rest\s*(\d+)\s*s/gi;
+
+      let sum = 0;
+      let m;
+      while ((m = reSeg.exec(t)) !== null) {
+        const reps = Number(m[1]);
+        const rest = Number(m[3]);
+        if (Number.isFinite(reps) && reps >= 2 && Number.isFinite(rest) && rest >= 0) {
+          sum += (reps - 1) * rest;
+        }
+      }
+      return sum;
+    }
+
+    function estimateWorkoutTotalSeconds(workoutText, paceSecPer100) {
+      if (!Number.isFinite(paceSecPer100) || paceSecPer100 <= 0) return null;
+
+      const lines = String(workoutText || "").split(/\r?\n/);
+
+      let currentLabel = "";
+      let setBodyLines = [];
+      let total = 0;
+
+      const flush = () => {
+        if (!setBodyLines.length) return;
+
+        const body = setBodyLines.join("\n");
+        const dist = computeSetDistanceFromBody(body);
+        if (!Number.isFinite(dist) || dist <= 0) {
+          setBodyLines = [];
+          return;
+        }
+
+        const mult = paceMultiplierForLabel(currentLabel);
+        const swim = (dist / 100) * paceSecPer100 * mult;
+        const rest = computeRestSecondsFromBody(body);
+
+        total += swim + rest;
+        setBodyLines = [];
+      };
+
+      for (const line of lines) {
+        const t = String(line || "").trim();
+        if (!t) continue;
+
+        if (
+          t.startsWith("Requested:") ||
+          t.startsWith("Total distance:") ||
+          t.startsWith("Total lengths:") ||
+          t.startsWith("Ends at start end:") ||
+          t.startsWith("Est total time:")
+        ) {
+          continue;
+        }
+
+        const m = t.match(/^([^:]{2,30}):\s*(.+)$/);
+        if (m) {
+          flush();
+          currentLabel = String(m[1] || "").trim();
+          setBodyLines = [String(m[2] || "").trim()];
+        } else {
+          setBodyLines.push(t);
+        }
+      }
+
+      flush();
+      return total;
+    }
+    /* __END_R240_PACE_AND_ESTIMATE_R240__ */
+
+ 
+
+    /* __START_R270_WORKOUT_BUILDER_R270__ */
+    function buildWorkout({ targetTotal, poolLen: base, unitsShort: uShort, poolLabel: pLabel, thresholdPace, opts: o, seed }) {
+      const total = snapToPoolMultiple(targetTotal, base);
+
+      const paceSec = parsePaceToSecondsPer100(thresholdPace);
+
+      const includeKick = o.includeKick && total >= snapToPoolMultiple(1500, base);
+      const includePull = o.includePull && total >= snapToPoolMultiple(1500, base);
+
+      const wantBuild = total >= snapToPoolMultiple(1200, base);
+      const wantDrill = true;
+
+      const warmTarget = pickFromTypical(total, base, [400, 600, 800, 1000], 0.18);
+      const coolTarget = pickFromTypical(total, base, [200, 300, 400, 500], 0.08);
+
+      let remaining = total;
+
+      const sets = [];
+
+      const warm = snapToPoolMultiple(warmTarget, base);
+      sets.push({ label: "Warm up", dist: warm });
+      remaining -= warm;
+
+      if (wantBuild) {
+        const build = snapToPoolMultiple(pickFromTypical(total, base, [200, 300, 400, 500], 0.08), base);
+        const d = Math.min(build, Math.max(base * 8, remaining - coolTarget));
+        sets.push({ label: "Build", dist: d });
+        remaining -= d;
+      }
+
+      if (wantDrill) {
+        const drill = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+        const d = Math.min(drill, Math.max(base * 8, remaining - coolTarget));
+        sets.push({ label: "Drill", dist: d });
+        remaining -= d;
+      }
+
+      if (includeKick) {
+        const kick = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+        const d = Math.min(kick, Math.max(base * 8, remaining - coolTarget));
+        sets.push({ label: "Kick", dist: d });
+        remaining -= d;
+      } else if (includePull) {
+        const pull = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+        const d = Math.min(pull, Math.max(base * 8, remaining - coolTarget));
+        sets.push({ label: "Pull", dist: d });
+        remaining -= d;
+      }
+
+      const cool = snapToPoolMultiple(coolTarget, base);
+      remaining -= cool;
+
+      const mainTotal = remaining;
+
+      if (mainTotal <= 0) {
+        return {
+          text:
+            "Warm up: 1x" + String(total) + " easy\n\n" +
+            "Requested: " + String(total) + String(uShort) + "\n" +
+            "Total distance: " + String(total) + String(uShort) + " (pool: " + String(pLabel) + ")"
+        };
+      }
+
+      if (mainTotal >= snapToPoolMultiple(2400, base)) {
+        const m1 = snapToPoolMultiple(Math.round(mainTotal * 0.55), base);
+        const m2 = snapToPoolMultiple(mainTotal - m1, base);
+        sets.push({ label: "Main 1", dist: m1 });
+        sets.push({ label: "Main 2", dist: m2 });
+      } else {
+        sets.push({ label: "Main", dist: snapToPoolMultiple(mainTotal, base) });
+      }
+
+      sets.push({ label: "Cool down", dist: cool });
+
+      const lines = [];
+
+      for (const s of sets) {
+        const setLabel = s.label;
+        const setDist = s.dist;
+
+        const body = buildOneSetBodyServerLocal({
+          label: setLabel,
+          targetDistance: setDist,
+          poolLen: base,
+          opts: o,
+          seed: (seed + fnv1a32(setLabel)) >>> 0
+        });
+
+        if (!body) {
+          lines.push(setLabel + ": " + "1x" + String(setDist) + " easy");
+          lines.push("");
+          continue;
+        }
+
+        const bodyLines = body.split("\n");
+        lines.push(setLabel + ": " + bodyLines[0]);
+        for (const extra of bodyLines.slice(1)) lines.push(extra);
+        lines.push("");
+      }
+
+      while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
+
+      const footer = [];
+      footer.push("");
+      footer.push("Requested: " + String(targetTotal) + String(uShort));
+
+      if (total % base === 0) {
+        const totalLengths = total / base;
+        footer.push("Total lengths: " + String(totalLengths) + " lengths");
+        footer.push("Ends at start end: " + (totalLengths % 2 === 0 ? "yes" : "no"));
+      }
+
+      footer.push("Total distance: " + String(total) + String(uShort) + " (pool: " + String(pLabel) + ")");
+
+      if (Number.isFinite(paceSec) && paceSec > 0) {
+        const estTotal = estimateWorkoutTotalSeconds(lines.join("\n"), paceSec);
+        if (Number.isFinite(estTotal)) footer.push("Est total time: " + fmtMmSs(estTotal));
+      }
+
+      return { text: lines.join("\n") + "\n" + footer.join("\n") };
+
+      function pickFromTypical(totalD, baseD, choices, pct) {
+        const target = totalD * pct;
+        const snapped = choices.map(v => snapToPoolMultiple(v, baseD)).filter(v => v > 0);
+
+        let best = snapped[0] || snapToPoolMultiple(target, baseD);
+        let bestDiff = Math.abs(best - target);
+
+        for (const c of snapped) {
+          const diff = Math.abs(c - target);
+          if (diff < bestDiff) {
+            best = c;
+            bestDiff = diff;
+          }
+        }
+
+        const wiggle = (seed % 3) - 1;
+        const idx0 = snapped.indexOf(best);
+        const idx = Math.max(0, Math.min(snapped.length - 1, (idx0 < 0 ? 0 : idx0) + wiggle));
+        if (snapped[idx]) best = snapped[idx];
+
+        return best;
+      }
+    }
+    /* __END_R270_WORKOUT_BUILDER_R270__ */
+
+    /* __START_R300_HANDLER_RETURN_R300__ */
+    try {
+      const targetTotal = snapToPoolMultiple(distance, poolLen);
+      const seedA = nowSeed();
+
+      const workout = buildWorkout({
+        targetTotal,
+        poolLen,
+        unitsShort,
+        poolLabel,
+        thresholdPace: String(payload.thresholdPace || ""),
+        opts,
+        seed: seedA
+      });
+
+      if (!workout || !workout.text) {
+        return res.status(500).json({ ok: false, error: "Failed to build workout." });
+      }
+
+      const fp = fingerprintWorkoutText(workout.text);
+
+      if (lastWorkoutFp && fp === lastWorkoutFp) {
+        const seedB = nowSeed();
+        const workout2 = buildWorkout({
+          targetTotal,
+          poolLen,
+          unitsShort,
+          poolLabel,
+          thresholdPace: String(payload.thresholdPace || ""),
+          opts,
+          seed: seedB
+        });
+
+        if (workout2 && workout2.text) {
+          return res.json({ ok: true, workoutText: workout2.text });
+        }
+      }
+
+      return res.json({ ok: true, workoutText: workout.text });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) });
+    }
+    /* __END_R300_HANDLER_RETURN_R300__ */
+  });
+  /* __END_ROUTE_GENERATE_WORKOUT_R200__ */
+
 });
 /* __END_ROUTE_HOME_UI_R100__ */
 
-/* __START_ROUTE_GENERATE_WORKOUT_R200__ */
+/* __START_ROUTE_REROLL_SET_R180__ */
+app.post("/reroll-set", (req, res) => {
+  try {
+    const body = req.body || {};
 
-app.post("/generate-workout", async (req, res) => {
-  /* __START_R210_PARSE_AND_NORMALIZE__ */
-  const { distance, poolLength, customPoolLength, poolLengthUnit } = req.body;
+    const poolLength = body.poolLength;
+    const poolLengthUnit = body.poolLengthUnit;
+    const customPoolLength = body.customPoolLength;
 
-  const targetTotal = Number(distance);
-  const isCustomPool = poolLength === "custom";
+    const isCustomPool = poolLength === "custom";
 
-  const unitsShort = isCustomPool
-    ? poolLengthUnit === "yards"
-      ? "yd"
-      : "m"
-    : poolLength === "25yd"
-      ? "yd"
-      : "m";
+    const unitsShort = isCustomPool
+      ? (poolLengthUnit === "yards" ? "yd" : "m")
+      : (poolLength === "25yd" ? "yd" : "m");
 
-  const poolLen = isCustomPool ? Number(customPoolLength) : null;
+    const poolLen = isCustomPool
+      ? Number(customPoolLength)
+      : (poolLength === "25m" ? 25 : poolLength === "50m" ? 50 : poolLength === "25yd" ? 25 : null);
 
-  if (!Number.isFinite(targetTotal) || targetTotal <= 0) {
-    return res.status(400).json({ ok: false, error: "Invalid distance." });
-  }
-  if (!poolLength || typeof poolLength !== "string") {
-    return res
-      .status(400)
-      .json({ ok: false, error: "Invalid pool selection." });
-  }
-  if (isCustomPool && (!Number.isFinite(poolLen) || poolLen <= 0)) {
-    return res
-      .status(400)
-      .json({ ok: false, error: "Invalid custom pool length." });
-  }
-  if (!process.env.OPENAI_API_KEY) {
-    return res
-      .status(500)
-      .json({ ok: false, error: "Missing OPENAI_API_KEY (Replit Secret)." });
-  }
-
-  // Exact-possible: totalDistance is a clean multiple of pool length AND total lengths even.
-  const targetLengthsExact = isCustomPool ? targetTotal / poolLen : null;
-  const exactPossible =
-    isCustomPool &&
-    Number.isInteger(targetLengthsExact) &&
-    targetLengthsExact % 2 === 0;
-  /* __END_R210_PARSE_AND_NORMALIZE__ */
-
-  /* __START_R220_DETERMINISTIC_CUSTOM_EXACT__ */
-  function buildDeterministicCustomWorkoutTextExact() {
-    if (!exactPossible) return null;
-
-    const lengthsPerRep = 2;
-    const perRepDistance = lengthsPerRep * poolLen;
-    const totalReps = targetLengthsExact / lengthsPerRep; // integer
-
-    let wu = Math.max(4, Math.round(totalReps * 0.2));
-    let dr = Math.max(4, Math.round(totalReps * 0.15));
-    let cd = Math.max(2, Math.round(totalReps * 0.15));
-    let main = totalReps - (wu + dr + cd);
-
-    if (main < 6) {
-      const needed = 6 - main;
-
-      const takeWu = Math.min(Math.max(wu - 4, 0), needed);
-      wu -= takeWu;
-      main += takeWu;
-
-      const remaining = 6 - main;
-      const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
-      dr -= takeDr;
-      main += takeDr;
-
-      const remaining2 = 6 - main;
-      const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
-      cd -= takeCd;
-      main += takeCd;
+    if (!poolLen || !Number.isFinite(poolLen) || poolLen <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid pool length." });
     }
 
-    const sum = wu + dr + main + cd;
-    if (sum !== totalReps) main += totalReps - sum;
-
-    const totalLengths = Number(targetLengthsExact); // integer
-    const lines = [];
-    lines.push(
-      `Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`,
-    );
-    lines.push(
-      `Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`,
-    );
-    lines.push(
-      `Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`,
-    );
-    lines.push(
-      `Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`,
-    );
-    lines.push("");
-    lines.push(`Total lengths: ${totalLengths} lengths`);
-    lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
-    lines.push(
-      `Total distance: ${targetTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
-    );
-    return lines.join("\n");
-  }
-  /* __END_R220_DETERMINISTIC_CUSTOM_EXACT__ */
-
-  /* __START_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
-  function buildDeterministicCustomWorkoutTextNearest() {
-    if (!isCustomPool) return null;
-
-    const rawLengths = targetTotal / poolLen;
-
-    const down = Math.floor(rawLengths);
-    const up = Math.ceil(rawLengths);
-
-    const downEven = down % 2 === 0 ? down : down - 1;
-    const upEven = up % 2 === 0 ? up : up + 1;
-
-    const candidates = [];
-    if (Number.isInteger(downEven) && downEven > 0) candidates.push(downEven);
-    if (Number.isInteger(upEven) && upEven > 0) candidates.push(upEven);
-
-    if (candidates.length === 0) return null;
-
-    let best = candidates[0];
-    for (const c of candidates.slice(1)) {
-      const diffBest = Math.abs(best * poolLen - targetTotal);
-      const diffC = Math.abs(c * poolLen - targetTotal);
-      if (diffC < diffBest) best = c;
-      else if (diffC === diffBest && c > best) best = c;
+    const targetDistance = Number(body.targetDistance);
+    if (!Number.isFinite(targetDistance) || targetDistance <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid targetDistance." });
     }
 
-    const chosenTotal = best * poolLen;
+    const labelRaw = typeof body.label === "string" && body.label.trim() ? body.label.trim() : "Main";
+    const label = canonicalLabelServer(labelRaw);
 
-    const lengthsPerRep = 2;
-    const perRepDistance = lengthsPerRep * poolLen;
-    const totalReps = best / lengthsPerRep; // integer because best is even
+    const opts = normalizeOptionsServer(body);
 
-    let wu = Math.max(4, Math.round(totalReps * 0.2));
-    let dr = Math.max(4, Math.round(totalReps * 0.15));
-    let cd = Math.max(2, Math.round(totalReps * 0.15));
-    let main = totalReps - (wu + dr + cd);
+    const avoidText = typeof body.avoidText === "string" ? body.avoidText.trim() : "";
 
-    if (main < 6) {
-      const needed = 6 - main;
+    // Generate a replacement body with the same label and distance
+    for (let i = 0; i < 10; i++) {
+      const seed = (Date.now() + (i * 9973)) >>> 0;
+      const next = buildOneSetBodyServer({
+        label,
+        targetDistance,
+        poolLen,
+        unitsShort,
+        opts,
+        seed
+      });
 
-      const takeWu = Math.min(Math.max(wu - 4, 0), needed);
-      wu -= takeWu;
-      main += takeWu;
+      if (!next) continue;
+      if (avoidText && next.trim() === avoidText.trim()) continue;
 
-      const remaining = 6 - main;
-      const takeDr = Math.min(Math.max(dr - 4, 0), remaining);
-      dr -= takeDr;
-      main += takeDr;
-
-      const remaining2 = 6 - main;
-      const takeCd = Math.min(Math.max(cd - 2, 0), remaining2);
-      cd -= takeCd;
-      main += takeCd;
+      return res.json({ ok: true, setBody: next });
     }
 
-    const sum = wu + dr + main + cd;
-    if (sum !== totalReps) main += totalReps - sum;
-
-    const totalLengths = Number(best); // integer
-    const lines = [];
-    lines.push(
-      `Warm-up: ${wu}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Easy — 20s rest`,
-    );
-    lines.push(
-      `Drill: ${dr}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Choice drill — Moderate — 20s rest`,
-    );
-    lines.push(
-      `Main: ${main}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Freestyle — Hard — 30–45s rest`,
-    );
-    lines.push(
-      `Cooldown: ${cd}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths) — Easy mixed — 20s rest`,
-    );
-    lines.push("");
-    lines.push(`Total lengths: ${totalLengths} lengths`);
-    lines.push(`Ends at start end: ${totalLengths % 2 === 0 ? "yes" : "no"}`);
-    lines.push(`Requested: ${targetTotal}${unitsShort}`);
-    lines.push(
-      `Total distance: ${chosenTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
-    );
-    return lines.join("\n");
-  }
-  /* __END_R225_DETERMINISTIC_CUSTOM_NEAREST__ */
-
-  /* __START_R230_OPENAI_CALL__ */
-  async function callOpenAI(messages, { timeoutMs = 20000 } = {}) {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages,
-            temperature: 0.2,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(
-          `OpenAI HTTP ${response.status}: ${text.slice(0, 300)}`,
-        );
-      }
-
-      const data = await response.json();
-      return data?.choices?.[0]?.message?.content ?? "";
-    } finally {
-      clearTimeout(t);
-    }
-  }
-  /* __END_R230_OPENAI_CALL__ */
-
-  /* __START_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
-  function extractFirstJsonObject(text) {
-    if (typeof text !== "string") return null;
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (start === -1 || end === -1 || end <= start) return null;
-    return text.slice(start, end + 1);
+    return res.status(500).json({ ok: false, error: "Reroll failed to produce a replacement set." });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) });
   }
 
-  function validateCustomWorkoutJson(obj) {
-    const errors = [];
+  function canonicalLabelServer(labelRaw) {
+    const raw = String(labelRaw || "").trim();
+    const key = raw.toLowerCase().replace(/\s+/g, " ").trim();
+    const map = {
+      "warm-up": "Warm up",
+      "warm up": "Warm up",
+      "warmup": "Warm up",
+      "build": "Build",
+      "drill": "Drill",
+      "kick": "Kick",
+      "pull": "Pull",
+      "main": "Main",
+      "main 1": "Main 1",
+      "main 2": "Main 2",
+      "cooldown": "Cool down",
+      "cool down": "Cool down"
+    };
+    return map[key] || raw;
+  }
 
-    if (!obj || typeof obj !== "object") {
-      errors.push("JSON root must be an object.");
-      return { ok: false, errors };
-    }
-    if (!Array.isArray(obj.sets) || obj.sets.length === 0) {
-      errors.push('Field "sets" must be a non-empty array.');
-      return { ok: false, errors };
-    }
+  function normalizeOptionsServer(payload) {
+    // These may come as booleans already (client does it) but keep robust.
+    const b = (v) => v === true || v === "true" || v === "on" || v === 1;
 
-    let computedTotal = 0;
-    let computedTotalLengths = 0;
+    const strokes = {
+      freestyle: b(payload.stroke_freestyle),
+      backstroke: b(payload.stroke_backstroke),
+      breaststroke: b(payload.stroke_breaststroke),
+      butterfly: b(payload.stroke_butterfly)
+    };
 
-    for (let i = 0; i < obj.sets.length; i++) {
-      const s = obj.sets[i];
-
-      const label = String(s.label ?? "").trim();
-      const reps = Number(s.reps);
-      const lengthsPerRep = Number(s.lengthsPerRep);
-
-      if (!label) errors.push(`sets[${i}].label is required (non-empty).`);
-      if (!Number.isInteger(reps) || reps <= 0)
-        errors.push(`sets[${i}].reps must be a positive integer.`);
-      if (!Number.isInteger(lengthsPerRep) || lengthsPerRep <= 0)
-        errors.push(`sets[${i}].lengthsPerRep must be a positive integer.`);
-
-      if (
-        Number.isInteger(reps) &&
-        reps > 0 &&
-        Number.isInteger(lengthsPerRep) &&
-        lengthsPerRep > 0
-      ) {
-        const setLengths = reps * lengthsPerRep;
-        computedTotalLengths += setLengths;
-
-        if (setLengths % 2 !== 0) {
-          errors.push(
-            `sets[${i}] ends on ${setLengths} total lengths (must be even).`,
-          );
-        }
-
-        computedTotal += reps * lengthsPerRep * poolLen;
-      }
-    }
-
-    if (computedTotalLengths % 2 !== 0) {
-      errors.push(
-        `Workout ends on ${computedTotalLengths} total lengths (must be even).`,
-      );
-    }
-
-    // Non-exact custom: allow tolerance. (Exact totals are handled by deterministic path.)
-    const tolerance = Math.max(200, poolLen);
-    const diff = Math.abs(computedTotal - targetTotal);
-    if (diff > tolerance) {
-      errors.push(
-        `Total distance mismatch: computed ${computedTotal}${unitsShort}, requested ${targetTotal}${unitsShort}. (tolerance ±${tolerance}${unitsShort})`,
-      );
+    // Always ensure at least freestyle is available
+    if (!strokes.freestyle && !strokes.backstroke && !strokes.breaststroke && !strokes.butterfly) {
+      strokes.freestyle = true;
     }
 
     return {
-      ok: errors.length === 0,
-      errors,
-      computedTotal,
-      computedTotalLengths,
-      tolerance,
+      focus: typeof payload.focus === "string" ? payload.focus : "allround",
+      restPref: typeof payload.restPref === "string" ? payload.restPref : "balanced",
+      includeKick: b(payload.includeKick),
+      includePull: b(payload.includePull),
+      fins: b(payload.equip_fins),
+      paddles: b(payload.equip_paddles),
+      strokes
     };
   }
 
-  function renderWorkoutTextFromJson(obj) {
+  function pickStrokeForSet(label, opts, seed) {
+    const allowed = [];
+    if (opts.strokes.freestyle) allowed.push("freestyle");
+    if (opts.strokes.backstroke) allowed.push("backstroke");
+    if (opts.strokes.breaststroke) allowed.push("breaststroke");
+    if (opts.strokes.butterfly) allowed.push("butterfly");
+
+    if (!allowed.length) return "freestyle";
+
+    // Bias by label
+    const k = String(label || "").toLowerCase();
+    if (k.includes("main") || k.includes("build")) {
+      if (allowed.includes("freestyle")) return "freestyle";
+    }
+
+    const idx = (Number(seed >>> 0) % allowed.length);
+    return allowed[idx];
+  }
+
+  function restSecondsFor(label, repDist, opts) {
+    const k = String(label || "").toLowerCase();
+    let base = 15;
+
+    if (k.includes("warm")) base = 0;
+    else if (k.includes("drill")) base = 20;
+    else if (k.includes("kick")) base = 15;
+    else if (k.includes("pull")) base = 15;
+    else if (k.includes("build")) base = 15;
+    else if (k.includes("main")) base = 20;
+    else if (k.includes("cool")) base = 0;
+
+    // Rep distance tweak
+    if (repDist >= 200) base = Math.max(10, base - 5);
+    if (repDist <= 50 && k.includes("main")) base = base + 10;
+
+    // Rest preference
+    const r = String(opts.restPref || "balanced");
+    if (r === "short") base = Math.max(0, base - 5);
+    if (r === "moderate") base = base + 0;
+    if (r === "more") base = base + 10;
+
+    return base;
+  }
+
+  function snapToPoolMultiple(dist, poolLen) {
+    const d = Number(dist);
+    if (!Number.isFinite(d) || d <= 0) return 0;
+    const base = Number(poolLen);
+    if (!Number.isFinite(base) || base <= 0) return d;
+    return Math.round(d / base) * base;
+  }
+
+  function buildOneSetBodyServer({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
+    const base = poolLen;
+
+    // Use a small library per set type, but force total distance exact.
+    // We build segments and then adjust with an easy filler that remains a pool multiple.
+    const k = String(label || "").toLowerCase();
+
+    const stroke = pickStrokeForSet(label, opts, seed);
+    const hasFins = !!opts.fins;
+    const hasPaddles = !!opts.paddles;
+
+    const makeLine = (reps, dist, text, restSec) => {
+      const r = Number(reps);
+      const d = Number(dist);
+      const rest = Number(restSec);
+
+      let suffix = "";
+      if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
+
+      const strokeText = (text || "").trim();
+      return String(r) + "x" + String(d) + " " + strokeText + suffix;
+    };
+
     const lines = [];
+    let remaining = snapToPoolMultiple(targetDistance, base);
 
-    for (const s of obj.sets) {
-      const label = String(s.label ?? "").trim();
-      const reps = Number(s.reps);
-      const lengthsPerRep = Number(s.lengthsPerRep);
+    if (remaining <= 0) return null;
 
-      const perRepDistance = lengthsPerRep * poolLen;
+    // Helper to add a segment and reduce remaining
+    const add = (reps, dist, note, rest) => {
+      const seg = reps * dist;
+      if (seg <= 0) return false;
+      if (seg > remaining) return false;
+      lines.push(makeLine(reps, dist, note, rest));
+      remaining -= seg;
+      return true;
+    };
 
-      const stroke =
-        typeof s.stroke === "string" && s.stroke.trim() ? s.stroke.trim() : "";
-      const intensity =
-        typeof s.intensity === "string" && s.intensity.trim()
-          ? s.intensity.trim()
-          : "";
-      const restSeconds = Number.isFinite(Number(s.restSeconds))
-        ? Number(s.restSeconds)
-        : null;
-      const notes =
-        typeof s.notes === "string" && s.notes.trim() ? s.notes.trim() : "";
+    // Choose patterns
+    if (k.includes("warm")) {
+      // Prefer 200 + 4x50 style over odd 1x550
+      const options = [
+        () => {
+          const d200 = snapToPoolMultiple(200, base);
+          if (d200 > 0) add(1, d200, stroke + " easy", 0);
+          const d50 = snapToPoolMultiple(50, base);
+          if (d50 > 0) add(4, d50, stroke + " build easy", restSecondsFor("build", d50, opts));
+          const d25 = snapToPoolMultiple(25, base);
+          if (d25 > 0) add(4, d25, "choice drill", restSecondsFor("drill", d25, opts));
+        },
+        () => {
+          const d300 = snapToPoolMultiple(300, base);
+          if (d300 > 0) add(1, d300, stroke + " easy", 0);
+          const d50 = snapToPoolMultiple(50, base);
+          if (d50 > 0) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
+        },
+        () => {
+          const d100 = snapToPoolMultiple(100, base);
+          if (d100 > 0) add(2, d100, stroke + " easy", 0);
+          const d50 = snapToPoolMultiple(50, base);
+          if (d50 > 0) add(4, d50, "kick easy", restSecondsFor("kick", d50, opts));
+          if (d50 > 0) add(4, d50, "drill swim", restSecondsFor("drill", d50, opts));
+        }
+      ];
 
-      const parts = [];
-      parts.push(
-        `${label}: ${reps}x${perRepDistance}${unitsShort} (${lengthsPerRep} lengths)`,
-      );
-      if (stroke) parts.push(stroke);
-      if (intensity) parts.push(intensity);
-      if (restSeconds !== null) parts.push(`${restSeconds}s rest`);
-      if (notes) parts.push(notes);
+      options[seed % options.length]();
 
-      lines.push(parts.join(" — "));
+      // Fill remaining with easy swim in 100s or 50s, not weird singles.
+      fillEasy();
+      return lines.join("\n");
     }
 
-    const computedTotal = obj.sets.reduce((sum, s) => {
-      return sum + Number(s.reps) * Number(s.lengthsPerRep) * poolLen;
-    }, 0);
+    if (k.includes("build")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
 
-    lines.push("");
-    lines.push(
-      `Total distance: ${computedTotal}${unitsShort} (pool: ${poolLen}${unitsShort})`,
-    );
-    return lines.join("\n");
-  }
-  /* __END_R240_CUSTOM_JSON_HELPERS_AND_VALIDATION__ */
+      if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
+      if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " descend 1 to 4", restSecondsFor("build", d100, opts));
 
-  /* __START_R250_PROMPTS__ */
-  function buildStandardPrompt() {
-    return `
-You are a swim coach generating a single swim workout.
+      fillEasy("build");
+      return lines.join("\n");
+    }
 
-Rules:
-- Output plain text only
-- Each line is a swim set
-- Distances must add up to exactly ${targetTotal}${unitsShort}
-- Pool length is standard (${poolLength})
-- DO NOT include "(lengths)" anywhere
-- Use conventional swim notation only (e.g. 10x100, 4x50)
+    if (k.includes("drill")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d25 = snapToPoolMultiple(25, base);
 
-Workout request:
-- Total distance: ${targetTotal}${unitsShort}
-- Pool: ${poolLength}
-`.trim();
-  }
+      if (d50 > 0 && remaining >= d50 * 8) add(8, d50, "drill swim technique", restSecondsFor("drill", d50, opts));
+      if (d25 > 0 && remaining >= d25 * 12) add(12, d25, "choice drill", restSecondsFor("drill", d25, opts));
 
-  function buildCustomJsonPrompt() {
-    const tolerance = Math.max(200, poolLen);
+      fillEasy("drill");
+      return lines.join("\n");
+    }
 
-    return `
-You are a swim coach generating a single swim workout FOR A CUSTOM POOL.
+    if (k.includes("kick")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
 
-CRITICAL:
-- Pool length = ${poolLen}${unitsShort}
-- 1 length = exactly ${poolLen}${unitsShort}
-- Return JSON ONLY (no prose, no markdown, no code fences).
+      const finNote = hasFins ? " with fins" : "";
+      if (d50 > 0 && remaining >= d50 * 8) add(8, d50, "kick steady" + finNote, restSecondsFor("kick", d50, opts));
+      if (d100 > 0 && remaining >= d100 * 4) add(4, d100, "kick strong" + finNote, restSecondsFor("kick", d100, opts));
 
-Even-length rules (mandatory):
-- Every set must finish on an even number of lengths.
-- The whole workout must finish on an even number of lengths.
+      fillEasy("kick");
+      return lines.join("\n");
+    }
 
-JSON schema:
-{
-  "sets": [
+    if (k.includes("pull")) {
+      const d100 = snapToPoolMultiple(100, base);
+      const d200 = snapToPoolMultiple(200, base);
+
+      const padNote = hasPaddles ? " with paddles" : "";
+      if (d200 > 0 && remaining >= d200 * 3) add(3, d200, "pull steady" + padNote, restSecondsFor("pull", d200, opts));
+      if (d100 > 0 && remaining >= d100 * 6) add(6, d100, "pull strong" + padNote, restSecondsFor("pull", d100, opts));
+
+      fillEasy("pull");
+      return lines.join("\n");
+    }
+
+    if (k.includes("cool")) {
+      // Cool down should be simple and clean
+      const d200 = snapToPoolMultiple(200, base);
+      const d100 = snapToPoolMultiple(100, base);
+      if (d200 > 0 && remaining >= d200) add(1, d200, stroke + " easy", 0);
+      if (d100 > 0 && remaining >= d100) add(1, d100, "easy mixed", 0);
+      fillEasy("cool");
+      return lines.join("\n");
+    }
+
+    // Main (and Main 1/2)
     {
-      "label": "Warm-up" | "Drill" | "Main" | "Cooldown",
-      "reps": <positive integer>,
-      "lengthsPerRep": <positive integer>,
-      "stroke": "<optional string>",
-      "intensity": "<optional string>",
-      "restSeconds": <optional integer>,
-      "notes": "<optional string>"
-    }
-  ]
-}
+      const focus = String(opts.focus || "allround");
 
-Distance math:
-- perRepDistance = lengthsPerRep * ${poolLen}${unitsShort}
-- setDistance = reps * perRepDistance
-- sum(setDistance) should be as close as possible to ${targetTotal}${unitsShort}
-- May differ by up to ±${tolerance}${unitsShort}
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
+      const d200 = snapToPoolMultiple(200, base);
 
-Hard rule:
-- NEVER assume 25m/50m. You are in a ${poolLen}${unitsShort} pool.
-`.trim();
-  }
-  /* __END_R250_PROMPTS__ */
-
-  /* __START_R260_HANDLER_FLOW__ */
-  try {
-    // Deterministic fallback for standard pools (no "(lengths)", sums exactly)
-    function buildDeterministicStandardWorkoutText() {
-      const total = targetTotal;
-
-      // Simple, always-sums allocation
-      // 20% warmup, 15% drills, 55% main, 10% cooldown (then adjust to exact using 50/100 chunks)
-      let wu = Math.round(total * 0.2);
-      let dr = Math.round(total * 0.15);
-      let cd = Math.round(total * 0.1);
-      let main = total - (wu + dr + cd);
-
-      // Snap each to nearest 50 in the target units (works fine for 25m/50m/25yd conventions)
-      const snap50 = (n) => Math.max(50, Math.round(n / 50) * 50);
-
-      wu = snap50(wu);
-      dr = snap50(dr);
-      cd = snap50(cd);
-      main = total - (wu + dr + cd);
-
-      // Ensure main is at least 400; if not, steal from warmup/drills
-      if (main < 400) {
-        const need = 400 - main;
-        const takeWu = Math.min(Math.max(wu - 200, 0), need);
-        wu -= takeWu;
-        main += takeWu;
-
-        const need2 = 400 - main;
-        const takeDr = Math.min(Math.max(dr - 200, 0), need2);
-        dr -= takeDr;
-        main += takeDr;
+      if (focus === "sprint") {
+        if (d50 > 0 && remaining >= d50 * 12) add(12, d50, stroke + " fast", restSecondsFor("main", d50, opts) + 10);
+        if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " strong", restSecondsFor("main", d100, opts));
+      } else if (focus === "threshold") {
+        if (d100 > 0 && remaining >= d100 * 10) add(10, d100, stroke + " best average", restSecondsFor("main", d100, opts));
+        if (d200 > 0 && remaining >= d200 * 4) add(4, d200, stroke + " steady strong", restSecondsFor("main", d200, opts));
+      } else if (focus === "endurance") {
+        if (d200 > 0 && remaining >= d200 * 6) add(6, d200, stroke + " steady", restSecondsFor("main", d200, opts));
+        if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " smooth", restSecondsFor("main", d100, opts));
+      } else if (focus === "technique") {
+        if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " perfect form", restSecondsFor("main", d100, opts));
+        if (d50 > 0 && remaining >= d50 * 8) add(8, d50, stroke + " focus stroke count", restSecondsFor("main", d50, opts));
+      } else {
+        // All round
+        if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " steady", restSecondsFor("main", d100, opts));
+        if (d200 > 0 && remaining >= d200 * 3) add(3, d200, stroke + " strong", restSecondsFor("main", d200, opts));
+        if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " fast finish", restSecondsFor("main", d50, opts) + 5);
       }
 
-      // Final exactness adjustment using 50s
-      const sum = wu + dr + main + cd;
-      const diff = total - sum;
-      main += diff; // diff will be multiple of 50 because total is slider-hundreds and others snapped to 50
-
-      const lines = [];
-      // Use conventional “reps x distance” where possible
-      lines.push(`Warm-up: ${Math.max(1, Math.round(wu / 200))}x200 easy`); // approximate reps; still sums? (line is guidance)
-      lines.push(
-        `Drills: ${Math.max(4, Math.round(dr / 50))}x50 drill (choice)`,
-      );
-      lines.push(
-        `Main set: ${Math.max(5, Math.round(main / 100))}x100 steady/moderate`,
-      );
-      lines.push(`Cooldown: ${Math.max(1, Math.round(cd / 100))}x100 easy`);
-
-      // Note: For standard pools we don’t print a computed total line; this is fallback copy only.
-      // If you want the footer later, we’ll compute exact displayed totals by set.
-      return lines.join("\n\n");
+      fillEasy("main");
+      return lines.join("\n");
     }
 
-    // Standard pools: try OpenAI, but if it times out/fails, return deterministic fallback
-    if (!isCustomPool) {
-      try {
-        const workoutText = await callOpenAI(
-          [{ role: "user", content: buildStandardPrompt() }],
-          { timeoutMs: 20000 },
-        );
+    function fillEasy(kind) {
+      // Fill remaining with clean pool-multiple segments that look human.
+      // Prefer 100s then 50s, and only as 1x if it is a standard distance.
+      const d100 = snapToPoolMultiple(100, base);
+      const d50 = snapToPoolMultiple(50, base);
+      const d200 = snapToPoolMultiple(200, base);
 
-        if (!workoutText || typeof workoutText !== "string") {
-          throw new Error("OpenAI returned empty workout text.");
+      const k2 = String(kind || "").toLowerCase();
+
+      const note =
+        k2.includes("main") ? (stroke + " steady") :
+        k2.includes("drill") ? "easy swim" :
+        k2.includes("kick") ? "easy swim" :
+        k2.includes("pull") ? "easy swim" :
+        (stroke + " easy");
+
+      while (remaining >= (d200 || base) && d200 > 0 && remaining % d200 === 0 && remaining >= d200) {
+        // Only use a couple of 200s max
+        if (lines.length >= 4) break;
+        add(1, d200, note, restSecondsFor(kind || "easy", d200, opts));
+      }
+
+      if (d100 > 0) {
+        const reps100 = Math.floor(remaining / d100);
+        if (reps100 >= 2) {
+          const r = Math.min(reps100, 6);
+          add(r, d100, note, restSecondsFor(kind || "easy", d100, opts));
+        }
+      }
+
+      if (d50 > 0) {
+        const reps50 = Math.floor(remaining / d50);
+        if (reps50 >= 2) {
+          const r = Math.min(reps50, 10);
+          add(r, d50, note, restSecondsFor(kind || "easy", d50, opts));
+        }
+      }
+
+      // Last resort: one clean single that is still a pool multiple
+      if (remaining > 0) {
+        const allowedSingles = [200, 300, 400, 500, 600, 800, 1000].map(v => snapToPoolMultiple(v, base)).filter(v => v > 0);
+        const canSingle = allowedSingles.includes(remaining);
+        if (canSingle) {
+          add(1, remaining, note, 0);
+          return;
         }
 
-        return res.json({ ok: true, workoutText });
-      } catch (e) {
-        console.warn(
-          "OpenAI standard-pool fallback triggered:",
-          e?.message ?? e,
-        );
-        const workoutText = buildDeterministicStandardWorkoutText();
-        return res.json({
-          ok: true,
-          workoutText,
-        });
+        // Otherwise force 2x(remaining/2) if possible
+        if (remaining % 2 === 0) {
+          const half = remaining / 2;
+          add(2, half, note, restSecondsFor(kind || "easy", half, opts));
+          return;
+        }
+
+        // If stuck, do not output weirdness. Return null.
+        return null;
+      }
+    }
+  }
+});
+/* __END_ROUTE_REROLL_SET_R180__ */
+
+/* __START_ROUTE_GENERATE_WORKOUT_R200__ */
+app.post("/generate-workout", (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const distance = Number(body.distance);
+    const poolLength = body.poolLength;
+    const customPoolLength = body.customPoolLength;
+    const poolLengthUnit = body.poolLengthUnit;
+    const lastWorkoutFp = typeof body.lastWorkoutFp === "string" ? body.lastWorkoutFp : "";
+
+    if (!Number.isFinite(distance) || distance <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid distance." });
+    }
+    if (!poolLength || typeof poolLength !== "string") {
+      return res.status(400).json({ ok: false, error: "Invalid pool selection." });
+    }
+
+    const isCustomPool = poolLength === "custom";
+
+    const unitsShort = isCustomPool
+      ? (poolLengthUnit === "yards" ? "yd" : "m")
+      : (poolLength === "25yd" ? "yd" : "m");
+
+    const poolLen = isCustomPool
+      ? Number(customPoolLength)
+      : (poolLength === "25m" ? 25 : poolLength === "50m" ? 50 : poolLength === "25yd" ? 25 : null);
+
+    if (!poolLen || !Number.isFinite(poolLen) || poolLen <= 0) {
+      return res.status(400).json({ ok: false, error: "Invalid pool length." });
+    }
+
+    const opts = normalizeOptions(body);
+
+    const targetTotal = snapToPoolMultiple(distance, poolLen);
+
+    const seed = nowSeed();
+    const workout = buildWorkout({
+      targetTotal,
+      poolLen,
+      unitsShort,
+      poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
+      thresholdPace: String(body.thresholdPace || ""),
+      opts,
+      seed
+    });
+
+    if (!workout || !workout.text) {
+      return res.status(500).json({ ok: false, error: "Failed to build workout." });
+    }
+
+    const fp = fingerprintWorkoutText(workout.text);
+    if (lastWorkoutFp && fp === lastWorkoutFp) {
+      const seed2 = nowSeed();
+      const workout2 = buildWorkout({
+        targetTotal,
+        poolLen,
+        unitsShort,
+        poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
+        thresholdPace: String(body.thresholdPace || ""),
+        opts,
+        seed: seed2
+      });
+
+      if (workout2 && workout2.text) {
+        return res.json({ ok: true, workoutText: workout2.text });
       }
     }
 
-    // Custom pools: deterministic only (instant, always valid)
-    const deterministicExact = buildDeterministicCustomWorkoutTextExact();
-    if (deterministicExact) {
-      return res.json({ ok: true, workoutText: deterministicExact });
-    }
-
-    const deterministicNearest = buildDeterministicCustomWorkoutTextNearest();
-    if (deterministicNearest) {
-      return res.json({ ok: true, workoutText: deterministicNearest });
-    }
-
-    return res.status(500).json({
-      ok: false,
-      error: "Custom pool deterministic generation failed unexpectedly.",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Workout generation failed." });
+    return res.json({ ok: true, workoutText: workout.text });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) });
   }
-  /* __END_R260_HANDLER_FLOW__ */
-});
 
+  function b(v) {
+    return v === true || v === "true" || v === "on" || v === 1;
+  }
+
+  function normalizeOptions(payload) {
+    const strokes = {
+      freestyle: b(payload.stroke_freestyle),
+      backstroke: b(payload.stroke_backstroke),
+      breaststroke: b(payload.stroke_breaststroke),
+      butterfly: b(payload.stroke_butterfly)
+    };
+
+    const anyStroke =
+      strokes.freestyle || strokes.backstroke || strokes.breaststroke || strokes.butterfly;
+
+    if (!anyStroke) {
+      strokes.freestyle = true;
+    }
+
+    return {
+      focus: typeof payload.focus === "string" ? payload.focus : "allround",
+      restPref: typeof payload.restPref === "string" ? payload.restPref : "balanced",
+      includeKick: payload.includeKick === undefined ? true : b(payload.includeKick),
+      includePull: b(payload.includePull),
+      fins: b(payload.equip_fins),
+      paddles: b(payload.equip_paddles),
+      strokes,
+      notes: typeof payload.notes === "string" ? payload.notes.trim() : ""
+    };
+  }
+
+  function nowSeed() {
+    const a = Date.now() >>> 0;
+    const b2 = Math.floor(Math.random() * 0xffffffff) >>> 0;
+    return (a ^ b2) >>> 0;
+  }
+
+  function fnv1a32(str) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function fingerprintWorkoutText(workoutText) {
+    return String(fnv1a32(String(workoutText || "")));
+  }
+
+  function snapToPoolMultiple(dist, poolLen) {
+    const d = Number(dist);
+    if (!Number.isFinite(d) || d <= 0) return 0;
+    const base = Number(poolLen);
+    if (!Number.isFinite(base) || base <= 0) return d;
+    return Math.round(d / base) * base;
+  }
+
+  function parsePaceToSecondsPer100(s) {
+    const t = String(s || "").trim();
+    if (!t) return null;
+
+    if (/^\d{1,2}:\d{2}$/.test(t)) {
+      const parts = t.split(":");
+      const mm = Number(parts[0]);
+      const ss = Number(parts[1]);
+      if (!Number.isFinite(mm) || !Number.isFinite(ss)) return null;
+      return (mm * 60) + ss;
+    }
+
+    if (/^\d{2,3}$/.test(t)) {
+      const v = Number(t);
+      if (!Number.isFinite(v) || v <= 0) return null;
+      return v;
+    }
+
+    return null;
+  }
+
+  function fmtMmSs(totalSeconds) {
+    const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
+    const mm = Math.floor(s / 60);
+    const ss = s % 60;
+    return String(mm) + ":" + String(ss).padStart(2, "0");
+  }
+
+  function estimateWorkoutTotalSeconds(workoutText, paceSecPer100) {
+    if (!Number.isFinite(paceSecPer100) || paceSecPer100 <= 0) return null;
+
+    const lines = String(workoutText || "").split(/\r?\n/);
+
+    let currentLabel = "";
+    let setBodyLines = [];
+    let total = 0;
+
+    const flush = () => {
+      if (!setBodyLines.length) return;
+
+      const body = setBodyLines.join("\n");
+      const dist = computeSetDistanceFromBody(body);
+      if (!Number.isFinite(dist) || dist <= 0) {
+        setBodyLines = [];
+        return;
+      }
+
+      const mult = paceMultiplierForLabel(currentLabel);
+      const swim = (dist / 100) * paceSecPer100 * mult;
+      const rest = computeRestSecondsFromBody(body);
+
+      total += swim + rest;
+
+      setBodyLines = [];
+    };
+
+    for (const line of lines) {
+      const t = String(line || "").trim();
+      if (!t) continue;
+
+      if (
+        t.startsWith("Requested:") ||
+        t.startsWith("Total distance:") ||
+        t.startsWith("Total lengths:") ||
+        t.startsWith("Ends at start end:") ||
+        t.startsWith("Est total time:")
+      ) {
+        continue;
+      }
+
+      const m = t.match(/^([^:]{2,30}):\s*(.+)$/);
+      if (m) {
+        flush();
+        currentLabel = String(m[1] || "").trim();
+        setBodyLines = [String(m[2] || "").trim()];
+      } else {
+        setBodyLines.push(t);
+      }
+    }
+
+    flush();
+    return total;
+  }
+
+  function computeSetDistanceFromBody(body) {
+    const t = String(body || "");
+    const re = /(\d+)\s*[x×]\s*(\d+)\s*(m|yd)?/gi;
+
+    let sum = 0;
+    let m;
+    while ((m = re.exec(t)) !== null) {
+      const reps = Number(m[1]);
+      const dist = Number(m[2]);
+      if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
+    }
+
+    if (sum === 0) {
+      const one = t.match(/(^|\s)(\d{2,5})(\s*(m|yd))?(\s|$)/);
+      if (one) {
+        const v = Number(one[2]);
+        if (Number.isFinite(v) && v >= 50) sum = v;
+      }
+    }
+
+    return sum > 0 ? sum : null;
+  }
+
+  function computeRestSecondsFromBody(body) {
+    const t = String(body || "");
+    const reSeg = /(\d+)\s*[x×]\s*(\d+)[^\n]*?rest\s*(\d+)\s*s/gi;
+    let sum = 0;
+    let m;
+    while ((m = reSeg.exec(t)) !== null) {
+      const reps = Number(m[1]);
+      const rest = Number(m[3]);
+      if (Number.isFinite(reps) && reps >= 2 && Number.isFinite(rest) && rest >= 0) {
+        sum += (reps - 1) * rest;
+      }
+    }
+    return sum;
+  }
+
+  function paceMultiplierForLabel(label) {
+    const k = String(label || "").toLowerCase();
+    if (k.includes("warm")) return 1.25;
+    if (k.includes("build")) return 1.18;
+    if (k.includes("drill")) return 1.30;
+    if (k.includes("kick")) return 1.38;
+    if (k.includes("pull")) return 1.25;
+    if (k.includes("main")) return 1.05;
+    if (k.includes("cool")) return 1.35;
+    return 1.15;
+  }
+
+  // FIX: generator needs its own set builder (reroll route has one, but it is scoped there)
+  function buildOneSetBodyServerLocal({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
+    const base = poolLen;
+
+    const makeLine = (reps, dist, text, restSec) => {
+      const r = Number(reps);
+      const d = Number(dist);
+      const rest = Number(restSec);
+
+      let suffix = "";
+      if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
+
+      const strokeText = (text || "").trim();
+      return String(r) + "x" + String(d) + " " + strokeText + suffix;
+    };
+
+    const pickStrokeForSet = (label2) => {
+      const allowed = [];
+      if (opts.strokes.freestyle) allowed.push("freestyle");
+      if (opts.strokes.backstroke) allowed.push("backstroke");
+      if (opts.strokes.breaststroke) allowed.push("breaststroke");
+      if (opts.strokes.butterfly) allowed.push("butterfly");
+      if (!allowed.length) return "freestyle";
+
+      const k = String(label2 || "").toLowerCase();
+      if ((k.includes("main") || k.includes("build")) && allowed.includes("freestyle")) return "freestyle";
+
+      const idx = (Number(seed >>> 0) % allowed.length);
+      return allowed[idx];
+    };
+
+    const restSecondsFor = (label2, repDist) => {
+      const k = String(label2 || "").toLowerCase();
+      let baseRest = 15;
+
+      if (k.includes("warm")) baseRest = 0;
+      else if (k.includes("drill")) baseRest = 20;
+      else if (k.includes("kick")) baseRest = 15;
+      else if (k.includes("pull")) baseRest = 15;
+      else if (k.includes("build")) baseRest = 15;
+      else if (k.includes("main")) baseRest = 20;
+      else if (k.includes("cool")) baseRest = 0;
+
+      if (repDist >= 200) baseRest = Math.max(10, baseRest - 5);
+      if (repDist <= 50 && k.includes("main")) baseRest = baseRest + 10;
+
+      const r = String(opts.restPref || "balanced");
+      if (r === "short") baseRest = Math.max(0, baseRest - 5);
+      if (r === "more") baseRest = baseRest + 10;
+
+      return baseRest;
+    };
+
+    const add = (lines, remainingObj, reps, dist, note, rest) => {
+      const seg = reps * dist;
+      if (seg <= 0) return false;
+      if (seg > remainingObj.value) return false;
+      lines.push(makeLine(reps, dist, note, rest));
+      remainingObj.value -= seg;
+      return true;
+    };
+
+    const fillEasy = (lines, remainingObj, kind, stroke) => {
+      const d100 = snapToPoolMultiple(100, base);
+      const d50 = snapToPoolMultiple(50, base);
+      const d200 = snapToPoolMultiple(200, base);
+
+      const k2 = String(kind || "").toLowerCase();
+
+      const note =
+        k2.includes("main") ? (stroke + " steady") :
+        k2.includes("drill") ? "easy swim" :
+        k2.includes("kick") ? "easy swim" :
+        k2.includes("pull") ? "easy swim" :
+        (stroke + " easy");
+
+      while (remainingObj.value >= (d200 || base) && d200 > 0 && remainingObj.value % d200 === 0 && remainingObj.value >= d200) {
+        if (lines.length >= 4) break;
+        add(lines, remainingObj, 1, d200, note, restSecondsFor(kind || "easy", d200));
+      }
+
+      if (d100 > 0) {
+        const reps100 = Math.floor(remainingObj.value / d100);
+        if (reps100 >= 2) {
+          const r = Math.min(reps100, 6);
+          add(lines, remainingObj, r, d100, note, restSecondsFor(kind || "easy", d100));
+        }
+      }
+
+      if (d50 > 0) {
+        const reps50 = Math.floor(remainingObj.value / d50);
+        if (reps50 >= 2) {
+          const r = Math.min(reps50, 10);
+          add(lines, remainingObj, r, d50, note, restSecondsFor(kind || "easy", d50));
+        }
+      }
+
+      if (remainingObj.value > 0) {
+        const allowedSingles = [200, 300, 400, 500, 600, 800, 1000]
+          .map(v => snapToPoolMultiple(v, base))
+          .filter(v => v > 0);
+
+        const canSingle = allowedSingles.includes(remainingObj.value);
+        if (canSingle) {
+          add(lines, remainingObj, 1, remainingObj.value, note, 0);
+          return true;
+        }
+
+        if (remainingObj.value % 2 === 0) {
+          const half = remainingObj.value / 2;
+          add(lines, remainingObj, 2, half, note, restSecondsFor(kind || "easy", half));
+          return true;
+        }
+
+        return false;
+      }
+
+      return true;
+    };
+
+    const lines = [];
+    const remainingObj = { value: snapToPoolMultiple(targetDistance, base) };
+    if (remainingObj.value <= 0) return null;
+
+    const stroke = pickStrokeForSet(label);
+    const hasFins = !!opts.fins;
+    const hasPaddles = !!opts.paddles;
+    const k = String(label || "").toLowerCase();
+
+    if (k.includes("warm")) {
+      const d200 = snapToPoolMultiple(200, base);
+      const d50 = snapToPoolMultiple(50, base);
+      const d25 = snapToPoolMultiple(25, base);
+
+      const choice = seed % 3;
+
+      if (choice === 0) {
+        if (d200 > 0) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
+        if (d50 > 0) add(lines, remainingObj, 4, d50, stroke + " build easy", restSecondsFor("build", d50));
+        if (d25 > 0) add(lines, remainingObj, 4, d25, "choice drill", restSecondsFor("drill", d25));
+      } else if (choice === 1) {
+        const d300 = snapToPoolMultiple(300, base);
+        if (d300 > 0) add(lines, remainingObj, 1, d300, stroke + " easy", 0);
+        if (d50 > 0) add(lines, remainingObj, 6, d50, stroke + " build", restSecondsFor("build", d50));
+      } else {
+        const d100 = snapToPoolMultiple(100, base);
+        if (d100 > 0) add(lines, remainingObj, 2, d100, stroke + " easy", 0);
+        if (d50 > 0) add(lines, remainingObj, 4, d50, "kick easy", restSecondsFor("kick", d50));
+        if (d50 > 0) add(lines, remainingObj, 4, d50, "drill swim", restSecondsFor("drill", d50));
+      }
+
+      if (!fillEasy(lines, remainingObj, "warm", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    if (k.includes("build")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
+
+      if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, stroke + " build", restSecondsFor("build", d50));
+      if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " descend 1 to 4", restSecondsFor("build", d100));
+
+      if (!fillEasy(lines, remainingObj, "build", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    if (k.includes("drill")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d25 = snapToPoolMultiple(25, base);
+
+      if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, "drill swim technique", restSecondsFor("drill", d50));
+      if (d25 > 0 && remainingObj.value >= d25 * 12) add(lines, remainingObj, 12, d25, "choice drill", restSecondsFor("drill", d25));
+
+      if (!fillEasy(lines, remainingObj, "drill", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    if (k.includes("kick")) {
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
+      const finNote = hasFins ? " with fins" : "";
+
+      if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, "kick steady" + finNote, restSecondsFor("kick", d50));
+      if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, "kick strong" + finNote, restSecondsFor("kick", d100));
+
+      if (!fillEasy(lines, remainingObj, "kick", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    if (k.includes("pull")) {
+      const d100 = snapToPoolMultiple(100, base);
+      const d200 = snapToPoolMultiple(200, base);
+      const padNote = hasPaddles ? " with paddles" : "";
+
+      if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, "pull steady" + padNote, restSecondsFor("pull", d200));
+      if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, "pull strong" + padNote, restSecondsFor("pull", d100));
+
+      if (!fillEasy(lines, remainingObj, "pull", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    if (k.includes("cool")) {
+      const d200 = snapToPoolMultiple(200, base);
+      const d100 = snapToPoolMultiple(100, base);
+
+      if (d200 > 0 && remainingObj.value >= d200) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
+      if (d100 > 0 && remainingObj.value >= d100) add(lines, remainingObj, 1, d100, "easy mixed", 0);
+
+      if (!fillEasy(lines, remainingObj, "cool", stroke)) return null;
+      return lines.join("\n");
+    }
+
+    // Main
+    {
+      const focus = String(opts.focus || "allround");
+
+      const d50 = snapToPoolMultiple(50, base);
+      const d100 = snapToPoolMultiple(100, base);
+      const d200 = snapToPoolMultiple(200, base);
+
+      if (focus === "sprint") {
+        if (d50 > 0 && remainingObj.value >= d50 * 12) add(lines, remainingObj, 12, d50, stroke + " fast", restSecondsFor("main", d50) + 10);
+        if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " strong", restSecondsFor("main", d100));
+      } else if (focus === "threshold") {
+        if (d100 > 0 && remainingObj.value >= d100 * 10) add(lines, remainingObj, 10, d100, stroke + " best average", restSecondsFor("main", d100));
+        if (d200 > 0 && remainingObj.value >= d200 * 4) add(lines, remainingObj, 4, d200, stroke + " steady strong", restSecondsFor("main", d200));
+      } else if (focus === "endurance") {
+        if (d200 > 0 && remainingObj.value >= d200 * 6) add(lines, remainingObj, 6, d200, stroke + " steady", restSecondsFor("main", d200));
+        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " smooth", restSecondsFor("main", d100));
+      } else if (focus === "technique") {
+        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " perfect form", restSecondsFor("main", d100));
+        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " focus stroke count", restSecondsFor("main", d50));
+      } else {
+        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " steady", restSecondsFor("main", d100));
+        if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, stroke + " strong", restSecondsFor("main", d200));
+        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, stroke + " fast finish", restSecondsFor("main", d50) + 5);
+      }
+
+      if (!fillEasy(lines, remainingObj, "main", stroke)) return null;
+      return lines.join("\n");
+    }
+  }
+
+  function buildWorkout({ targetTotal, poolLen, unitsShort, poolLabel, thresholdPace, opts, seed }) {
+    const base = poolLen;
+    const total = snapToPoolMultiple(targetTotal, base);
+
+    const paceSec = parsePaceToSecondsPer100(thresholdPace);
+
+    const includeKick = opts.includeKick && total >= snapToPoolMultiple(1500, base);
+    const includePull = opts.includePull && total >= snapToPoolMultiple(1500, base);
+
+    const wantBuild = total >= snapToPoolMultiple(1200, base);
+    const wantDrill = true;
+
+    const warmTarget = pickFromTypical(total, base, [400, 600, 800, 1000], 0.18);
+    const coolTarget = pickFromTypical(total, base, [200, 300, 400, 500], 0.08);
+
+    let remaining = total;
+
+    const sets = [];
+
+    const warm = snapToPoolMultiple(warmTarget, base);
+    sets.push({ label: "Warm up", dist: warm });
+    remaining -= warm;
+
+    if (wantBuild) {
+      const build = snapToPoolMultiple(pickFromTypical(total, base, [200, 300, 400, 500], 0.08), base);
+      sets.push({ label: "Build", dist: Math.min(build, Math.max(base * 8, remaining - coolTarget)) });
+      remaining -= sets[sets.length - 1].dist;
+    }
+
+    if (wantDrill) {
+      const drill = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+      const d = Math.min(drill, Math.max(base * 8, remaining - coolTarget));
+      sets.push({ label: "Drill", dist: d });
+      remaining -= d;
+    }
+
+    if (includeKick) {
+      const kick = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+      const d = Math.min(kick, Math.max(base * 8, remaining - coolTarget));
+      sets.push({ label: "Kick", dist: d });
+      remaining -= d;
+    } else if (includePull) {
+      const pull = snapToPoolMultiple(pickFromTypical(total, base, [300, 400, 500, 600], 0.12), base);
+      const d = Math.min(pull, Math.max(base * 8, remaining - coolTarget));
+      sets.push({ label: "Pull", dist: d });
+      remaining -= d;
+    }
+
+    const cool = snapToPoolMultiple(coolTarget, base);
+    remaining -= cool;
+
+    const mainTotal = remaining;
+
+    if (mainTotal <= 0) {
+      return {
+        text:
+          "Warm up: 1x" + String(total) + " easy\n\n" +
+          "Requested: " + String(total) + String(unitsShort) + "\n" +
+          "Total distance: " + String(total) + String(unitsShort) + " (pool: " + String(poolLabel) + ")"
+      };
+    }
+
+    if (mainTotal >= snapToPoolMultiple(2400, base)) {
+      const m1 = snapToPoolMultiple(Math.round(mainTotal * 0.55), base);
+      const m2 = snapToPoolMultiple(mainTotal - m1, base);
+      sets.push({ label: "Main 1", dist: m1 });
+      sets.push({ label: "Main 2", dist: m2 });
+    } else {
+      sets.push({ label: "Main", dist: snapToPoolMultiple(mainTotal, base) });
+    }
+
+    sets.push({ label: "Cool down", dist: cool });
+
+    const lines = [];
+
+    for (const s of sets) {
+      const setLabel = s.label;
+      const setDist = s.dist;
+
+      const body = buildOneSetBodyServerLocal({
+        label: setLabel,
+        targetDistance: setDist,
+        poolLen,
+        unitsShort,
+        opts,
+        seed: (seed + fnv1a32(setLabel)) >>> 0
+      });
+
+      if (!body) {
+        const fallback = safeSimpleSetBody(setLabel, setDist, poolLen, opts);
+        lines.push(setLabel + ": " + fallback.split("\n")[0]);
+        for (const extra of fallback.split("\n").slice(1)) lines.push(extra);
+        lines.push("");
+        continue;
+      }
+
+      const bodyLines = body.split("\n");
+      lines.push(setLabel + ": " + bodyLines[0]);
+      for (const extra of bodyLines.slice(1)) lines.push(extra);
+      lines.push("");
+    }
+
+    while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
+
+    const footer = [];
+    footer.push("");
+    footer.push("Requested: " + String(targetTotal) + String(unitsShort));
+
+    if (total % poolLen === 0) {
+      const totalLengths = total / poolLen;
+      footer.push("Total lengths: " + String(totalLengths) + " lengths");
+      footer.push("Ends at start end: " + (totalLengths % 2 === 0 ? "yes" : "no"));
+    }
+
+    footer.push("Total distance: " + String(total) + String(unitsShort) + " (pool: " + String(poolLabel) + ")");
+
+    if (Number.isFinite(paceSec) && paceSec > 0) {
+      const estTotal = estimateWorkoutTotalSeconds(lines.join("\n"), paceSec);
+      if (Number.isFinite(estTotal)) {
+        footer.push("Est total time: " + fmtMmSs(estTotal));
+      }
+    }
+
+    const full = lines.join("\n") + "\n" + footer.join("\n");
+
+    return { text: full };
+
+    function pickFromTypical(totalD, baseD, choices, pct) {
+      const target = totalD * pct;
+      const snappedChoices = choices
+        .map(v => snapToPoolMultiple(v, baseD))
+        .filter(v => v > 0);
+
+      let best = snappedChoices[0] || snapToPoolMultiple(target, baseD);
+      let bestDiff = Math.abs(best - target);
+
+      for (const c of snappedChoices) {
+        const diff = Math.abs(c - target);
+        if (diff < bestDiff) {
+          best = c;
+          bestDiff = diff;
+        }
+      }
+
+      const wiggle = (seed % 3) - 1;
+      const idx = Math.max(0, Math.min(snappedChoices.length - 1, snappedChoices.indexOf(best) + wiggle));
+      if (snappedChoices[idx]) best = snappedChoices[idx];
+
+      return best;
+    }
+
+    function safeSimpleSetBody(label, dist, poolLen2, opts2) {
+      const base2 = poolLen2;
+      const d100 = snapToPoolMultiple(100, base2);
+      const d50 = snapToPoolMultiple(50, base2);
+
+      const lines2 = [];
+      let remaining2 = dist;
+
+      const k = String(label || "").toLowerCase();
+      const rest = (k.includes("main") ? 20 : k.includes("drill") ? 20 : k.includes("build") ? 15 : 0);
+
+      if (d100 > 0) {
+        const reps = Math.floor(remaining2 / d100);
+        if (reps >= 2) {
+          const use = Math.min(reps, 12);
+          lines2.push(String(use) + "x" + String(d100) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : ""));
+          remaining2 -= use * d100;
+        }
+      }
+
+      if (d50 > 0 && remaining2 > 0) {
+        const reps = Math.floor(remaining2 / d50);
+        if (reps >= 2) {
+          const use = Math.min(reps, 16);
+          lines2.push(String(use) + "x" + String(d50) + " easy" + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : ""));
+          remaining2 -= use * d50;
+        }
+      }
+
+      if (remaining2 > 0) {
+        lines2.push("1x" + String(remaining2) + " easy");
+        remaining2 = 0;
+      }
+
+      return lines2.join("\n");
+    }
+  }
+});
 /* __END_ROUTE_GENERATE_WORKOUT_R200__ */
+
 
 /* __START_SERVER_LISTEN_R900__ */
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port " + String(PORT));
 });
 /* __END_SERVER_LISTEN_R900__ */
 

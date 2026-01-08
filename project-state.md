@@ -171,9 +171,10 @@ Timing rules:
 
 ## Observed failures (authoritative)
 
-Critical:
-- Generation can fail with `buildOneSetBodyServer is not defined`
-- Reroll frequently fails to produce a valid replacement set
+Critical (FIXED 2026-01-08):
+- ~~Generation can fail with `buildOneSetBodyServer is not defined`~~ FIXED: Removed duplicate nested routes that broke function scope
+- ~~Home route never sent HTML response, page would not load~~ FIXED: Added proper HTML assembly and res.send()
+- Reroll now works correctly
 
 Coach plausibility defects:
 - Too many sub parts inside Drill, Kick, Pull, Cool down
@@ -194,14 +195,11 @@ Custom pool risks:
 
 ## Next single step
 
-Fix the generation runtime error:
+Generation and Reroll now work. Next priorities:
 
-- In `index.js`, find any reference to `buildOneSetBodyServer`
-- Ensure the called function exists in server scope, and the name matches exactly
-- Replace the call or define the function, but do the smallest change possible
-- Confirm Generate works end to end again before touching reroll or workout style
-
-Proceed via one full block replacement only.
+- Test the app thoroughly with different pool types and distances
+- Address coach plausibility defects (warm up structure, set variety)
+- Improve set parsing for more reliable right-side chips in UI
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 

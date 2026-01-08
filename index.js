@@ -51,7 +51,7 @@ app.get("/", (req, res) => {
             <h3 style="margin:0 0 10px 0;">Distance</h3>
 
             <label style="display:block; margin-bottom:6px;">
-              <strong id="distanceLabel">1000</strong> <span style="color:#555;">(m or yd)</span>
+              <strong id="distanceLabel">1500</strong> <span style="color:#555;">(m or yd)</span>
             </label>
 
             <input
@@ -60,10 +60,10 @@ app.get("/", (req, res) => {
               min="500"
               max="10000"
               step="100"
-              value="1000"
+              value="1500"
               style="width: 320px;"
             />
-            <input type="hidden" name="distance" id="distanceHidden" value="1000" />
+            <input type="hidden" name="distance" id="distanceHidden" value="1500" />
           </div>
 
           <div style="min-width:360px;">
@@ -72,10 +72,10 @@ app.get("/", (req, res) => {
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
             <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" data-pool="25m">25m</button>
-              <button type="button" data-pool="50m">50m</button>
-              <button type="button" data-pool="25yd">25yd</button>
-              <button type="button" data-pool="custom">Custom</button>
+              <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+              <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+              <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+              <button type="button" data-pool="custom" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">Custom</button>
             </div>
 
             <div style="margin-top:12px;">
@@ -515,12 +515,17 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForEffort(effort) {
-        // Effort-based colors: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
-        if (effort === "easy") return "background:linear-gradient(to right, #22c55e 4px, #f0fdf4 4px); border:1px solid #bbf7d0; border-left:4px solid #22c55e;";
-        if (effort === "moderate") return "background:linear-gradient(to right, #3b82f6 4px, #eff6ff 4px); border:1px solid #bfdbfe; border-left:4px solid #3b82f6;";
-        if (effort === "mod-high") return "background:linear-gradient(to right, #eab308 4px, #fefce8 4px); border:1px solid #fde047; border-left:4px solid #eab308;";
-        if (effort === "hard") return "background:linear-gradient(to right, #f97316 4px, #fff7ed 4px); border:1px solid #fed7aa; border-left:4px solid #f97316;";
-        if (effort === "sprint") return "background:linear-gradient(to right, #ef4444 4px, #fef2f2 4px); border:1px solid #fecaca; border-left:4px solid #ef4444;";
+        // Effort-based colors matching Kapisko style:
+        // Level 1 (easy): GREEN - warm-up, cool-down, easy swims
+        // Level 2 (moderate): BLUE - steady, drill, technique
+        // Level 3 (mod-high): YELLOW/CREAM - build, descend
+        // Level 4 (hard): ORANGE - fast, strong, threshold
+        // Level 5 (sprint): RED - all out, race pace
+        if (effort === "easy") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #bbf7d0; border-right:1px solid #bbf7d0; border-bottom:1px solid #bbf7d0;";
+        if (effort === "moderate") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
+        if (effort === "mod-high") return "background:#fef9c3; border-left:4px solid #eab308; border-top:1px solid #fde047; border-right:1px solid #fde047; border-bottom:1px solid #fde047;";
+        if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
+        if (effort === "sprint") return "background:#fee2e2; border-left:4px solid #ef4444; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 
@@ -933,11 +938,12 @@ app.get("/", (req, res) => {
 
         for (const btn of poolButtons.querySelectorAll("button[data-pool]")) {
           const isActive = btn.getAttribute("data-pool") === poolValue;
-          btn.style.fontWeight = isActive ? "700" : "400";
-          btn.style.border = isActive ? "2px solid #000" : "1px solid #999";
-          btn.style.borderRadius = "10px";
-          btn.style.padding = "6px 10px";
-          btn.style.background = isActive ? "#eee" : "#fff";
+          btn.style.fontWeight = isActive ? "600" : "400";
+          btn.style.border = isActive ? "2px solid #111" : "2px solid #ccc";
+          btn.style.borderRadius = "8px";
+          btn.style.padding = "6px 14px";
+          btn.style.background = isActive ? "#111" : "#fff";
+          btn.style.color = isActive ? "#fff" : "#111";
           btn.style.cursor = "pointer";
         }
       }

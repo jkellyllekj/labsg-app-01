@@ -26,8 +26,8 @@ Additional project-specific preferences:
 
 ### Frontend
 - Inline HTML served from the Express route
-- Pool selection via buttons (25m, 50m, 25yd, Custom)
-- Distance selection via slider (500-10000, snapping to 100)
+- Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
+- Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
 - Effort-based color system: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
 - Dolphin loading animation during workout generation

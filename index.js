@@ -554,9 +554,9 @@ app.get("/", (req, res) => {
         // Background colors + left accent bar
         if (effort === "easy") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
         if (effort === "moderate") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #86efac; border-right:1px solid #86efac; border-bottom:1px solid #86efac;";
-        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #d97706; border-top:1px solid #fcd34d; border-right:1px solid #fcd34d; border-bottom:1px solid #fcd34d;";
+        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #f6c87a; border-top:1px solid #f9ddb0; border-right:1px solid #f9ddb0; border-bottom:1px solid #f9ddb0;";
         if (effort === "hard") return "background:#fed7aa; border-left:4px solid #ea580c; border-top:1px solid #fb923c; border-right:1px solid #fb923c; border-bottom:1px solid #fb923c;";
-        if (effort === "sprint") return "background:#fecaca; border-left:4px solid #dc2626; border-top:1px solid #f87171; border-right:1px solid #f87171; border-bottom:1px solid #f87171;";
+        if (effort === "sprint") return "background:#f6c1c1; border-left:4px solid #d10f24; border-top:1px solid #f1a9af; border-right:1px solid #f1a9af; border-bottom:1px solid #f1a9af;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 

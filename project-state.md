@@ -369,9 +369,9 @@ Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a s
 Workout set cards have colored backgrounds + left accent bar:
 - Blue background (#dbeafe) + blue bar (#3b82f6): Easy/warm-up/cool-down
 - Green background (#dcfce7) + green bar (#22c55e): Moderate/drill/technique  
-- Creamy yellow background (#fef3c7) + gold bar (#d97706): Mod-high/build
+- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Mod-high/build
 - Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard/main
-- Red background (#fecaca) + red bar (#dc2626): Sprint
+- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Sprint
 
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.

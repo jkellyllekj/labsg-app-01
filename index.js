@@ -254,7 +254,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:2px solid #111; box-shadow:0 3px 0 #111, 0 4px 8px rgba(0,0,0,0.2);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>

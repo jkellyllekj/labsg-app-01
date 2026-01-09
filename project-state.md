@@ -367,12 +367,14 @@ For non-standard pool lengths (30m, 33m, 27m etc), set descriptions now show "(X
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
 
 ### 2026-01-09 — Zone-based workout card colors (updated 2026-01-09)
-Workout set cards have colored backgrounds + left accent bar. Zone colors were swapped and renamed:
-- GREEN background (#dcfce7) + green bar (#22c55e): Easy/warm-up/cool-down (Zone 1)
-- BLUE background (#dbeafe) + blue bar (#3b82f6): Moderate/build/technique (Zone 2)
-- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Mod-high/build (Zone 3)
-- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard/main (Zone 4)
-- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Threshold (Zone 5) - renamed from "Sprint"
+Workout set cards have colored backgrounds + left accent bar. Zone names updated to match coaching terminology:
+- GREEN background (#dcfce7) + green bar (#22c55e): Easy (Zone 1) - warm-up, cool-down, recovery
+- BLUE background (#dbeafe) + blue bar (#3b82f6): Steady (Zone 2) - technique, drill, kick, pull
+- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Moderate (Zone 3) - building effort
+- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Strong (Zone 4) - main sets, sustained effort
+- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Hard (Zone 5) - max effort sets
+
+Note: "Sprint" is a SET TYPE (like "1x100 Sprint"), not a zone. Zones describe intensity levels.
 
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.
@@ -392,24 +394,40 @@ Set distance parser now handles multi-line sets and standalone distances (like "
 ### 2026-01-09 — Card drop shadow increased
 Workout set cards now have deeper drop shadows (0 8px 24px rgba) for more visual depth, inspired by user's 2019 CardGym printed cards.
 
-### 2026-01-09 — Future scalability ideas (from CardGym 2019 concept)
-These ideas are documented for potential future development:
-- Zone emoji strip: Row of emoji faces (sleepy to exhausted) showing intensity levels
-- Selectable backgrounds: Click to change background image (beach, pool, ocean scenes)
-- CardGym deck-of-cards theme: Playing card branding (2 of spades, King of hearts) for multi-sport expansion
-- Font exploration: Consider more modern/friendly fonts beyond system defaults
-- Inline rest display: Show rest times inline with set description (e.g., "4x50 drill :15 Rest")
-- Multi-sport expansion: Same concept for running, cycling, gym workouts
+### 2026-01-09 — CardGym 2019 Inspiration Features (ROADMAP)
+Features to implement, inspired by user's 2019 printed CardGym cards:
 
-### 2026-01-09 — Gradient system for zone transitions (IMPLEMENTED)
-Sets that span multiple zones now display gradient backgrounds:
-- Build sets: green (easy) → yellow (mod-high) gradient left-to-right
-- Main build sets: blue (moderate) → orange (hard) gradient
-- Descend sets: similar transitions based on context
-- Kick build sets: green (easy) → blue (moderate) gradient
-The accent bar also uses a vertical gradient matching the zone transition.
-Functions added: getZoneSpan(), getZoneColors(), gradientStyleForZones()
-Reroll handler also updated to apply gradients when set content changes.
+**IN PROGRESS:**
+- Floating cards: Remove white form/results container, let cards float on pool background
+- 3-column layout: Set description (left), rest in red (center), distance (right)
+- Zone renaming: Easy, Steady, Moderate, Strong, Hard
+- Expanded gradients: More set types should show gradient backgrounds
+
+**PLANNED:**
+- Drill name library: Cheetah, Fist, Jazz Hands, DPS, Corkscrew, Scull Forward/Rear, Finger Drag, Travoltas, Shark Fin, Catch-up, Swifts, Timber, Long Dog, River Dance, Long Torpedo, Sweeper, 6 Bi 6, 6 Tri 6, Water Polo, Rotations, Double Wide, Single-Arm, Dog Paddle, Half Lap Torpedo
+- Snazzy workout names: Auto-generate fun names like "Starters!", "Drill Time", "Swimulation", "Power Drills", "Full Tank", "Disappearing 400!", "Reducers", "Descents", "Happiness"
+- Emoji intensity strip: 5 faces (sleepy to exhausted) at bottom showing workout difficulty
+- Inline rest display: ":15 Rest" shown inline in red text
+
+**DEFERRED:**
+- Playing card theme (not needed for web app)
+- Selectable backgrounds (future)
+- Font exploration
+- Multi-sport expansion (CardGym concept for running, cycling, gym)
+
+### 2026-01-09 — Gradient system for zone transitions (NEEDS EXPANSION)
+Sets that span multiple zones display gradient backgrounds. Currently only triggers on:
+- Build sets with "build", "negative split", "smooth to strong" keywords
+- Descend sets
+- Kick build sets
+
+**ISSUE:** Gradients don't appear on enough set types. Need to expand to cover more scenarios like:
+- Main sets that build effort
+- Pyramid sets
+- Any set with progressive intensity language
+
+Functions: getZoneSpan(), getZoneColors(), gradientStyleForZones()
+Reroll handler also applies gradients when set content changes.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

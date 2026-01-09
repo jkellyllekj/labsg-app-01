@@ -30,17 +30,17 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        /* Zone colors: GREEN=Easy, BLUE=Moderate, YELLOW=Mod-High, ORANGE=Hard, RED=Threshold */
+        /* Zone colors: GREEN=Easy, BLUE=Steady, YELLOW=Moderate, ORANGE=Strong, RED=Hard */
         --zone-easy-bg: #dcfce7;
         --zone-easy-bar: #22c55e;
-        --zone-moderate-bg: #dbeafe;
-        --zone-moderate-bar: #3b82f6;
-        --zone-modhigh-bg: #fef3c7;
-        --zone-modhigh-bar: #f6c87a;
-        --zone-hard-bg: #fed7aa;
-        --zone-hard-bar: #ea580c;
-        --zone-threshold-bg: #f6c1c1;
-        --zone-threshold-bar: #d10f24;
+        --zone-steady-bg: #dbeafe;
+        --zone-steady-bar: #3b82f6;
+        --zone-moderate-bg: #fef3c7;
+        --zone-moderate-bar: #f6c87a;
+        --zone-strong-bg: #fed7aa;
+        --zone-strong-bar: #ea580c;
+        --zone-hard-bg: #f6c1c1;
+        --zone-hard-bar: #d10f24;
       }
       @keyframes dolphin-jump {
         0% { transform: translateY(0) rotate(0deg); }
@@ -79,13 +79,13 @@ app.get("/", (req, res) => {
         }
       }
     </style>
-    <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.85); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.1);">
+    <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.9); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.15);">
       <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
       <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
     </div>
 
     <div style="max-width:920px;">
-      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.5); border-radius:16px; background:rgba(255,255,255,0.85); box-shadow:0 4px 20px rgba(0,80,100,0.12);">
+      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
         <div class="form-row">
           <div class="form-col">
             <h3 style="margin:0 0 10px 0;">Distance</h3>
@@ -251,7 +251,7 @@ app.get("/", (req, res) => {
         </div>
       </form>
 
-      <div id="resultWrap" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.85); border-radius:12px; border:none;">
+      <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <div id="cards" style="display:none;"></div>
@@ -527,62 +527,91 @@ app.get("/", (req, res) => {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
         
+        // Zone names: easy, steady, moderate, strong, hard
+        
         // Warm-up and cool-down are always easy (green - Zone 1)
         if (text.includes("warm") || text.includes("cool")) return "easy";
         
-        // Threshold keywords (red - Zone 5) - highest intensity
-        const thresholdWords = ["sprint", "all out", "max effort", "race pace", "100%"];
-        for (const w of thresholdWords) if (text.includes(w)) return "threshold";
-        
-        // Hard keywords (orange - Zone 4)
-        const hardWords = ["fast", "strong", "hard", "best average", "race", "threshold"];
+        // Hard keywords (red - Zone 5) - highest intensity
+        const hardWords = ["sprint", "all out", "max effort", "race pace", "100%"];
         for (const w of hardWords) if (text.includes(w)) return "hard";
         
-        // Main sets are NEVER easy/green - at minimum mod-high (yellow), default hard (orange)
+        // Strong keywords (orange - Zone 4)
+        const strongWords = ["fast", "strong", "best average", "race", "threshold"];
+        for (const w of strongWords) if (text.includes(w)) return "strong";
+        
+        // Main sets are NEVER easy/green - at minimum moderate (yellow), default strong (orange)
         if (labelOnly.includes("main")) {
-          // Check if it has mod-high keywords, otherwise default to hard
-          const modHighWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
-          for (const w of modHighWords) if (text.includes(w)) return "mod-high";
-          return "hard";
+          // Check if it has moderate keywords, otherwise default to strong
+          const moderateWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
+          for (const w of moderateWords) if (text.includes(w)) return "moderate";
+          return "strong";
         }
         
-        // Moderate-high keywords (creamy yellow - Zone 3)
-        const modHighWords = ["descend", "build", "negative split", "push"];
-        for (const w of modHighWords) if (text.includes(w)) return "mod-high";
+        // Moderate keywords (creamy yellow - Zone 3)
+        const moderateWords = ["descend", "build", "negative split", "push"];
+        for (const w of moderateWords) if (text.includes(w)) return "moderate";
         
-        // Moderate keywords (blue - Zone 2) - for build/technique
-        const modWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
-        for (const w of modWords) if (text.includes(w)) return "moderate";
+        // Steady keywords (blue - Zone 2) - for technique
+        const steadyWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
+        for (const w of steadyWords) if (text.includes(w)) return "steady";
         
         // Easy keywords (green - Zone 1)
         const easyWords = ["easy", "relaxed", "recovery", "loosen"];
         for (const w of easyWords) if (text.includes(w)) return "easy";
         
-        // Default: moderate for technique sets
-        return "moderate";
+        // Default: steady for technique sets
+        return "steady";
       }
 
       function getZoneSpan(label, body) {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
         
-        // Kick build sets: easy → moderate (check FIRST before generic build)
+        // Zone names: easy, steady, moderate, strong, hard
+        
+        // Kick build sets: easy → steady (check FIRST before generic build)
         if (labelOnly.includes("kick") && text.includes("build")) {
-          return ["easy", "moderate"];
+          return ["easy", "steady"];
+        }
+        
+        // Pull build sets: easy → steady
+        if (labelOnly.includes("pull") && text.includes("build")) {
+          return ["easy", "steady"];
+        }
+        
+        // Main sets with build/progressive language: moderate → strong or strong → hard
+        if (labelOnly.includes("main")) {
+          if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
+            return ["moderate", "strong"];
+          }
+          if (text.includes("descend") || text.includes("pyramid")) {
+            return ["moderate", "strong"];
+          }
+          // Main with sprint at end
+          if (text.includes("sprint") || text.includes("final") && text.includes("fast")) {
+            return ["strong", "hard"];
+          }
         }
         
         // Build sets span from starting zone to higher intensity
         if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
-          // Main builds: moderate → hard
-          if (labelOnly.includes("main")) return ["moderate", "hard"];
-          // Regular builds: easy → mod-high
-          return ["easy", "mod-high"];
+          return ["easy", "moderate"];
         }
         
         // Descend sets go from easier to harder
         if (text.includes("descend")) {
-          if (labelOnly.includes("main")) return ["mod-high", "hard"];
-          return ["moderate", "mod-high"];
+          return ["steady", "moderate"];
+        }
+        
+        // Pyramid sets
+        if (text.includes("pyramid")) {
+          return ["steady", "moderate"];
+        }
+        
+        // Reducers (like the CardGym cards)
+        if (text.includes("reducer")) {
+          return ["steady", "strong"];
         }
         
         // No zone span - single zone
@@ -593,14 +622,15 @@ app.get("/", (req, res) => {
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
+        // Zone names: easy, steady, moderate, strong, hard
         const zones = {
           easy: { bg: getVar('--zone-easy-bg', '#dcfce7'), bar: getVar('--zone-easy-bar', '#22c55e') },
-          moderate: { bg: getVar('--zone-moderate-bg', '#dbeafe'), bar: getVar('--zone-moderate-bar', '#3b82f6') },
-          'mod-high': { bg: getVar('--zone-modhigh-bg', '#fef3c7'), bar: getVar('--zone-modhigh-bar', '#f6c87a') },
-          hard: { bg: getVar('--zone-hard-bg', '#fed7aa'), bar: getVar('--zone-hard-bar', '#ea580c') },
-          threshold: { bg: getVar('--zone-threshold-bg', '#f6c1c1'), bar: getVar('--zone-threshold-bar', '#d10f24') }
+          steady: { bg: getVar('--zone-steady-bg', '#dbeafe'), bar: getVar('--zone-steady-bar', '#3b82f6') },
+          moderate: { bg: getVar('--zone-moderate-bg', '#fef3c7'), bar: getVar('--zone-moderate-bar', '#f6c87a') },
+          strong: { bg: getVar('--zone-strong-bg', '#fed7aa'), bar: getVar('--zone-strong-bar', '#ea580c') },
+          hard: { bg: getVar('--zone-hard-bg', '#f6c1c1'), bar: getVar('--zone-hard-bar', '#d10f24') }
         };
-        return zones[zone] || zones.moderate;
+        return zones[zone] || zones.steady;
       }
 
       function gradientStyleForZones(zoneSpan) {
@@ -628,6 +658,7 @@ app.get("/", (req, res) => {
 
       function colorStyleForEffort(effort) {
         // Zone-based colors using CSS variables for live color picker
+        // Zone names: easy, steady, moderate, strong, hard
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
@@ -636,24 +667,24 @@ app.get("/", (req, res) => {
           const bar = getVar('--zone-easy-bar', '#22c55e');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
-        if (effort === "moderate") {
-          const bg = getVar('--zone-moderate-bg', '#dbeafe');
-          const bar = getVar('--zone-moderate-bar', '#3b82f6');
+        if (effort === "steady") {
+          const bg = getVar('--zone-steady-bg', '#dbeafe');
+          const bar = getVar('--zone-steady-bar', '#3b82f6');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
-        if (effort === "mod-high") {
-          const bg = getVar('--zone-modhigh-bg', '#fef3c7');
-          const bar = getVar('--zone-modhigh-bar', '#f6c87a');
+        if (effort === "moderate") {
+          const bg = getVar('--zone-moderate-bg', '#fef3c7');
+          const bar = getVar('--zone-moderate-bar', '#f6c87a');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "strong") {
+          const bg = getVar('--zone-strong-bg', '#fed7aa');
+          const bar = getVar('--zone-strong-bar', '#ea580c');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         if (effort === "hard") {
-          const bg = getVar('--zone-hard-bg', '#fed7aa');
-          const bar = getVar('--zone-hard-bar', '#ea580c');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
-        }
-        if (effort === "threshold") {
-          const bg = getVar('--zone-threshold-bg', '#f6c1c1');
-          const bar = getVar('--zone-threshold-bar', '#d10f24');
+          const bg = getVar('--zone-hard-bg', '#f6c1c1');
+          const bar = getVar('--zone-hard-bar', '#d10f24');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         return "background:#fff; border:1px solid #e7e7e7;";
@@ -1455,32 +1486,32 @@ app.get("/viewport-lab", (req, res) => {
         <span class="hex-display" id="hexEasyBar">#22c55e</span>
       </div>
       <div class="zone-row" style="background:#dbeafe; border-left:3px solid #3b82f6;">
-        <span class="zone-label">Moderate</span>
-        <input type="color" id="colorModerateBg" value="#dbeafe" title="Background" />
-        <span class="hex-display" id="hexModerateBg">#dbeafe</span>
-        <input type="color" id="colorModerateBar" value="#3b82f6" title="Accent" />
-        <span class="hex-display" id="hexModerateBar">#3b82f6</span>
+        <span class="zone-label">Steady</span>
+        <input type="color" id="colorSteadyBg" value="#dbeafe" title="Background" />
+        <span class="hex-display" id="hexSteadyBg">#dbeafe</span>
+        <input type="color" id="colorSteadyBar" value="#3b82f6" title="Accent" />
+        <span class="hex-display" id="hexSteadyBar">#3b82f6</span>
       </div>
       <div class="zone-row" style="background:#fef3c7; border-left:3px solid #f6c87a;">
-        <span class="zone-label">Mod-High</span>
-        <input type="color" id="colorModhighBg" value="#fef3c7" title="Background" />
-        <span class="hex-display" id="hexModhighBg">#fef3c7</span>
-        <input type="color" id="colorModhighBar" value="#f6c87a" title="Accent" />
-        <span class="hex-display" id="hexModhighBar">#f6c87a</span>
+        <span class="zone-label">Moderate</span>
+        <input type="color" id="colorModerateBg" value="#fef3c7" title="Background" />
+        <span class="hex-display" id="hexModerateBg">#fef3c7</span>
+        <input type="color" id="colorModerateBar" value="#f6c87a" title="Accent" />
+        <span class="hex-display" id="hexModerateBar">#f6c87a</span>
       </div>
       <div class="zone-row" style="background:#fed7aa; border-left:3px solid #ea580c;">
-        <span class="zone-label">Hard</span>
-        <input type="color" id="colorHardBg" value="#fed7aa" title="Background" />
-        <span class="hex-display" id="hexHardBg">#fed7aa</span>
-        <input type="color" id="colorHardBar" value="#ea580c" title="Accent" />
-        <span class="hex-display" id="hexHardBar">#ea580c</span>
+        <span class="zone-label">Strong</span>
+        <input type="color" id="colorStrongBg" value="#fed7aa" title="Background" />
+        <span class="hex-display" id="hexStrongBg">#fed7aa</span>
+        <input type="color" id="colorStrongBar" value="#ea580c" title="Accent" />
+        <span class="hex-display" id="hexStrongBar">#ea580c</span>
       </div>
       <div class="zone-row" style="background:#f6c1c1; border-left:3px solid #d10f24;">
-        <span class="zone-label">Threshold</span>
-        <input type="color" id="colorThresholdBg" value="#f6c1c1" title="Background" />
-        <span class="hex-display" id="hexThresholdBg">#f6c1c1</span>
-        <input type="color" id="colorThresholdBar" value="#d10f24" title="Accent" />
-        <span class="hex-display" id="hexThresholdBar">#d10f24</span>
+        <span class="zone-label">Hard</span>
+        <input type="color" id="colorHardBg" value="#f6c1c1" title="Background" />
+        <span class="hex-display" id="hexHardBg">#f6c1c1</span>
+        <input type="color" id="colorHardBar" value="#d10f24" title="Accent" />
+        <span class="hex-display" id="hexHardBar">#d10f24</span>
       </div>
       <div style="margin-top:6px; font-size:9px; color:#666; line-height:1.2;">
         Pick colors, then generate a workout in a frame to see them applied.
@@ -1646,17 +1677,17 @@ app.get("/viewport-lab", (req, res) => {
       });
     }
 
-    // Setup all color inputs
+    // Setup all color inputs (Zone names: easy, steady, moderate, strong, hard)
     setupColorInput('colorEasyBg', 'hexEasyBg', '--zone-easy-bg');
     setupColorInput('colorEasyBar', 'hexEasyBar', '--zone-easy-bar');
+    setupColorInput('colorSteadyBg', 'hexSteadyBg', '--zone-steady-bg');
+    setupColorInput('colorSteadyBar', 'hexSteadyBar', '--zone-steady-bar');
     setupColorInput('colorModerateBg', 'hexModerateBg', '--zone-moderate-bg');
     setupColorInput('colorModerateBar', 'hexModerateBar', '--zone-moderate-bar');
-    setupColorInput('colorModhighBg', 'hexModhighBg', '--zone-modhigh-bg');
-    setupColorInput('colorModhighBar', 'hexModhighBar', '--zone-modhigh-bar');
+    setupColorInput('colorStrongBg', 'hexStrongBg', '--zone-strong-bg');
+    setupColorInput('colorStrongBar', 'hexStrongBar', '--zone-strong-bar');
     setupColorInput('colorHardBg', 'hexHardBg', '--zone-hard-bg');
     setupColorInput('colorHardBar', 'hexHardBar', '--zone-hard-bar');
-    setupColorInput('colorThresholdBg', 'hexThresholdBg', '--zone-threshold-bg');
-    setupColorInput('colorThresholdBar', 'hexThresholdBar', '--zone-threshold-bar');
   </script>
 </body>
 </html>`;

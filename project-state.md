@@ -4,7 +4,7 @@
 
 Project: Swim Workout Generator  
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
-Last updated: 2026-01-08  
+Last updated: 2026-01-09  
 Status: **Authoritative**
 
 ---
@@ -231,7 +231,7 @@ UI defects:
 
 ## Next single step
 
-Tested 2026-01-08: All core fixes complete.
+Tested 2026-01-09: All core fixes and UI polish complete.
 
 Completed:
 1. DONE: Fixed minimal workout bug (allocation logic rewritten)
@@ -240,11 +240,21 @@ Completed:
 4. DONE: Wording cleaned up (no more "easy swim")
 5. DONE: Fixed slider bug (distance label now updates when slider moves)
 6. DONE: Serpentine-style UI with color-coded cards and left accent bars
+7. DONE: Effort-based color system (5 levels: green/blue/yellow/orange/red)
+8. DONE: Reroll seed-based variety (6 drill/kick/pull description variations)
+9. DONE: Jumping dolphin animation during generation
+10. DONE: Minimum 1 second loader display
+11. DONE: Smooth 0.3s fade-in for workout results
+12. DONE: Premium form styling (gradient background, drop shadow, rounded corners)
+13. DONE: Updated header with cleaner tagline
+14. DONE: Viewport Lab testing page at /viewport-lab (temporary)
+15. DONE: Default distance 1500m, 25m pool highlighted by default
 
 Remaining:
 - Improve set parsing for more reliable right-side chips in UI
 - Consider improving custom pool distance formatting (currently 3x99 looks robotic)
 - Premium features: temperature option for more varied workout structures (pyramids, etc.)
+- Remove Viewport Lab link before production release
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 
@@ -295,6 +305,27 @@ If AI reroll cannot produce a valid set, the system must fall back to a determin
 
 ### 2026-01-08 — Basic mode first, advanced options are optional
 v1 must produce a good workout with zero configuration. Advanced options can exist, but must not degrade basic output.
+
+### 2026-01-09 — Effort-based color system
+Colors indicate intensity level, not set type:
+- Level 1 (green): Easy (warm-up, cool-down)
+- Level 2 (blue): Moderate
+- Level 3 (yellow): Mod-high
+- Level 4 (orange): Hard
+- Level 5 (red): Sprint
+Each level has matching background tint and left accent bar.
+
+### 2026-01-09 — No "easy" in drill/kick/pull labels
+Color tells the intensity story. Use "relaxed" instead of "easy" for drill, kick, and pull sets. Reserve "easy" only for warm-up and cool-down.
+
+### 2026-01-09 — Minimum 1 second loader display
+Even if generation is fast, the jumping dolphin loader shows for at least 1 second. This creates a polished feel and prevents jarring instant transitions.
+
+### 2026-01-09 — Smooth fade-in for results
+Workout cards fade in with 0.3s animation (opacity plus translateY) instead of appearing instantly. Creates Apple-style polish.
+
+### 2026-01-09 — Viewport Lab is a temporary testing tool
+The /viewport-lab route shows the app at multiple screen sizes (mobile, tablet, desktop) for responsive design testing. Link appears on home page during development. Remove before production.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

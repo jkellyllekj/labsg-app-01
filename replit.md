@@ -30,9 +30,17 @@ Additional project-specific preferences:
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
 - Effort-based color system: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
-- Dolphin loading animation during workout generation
+- Jumping dolphin animation during workout generation (minimum 1 second display)
+- Smooth 0.3s fade-in animation for workout results
+- Premium form styling: gradient background, drop shadow, 16px rounded corners
 - Dice emoji button for rerolling individual sets
 - Advanced options with grid layout: strokes on left, equipment on right
+
+### Routes
+- `/` - Main workout generator page
+- `/viewport-lab` - Temporary responsive design testing page (shows app at multiple screen sizes)
+- `/generate` - POST endpoint for workout generation
+- `/reroll-set` - POST endpoint for rerolling individual sets
 
 ### Backend
 - Express 5.x server on port 5000 (or PORT env variable)
@@ -52,6 +60,9 @@ Additional project-specific preferences:
 - **Effort-based colors**: Colors indicate intensity (not set type) - green=easy, red=sprint
 - **Freestyle default**: Warm-up, main, and cool-down default to freestyle when available
 - **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
+- **Minimum 1 second loader**: Jumping dolphin shows for at least 1 second for polished feel
+- **Fade-in animations**: Workout results fade in over 0.3s for Apple-style polish
+- **Viewport Lab**: Temporary testing tool at /viewport-lab for responsive design verification
 
 ## External Dependencies
 

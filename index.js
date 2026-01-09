@@ -550,8 +550,13 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForEffort(effort) {
-        // All cards are white with subtle transparency to match form panel
-        // No colored borders - clean white design
+        // Zone-based colors matching triathlon coaching zones
+        // Cards have white/transparent background with subtle colored left accent bar
+        if (effort === "easy") return "background:rgba(255,255,255,0.85); border-left:4px solid #3b82f6; border-top:1px solid rgba(200,200,200,0.5); border-right:1px solid rgba(200,200,200,0.5); border-bottom:1px solid rgba(200,200,200,0.5);";
+        if (effort === "moderate") return "background:rgba(255,255,255,0.85); border-left:4px solid #22c55e; border-top:1px solid rgba(200,200,200,0.5); border-right:1px solid rgba(200,200,200,0.5); border-bottom:1px solid rgba(200,200,200,0.5);";
+        if (effort === "mod-high") return "background:rgba(255,255,255,0.85); border-left:4px solid #92400e; border-top:1px solid rgba(200,200,200,0.5); border-right:1px solid rgba(200,200,200,0.5); border-bottom:1px solid rgba(200,200,200,0.5);";
+        if (effort === "hard") return "background:rgba(255,255,255,0.85); border-left:4px solid #f97316; border-top:1px solid rgba(200,200,200,0.5); border-right:1px solid rgba(200,200,200,0.5); border-bottom:1px solid rgba(200,200,200,0.5);";
+        if (effort === "sprint") return "background:rgba(255,255,255,0.85); border-left:4px solid #ef4444; border-top:1px solid rgba(200,200,200,0.5); border-right:1px solid rgba(200,200,200,0.5); border-bottom:1px solid rgba(200,200,200,0.5);";
         return "background:rgba(255,255,255,0.85); border:1px solid rgba(200,200,200,0.5);";
       }
 

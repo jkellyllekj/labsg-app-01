@@ -39,7 +39,7 @@ Additional project-specific preferences:
 ### Routes
 - `/` - Main workout generator page
 - `/viewport-lab` - Temporary responsive design testing page (shows app at multiple screen sizes)
-- `/generate` - POST endpoint for workout generation
+- `/generate-workout` - POST endpoint for workout generation
 - `/reroll-set` - POST endpoint for rerolling individual sets
 
 ### Backend
@@ -50,19 +50,22 @@ Additional project-specific preferences:
 ### Data Flow
 1. User selects pool type and target distance
 2. Frontend sends request to backend API
-3. Backend calls OpenAI with structured prompt
-4. Response parsed and displayed as workout chips
+3. Backend generates workout using local algorithm (no external AI calls for basic generation)
+4. Response parsed and displayed as workout chips with effort-based colors
 
 ### Key Design Decisions
 - **Clean rebuild over refactor**: Started fresh rather than modifying legacy prototype
 - **Coach plausibility**: Workouts should feel human-written, not algorithmically generated
 - **Custom pool caution**: LLM arithmetic for custom pool lengths cannot be fully trusted - validation required
 - **Effort-based colors**: Colors indicate intensity (not set type) - green=easy, red=sprint
-- **Freestyle default**: Warm-up, main, and cool-down default to freestyle when available
+- **Freestyle default**: Warm-up and cool-down prefer freestyle when available; other sets use selected stroke variety
 - **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
 - **Minimum 1 second loader**: Jumping dolphin shows for at least 1 second for polished feel
 - **Fade-in animations**: Workout results fade in over 0.3s for Apple-style polish
 - **Viewport Lab**: Temporary testing tool at /viewport-lab for responsive design verification
+- **Short workout guard**: Workouts under 800m skip sprints/threshold and use simple steady/smooth sets
+- **Stroke variety**: When multiple strokes selected, sets use variety based on seed (not always freestyle)
+- **Equipment integration**: Fins appear in kick sets, paddles appear in pull sets when selected
 
 ## External Dependencies
 

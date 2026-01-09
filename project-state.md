@@ -356,14 +356,20 @@ Zone 3 (mod-high/build) uses creamy yellow background (#fef3c7) with brown accen
 ### 2026-01-09 — Removed "Your Workout" title
 The workout results no longer have a title header - the set cards speak for themselves.
 
-### 2026-01-09 — User's pool photo as background
-Background image is user's own sunny outdoor pool photo with lane lines and pennants.
+### 2026-01-09 — User's pool photo as background (compressed)
+Background image is user's own sunny outdoor pool photo with lane lines and pennants. Compressed from 6MB to 133KB for fast loading. Uses background-attachment:fixed for subtle parallax effect.
 
 ### 2026-01-09 — Custom pool lengths show lap count (TODO)
 For non-standard pool lengths (30m, 33m, 27m etc), set descriptions should show "(X lengths)" in parentheses so swimmers know lap count. Example: "3x90m (3 lengths)". Not yet implemented.
 
 ### 2026-01-09 — Long workouts don't always need many subsets (TODO)
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
+
+### 2026-01-09 — White workout cards
+Workout set cards are now white with subtle transparency (rgba(255,255,255,0.85)) and light border (rgba(200,200,200,0.5)) to match the form panel. No colored borders or accent bars.
+
+### 2026-01-09 — Build set reroll variety
+Build set generation now has 4 pattern variations and 5 description options (build, descend, negative split, build to fast, smooth to strong) so rerolling produces different results.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

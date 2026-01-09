@@ -550,18 +550,9 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForEffort(effort) {
-        // Zone-based colors matching triathlon coaching zones:
-        // Zone 1 (easy): BLUE - chatting pace, warm-up, cool-down
-        // Zone 2 (moderate): GREEN - phrases, steady, drill, technique
-        // Zone 3 (mod-high): LIME/YELLOW - single words, build, descend
-        // Zone 4 (hard): ORANGE - hard to speak, fast, strong, threshold
-        // Zone 5 (sprint): RED - unable to speak, all out, race pace
-        if (effort === "easy") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
-        if (effort === "moderate") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #86efac; border-right:1px solid #86efac; border-bottom:1px solid #86efac;";
-        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #92400e; border-top:1px solid #fcd34d; border-right:1px solid #fcd34d; border-bottom:1px solid #fcd34d;";
-        if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
-        if (effort === "sprint") return "background:#fee2e2; border-left:4px solid #ef4444; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
-        return "background:#fff; border:1px solid #e7e7e7;";
+        // All cards are white with subtle transparency to match form panel
+        // No colored borders - clean white design
+        return "background:rgba(255,255,255,0.85); border:1px solid rgba(200,200,200,0.5);";
       }
 
       // Keep old functions for compatibility but mark deprecated
@@ -1152,7 +1143,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes.jpg?v=6') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes-compressed.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh; background-attachment:fixed;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}
@@ -1660,9 +1651,32 @@ app.post("/reroll-set", (req, res) => {
     if (k.includes("build")) {
       const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
+      const d75 = snapToPoolMultiple(75, base);
 
-      if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
-      if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " descend 1 to 4", restSecondsFor("build", d100, opts));
+      const buildDescriptions = [
+        stroke + " build",
+        stroke + " descend 1 to 4",
+        stroke + " negative split",
+        stroke + " build to fast",
+        stroke + " smooth to strong"
+      ];
+      const desc = buildDescriptions[seed % buildDescriptions.length];
+      const desc2 = buildDescriptions[(seed + 1) % buildDescriptions.length];
+
+      // Variety of patterns based on seed
+      const patternChoice = seed % 4;
+      if (patternChoice === 0) {
+        if (d50 > 0 && remaining >= d50 * 6) add(6, d50, desc, restSecondsFor("build", d50, opts));
+        if (d100 > 0 && remaining >= d100 * 4) add(4, d100, desc2, restSecondsFor("build", d100, opts));
+      } else if (patternChoice === 1) {
+        if (d100 > 0 && remaining >= d100 * 4) add(4, d100, desc, restSecondsFor("build", d100, opts));
+        if (d50 > 0 && remaining >= d50 * 4) add(4, d50, desc2, restSecondsFor("build", d50, opts));
+      } else if (patternChoice === 2) {
+        if (d75 > 0 && remaining >= d75 * 4) add(4, d75, desc, restSecondsFor("build", d75, opts));
+        if (d50 > 0 && remaining >= d50 * 6) add(6, d50, desc2, restSecondsFor("build", d50, opts));
+      } else {
+        if (d50 > 0 && remaining >= d50 * 8) add(8, d50, desc, restSecondsFor("build", d50, opts));
+      }
 
       fillEasy("build");
       return lines.join("\n");
@@ -2288,9 +2302,32 @@ app.post("/generate-workout", (req, res) => {
     if (k.includes("build")) {
       const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
+      const d75 = snapToPoolMultiple(75, base);
 
-      if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, stroke + " build", restSecondsFor("build", d50));
-      if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " descend 1 to 4", restSecondsFor("build", d100));
+      const buildDescriptions = [
+        stroke + " build",
+        stroke + " descend 1 to 4",
+        stroke + " negative split",
+        stroke + " build to fast",
+        stroke + " smooth to strong"
+      ];
+      const desc = buildDescriptions[seed % buildDescriptions.length];
+      const desc2 = buildDescriptions[(seed + 1) % buildDescriptions.length];
+
+      // Variety of patterns based on seed
+      const patternChoice = seed % 4;
+      if (patternChoice === 0) {
+        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, desc, restSecondsFor("build", d50));
+        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, desc2, restSecondsFor("build", d100));
+      } else if (patternChoice === 1) {
+        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, desc, restSecondsFor("build", d100));
+        if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, desc2, restSecondsFor("build", d50));
+      } else if (patternChoice === 2) {
+        if (d75 > 0 && remainingObj.value >= d75 * 4) add(lines, remainingObj, 4, d75, desc, restSecondsFor("build", d75));
+        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, desc2, restSecondsFor("build", d50));
+      } else {
+        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, desc, restSecondsFor("build", d50));
+      }
 
       if (!fillEasy(lines, remainingObj, "build", stroke)) return null;
       return lines.join("\n");

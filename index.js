@@ -1964,7 +1964,9 @@ app.post("/reroll-set", (req, res) => {
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
           const d25 = snapToPoolMultiple(25, base);
-          if (d25 > 0) add(4, d25, "choice drill", restSecondsFor("drill", d25, opts));
+          // Named drills for warm-up
+          const warmDrills = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
+          if (d25 > 0) add(4, d25, warmDrills[seed % warmDrills.length], restSecondsFor("drill", d25, opts));
         },
         // 2 segments: swim + build
         () => {
@@ -1979,7 +1981,9 @@ app.post("/reroll-set", (req, res) => {
           if (d100 > 0) add(2, d100, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(4, d50, "kick easy", restSecondsFor("kick", d50, opts));
-          if (d50 > 0) add(4, d50, "drill swim", restSecondsFor("drill", d50, opts));
+          // Named drill for option 3
+          const drillOptions = ["Shark fin", "Zipper", "DPS", "Long dog", "Corkscrew"];
+          if (d50 > 0) add(4, d50, drillOptions[seed % drillOptions.length], restSecondsFor("drill", d50, opts));
         },
         // 1 segment: simple long swim (for short warm-ups)
         () => {
@@ -2055,20 +2059,26 @@ app.post("/reroll-set", (req, res) => {
       const d25 = snapToPoolMultiple(25, base);
       const d75 = snapToPoolMultiple(75, base);
 
-      const drillDescriptions = [
-        "25 drill 25 swim", "choice drill", "drill focus technique",
-        "catchup drill", "fingertip drag drill", "fist drill"
+      // Named drill library from CardGym cards - always use these
+      const namedDrills = [
+        "Catch-up", "Fist drill", "Fingertip drag", "DPS",
+        "Shark fin", "Zipper", "Scull", "Corkscrew",
+        "Single arm", "Long dog", "Tarzan", "Head up",
+        "Hip rotation", "Paddle scull", "Kickboard balance", "6-3-6"
       ];
-      const desc = drillDescriptions[seed % drillDescriptions.length];
+      
+      // Primary drill: always use named drills
+      const desc1 = namedDrills[seed % namedDrills.length];
+      const desc2 = namedDrills[(seed + 7) % namedDrills.length];
 
       // Try to fill with reasonable reps based on what fits
       if (d50 > 0 && remaining >= d50 * 2) {
         const reps = Math.min(8, Math.floor(remaining / d50));
-        if (reps >= 2) add(reps, d50, desc, restSecondsFor("drill", d50, opts));
+        if (reps >= 2) add(reps, d50, desc1, restSecondsFor("drill", d50, opts));
       }
       if (d25 > 0 && remaining >= d25 * 4) {
         const reps = Math.min(12, Math.floor(remaining / d25));
-        if (reps >= 4) add(reps, d25, drillDescriptions[(seed + 1) % drillDescriptions.length], restSecondsFor("drill", d25, opts));
+        if (reps >= 4) add(reps, d25, desc2, restSecondsFor("drill", d25, opts));
       }
 
       fillEasy("drill");
@@ -2179,9 +2189,13 @@ app.post("/reroll-set", (req, res) => {
 
       const k2 = String(kind || "").toLowerCase();
 
+      // Named drills for filler
+      const fillerDrills = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
+      const fillerDrill = fillerDrills[seed % fillerDrills.length];
+      
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "drill swim" :
+        k2.includes("drill") ? fillerDrill :
         k2.includes("kick") ? "kick relaxed" :
         k2.includes("pull") ? "pull relaxed" :
         k2.includes("build") ? (stroke + " build") :
@@ -2583,9 +2597,13 @@ app.post("/generate-workout", (req, res) => {
 
       const k2 = String(kind || "").toLowerCase();
 
+      // Named drills for filler
+      const fillerDrills = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
+      const fillerDrill = fillerDrills[seed % fillerDrills.length];
+      
       const note =
         k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? "drill swim" :
+        k2.includes("drill") ? fillerDrill :
         k2.includes("kick") ? "kick relaxed" :
         k2.includes("pull") ? "pull relaxed" :
         k2.includes("build") ? (stroke + " build") :
@@ -2663,7 +2681,9 @@ app.post("/generate-workout", (req, res) => {
       if (choice === 0) {
         if (d200 > 0) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
         if (d50 > 0) add(lines, remainingObj, 4, d50, stroke + " build", restSecondsFor("build", d50));
-        if (d25 > 0) add(lines, remainingObj, 4, d25, "choice drill", restSecondsFor("drill", d25));
+        // Named drills
+        const namedDrills1 = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
+        if (d25 > 0) add(lines, remainingObj, 4, d25, namedDrills1[seed % namedDrills1.length], restSecondsFor("drill", d25));
       } else if (choice === 1) {
         const d300 = snapToPoolMultiple(300, base);
         if (d300 > 0) add(lines, remainingObj, 1, d300, stroke + " easy", 0);
@@ -2672,7 +2692,8 @@ app.post("/generate-workout", (req, res) => {
         const d100 = snapToPoolMultiple(100, base);
         if (d100 > 0) add(lines, remainingObj, 2, d100, stroke + " easy", 0);
         if (d50 > 0) add(lines, remainingObj, 4, d50, "kick easy", restSecondsFor("kick", d50));
-        if (d50 > 0) add(lines, remainingObj, 4, d50, "drill swim", restSecondsFor("drill", d50));
+        const namedDrills2 = ["Shark fin", "Zipper", "DPS", "Long dog", "Corkscrew"];
+        if (d50 > 0) add(lines, remainingObj, 4, d50, namedDrills2[seed % namedDrills2.length], restSecondsFor("drill", d50));
       }
 
       if (!fillEasy(lines, remainingObj, "warm", stroke)) return null;
@@ -2718,22 +2739,31 @@ app.post("/generate-workout", (req, res) => {
       const d25 = snapToPoolMultiple(25, base);
       const remaining = remainingObj.value;
 
+      // Named drill library
+      const namedDrills = [
+        "Catch-up", "Fist drill", "Fingertip drag", "DPS",
+        "Shark fin", "Zipper", "Scull", "Corkscrew",
+        "Single arm", "Long dog", "Tarzan", "Head up"
+      ];
+      const drill1 = namedDrills[seed % namedDrills.length];
+      const drill2 = namedDrills[(seed + 5) % namedDrills.length];
+
       // Calculate how many reps of each distance fit
       if (d50 > 0) {
         const maxReps = Math.floor(remaining / d50);
         if (maxReps >= 6) {
-          add(lines, remainingObj, 6, d50, "25 drill 25 swim", restSecondsFor("drill", d50));
+          add(lines, remainingObj, 6, d50, drill1, restSecondsFor("drill", d50));
         } else if (maxReps >= 4) {
-          add(lines, remainingObj, 4, d50, "choice drill", restSecondsFor("drill", d50));
+          add(lines, remainingObj, 4, d50, drill1, restSecondsFor("drill", d50));
         } else if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d50, "drill focus technique", restSecondsFor("drill", d50));
+          add(lines, remainingObj, maxReps, d50, drill1, restSecondsFor("drill", d50));
         }
       }
       // Fill remaining with 25s if needed
       if (d25 > 0 && remainingObj.value >= d25 * 4) {
         const reps25 = Math.min(8, Math.floor(remainingObj.value / d25));
         if (reps25 >= 4) {
-          add(lines, remainingObj, reps25, d25, "catchup drill", restSecondsFor("drill", d25));
+          add(lines, remainingObj, reps25, d25, drill2, restSecondsFor("drill", d25));
         }
       }
 

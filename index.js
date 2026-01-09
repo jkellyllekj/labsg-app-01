@@ -852,6 +852,29 @@ app.get("/", (req, res) => {
         }
         return sum;
       }
+      
+      function extractRestDisplay(body) {
+        // Extract all rest display values from set body (may have multiple lines)
+        const t = String(body || "");
+        const matches = [];
+        const re = /rest\\s*(\\d+)\\s*s/gi;
+        let m;
+        while ((m = re.exec(t)) !== null) {
+          const val = m[1] + "s";
+          if (!matches.includes(val)) matches.push(val);
+        }
+        // Return unique rest values joined, or null if none
+        return matches.length ? matches.join("/") : null;
+      }
+      
+      function stripRestFromBody(body) {
+        // Remove "rest XXs" from each line for cleaner display
+        return String(body || "")
+          .split("\\n")
+          .map(line => line.replace(/\\s*rest\\s*\\d+\\s*s/gi, "").trim())
+          .filter(line => line.length > 0)
+          .join("\\n");
+      }
 
       function estimateSwimSeconds(body, paceSecPer100, label) {
         if (!Number.isFinite(paceSecPer100) || paceSecPer100 <= 0) return null;
@@ -920,15 +943,12 @@ app.get("/", (req, res) => {
           const body = s.bodies.filter(Boolean).join("\\n");
 
           const setDist = computeSetDistanceFromBody(body);
+          const restDisplay = extractRestDisplay(body);
 
           const estSec = estimateSwimSeconds(body, paceSec, label);
           
           // Get unit for display
           const unitShort = unitShortFromPayload(payload);
-
-          const rightChips = [];
-          if (Number.isFinite(setDist)) rightChips.push(String(setDist) + unitShort);
-          if (Number.isFinite(estSec)) rightChips.push("Est: " + fmtMmSs(estSec));
 
           const goalKey = String(idx);
           const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
@@ -946,10 +966,8 @@ app.get("/", (req, res) => {
 
           html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
 
-          html.push('<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">');
-
-          html.push('<div style="min-width:0; flex:1;">');
-          html.push('<div style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:10px;">');
+          // Header row: label + reroll button
+          html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px;">');
           html.push('<span>' + safeHtml(label) + '</span>');
           html.push(
             '<button type="button" data-reroll-set="' +
@@ -959,12 +977,28 @@ app.get("/", (req, res) => {
             "</button>"
           );
           html.push("</div>");
-          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" style="white-space:pre-wrap; line-height:1.35; color:#111;">' + safeHtml(body) + "</div>");
-          html.push("</div>");
 
-          html.push('<div style="flex:0 0 auto; display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end; max-width:260px;">');
-          for (const chip of rightChips) {
-            html.push('<div style="padding:6px 10px; border:1px solid #eee; border-radius:999px; background:#fafafa; font-size:13px;">' + safeHtml(chip) + "</div>");
+          // 3-column layout: set description | rest (red) | distance
+          html.push('<div style="display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:start;">');
+
+          // Column 1: Set body (with rest stripped out for cleaner display)
+          const bodyClean = stripRestFromBody(body);
+          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; color:#111; min-width:0;">' + safeHtml(bodyClean) + "</div>");
+
+          // Column 2: Rest (in red)
+          if (restDisplay) {
+            html.push('<div style="color:#c41e3a; font-weight:600; font-size:14px; white-space:nowrap;">' + safeHtml(restDisplay) + "</div>");
+          } else {
+            html.push('<div></div>');
+          }
+
+          // Column 3: Distance (and optional time)
+          html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
+          if (Number.isFinite(setDist)) {
+            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap;">' + String(setDist) + unitShort + "</div>");
+          }
+          if (Number.isFinite(estSec)) {
+            html.push('<div style="font-size:12px; color:#666; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
           }
           html.push("</div>");
 
@@ -1058,7 +1092,22 @@ app.get("/", (req, res) => {
                 return;
               }
 
-              bodyEl.textContent = nextBody;
+              // Strip rest from display and update rest column
+              const nextBodyClean = stripRestFromBody(nextBody);
+              const nextRest = extractRestDisplay(nextBody);
+              bodyEl.textContent = nextBodyClean;
+              bodyEl.setAttribute("data-original-body", nextBody);
+              
+              // Update rest column (sibling element)
+              const restEl = bodyEl.nextElementSibling;
+              if (restEl) {
+                if (nextRest) {
+                  restEl.textContent = nextRest;
+                  restEl.style.display = "";
+                } else {
+                  restEl.textContent = "";
+                }
+              }
 
               // Update card color based on new effort level
               const cardContainer = bodyEl.closest('[style*="border-radius:12px"]');

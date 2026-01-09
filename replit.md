@@ -29,10 +29,11 @@ Additional project-specific preferences:
 - Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
-- Zone-based color system: blue=easy (Zone 1), green=moderate (Zone 2), lime=mod-high (Zone 3), orange=hard (Zone 4), red=sprint (Zone 5)
+- Zone-based color system: blue=easy (Zone 1), green=moderate for drills/technique only (Zone 2), creamy yellow with brown bar=mod-high (Zone 3), orange=hard/main default (Zone 4), red=sprint (Zone 5)
+- Main sets are NEVER green - minimum yellow/orange intensity
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
-- Premium form styling: realistic pool water photo background (public/pool-lanes.jpg), drop shadow, 16px rounded corners
+- Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes.jpg), drop shadow, 16px rounded corners, no "Your Workout" title
 - Single-column form layout: Distance above Pool length for cleaner mobile/desktop experience
 - Card shadows: 0 6px 16px for more pronounced lift effect
 - Dice emoji button for rerolling individual sets

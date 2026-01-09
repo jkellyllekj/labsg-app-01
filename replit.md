@@ -29,7 +29,9 @@ Additional project-specific preferences:
 - Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
-- Workout cards: zone-based colored backgrounds with left accent bar (blue=easy, green=drill, cream/gold=build, orange-red=main, red=sprint)
+- Workout cards: zone-based colored backgrounds with left accent bar, floating directly on pool background (no white container)
+  - Zone colors: Easy (green), Steady (blue), Moderate (yellow), Strong (orange), Hard (red)
+  - Gradients for multi-zone sets: build, descend, pyramid, reducer, pull/kick builds
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
 - Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes-compressed.jpg, 133KB), drop shadow, 16px rounded corners, no "Your Workout" title
@@ -61,7 +63,7 @@ Additional project-specific preferences:
 - **Clean rebuild over refactor**: Started fresh rather than modifying legacy prototype
 - **Coach plausibility**: Workouts should feel human-written, not algorithmically generated
 - **Custom pool caution**: LLM arithmetic for custom pool lengths cannot be fully trusted - validation required
-- **Effort-based colors**: Colors indicate intensity (not set type) - green=easy, red=sprint
+- **Zone-based colors**: Five intensity levels: Easy (green), Steady (blue), Moderate (yellow), Strong (orange), Hard (red). "Sprint" is a set type, not a zone.
 - **Freestyle default**: Warm-up and cool-down prefer freestyle when available; other sets use selected stroke variety
 - **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
 - **Minimum 1 second loader**: Jumping dolphin shows for at least 1 second for polished feel

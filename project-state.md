@@ -419,6 +419,12 @@ Features to implement, inspired by user's 2019 printed CardGym cards:
 ### 2026-01-09 — Moderate zone border fix
 Fixed white corner artifacts on yellow/moderate zone cards. The issue was the semi-transparent border color (40% opacity) appearing white against the pool background. Changed to use opaque border color matching the bar color.
 
+### 2026-01-09 — Workout name display fix
+Fixed workout name appearing as "Set 1" in a card. Now the snazzy workout name (e.g., "Balanced Swim", "All-Rounder") floats on the right side above the cards, styled bold with text shadow for visibility against the pool background.
+
+### 2026-01-09 — Goal input box transparency
+Goal input boxes now have semi-transparent white background (70% opacity) to blend better with colored card backgrounds, especially yellow/moderate zone cards.
+
 ### 2026-01-09 — Gradient system for zone transitions (NEEDS EXPANSION)
 Sets that span multiple zones display gradient backgrounds. Currently only triggers on:
 - Build sets with "build", "negative split", "smooth to strong" keywords

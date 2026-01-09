@@ -254,6 +254,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px;"><span id="workoutNameText" style="font-weight:700; font-size:18px; color:#222; text-shadow:0 1px 2px rgba(255,255,255,0.8);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
@@ -479,6 +480,9 @@ app.get("/", (req, res) => {
         copyBtn.dataset.copyText = "";
 
         window.__swgSummary = null;
+        
+        const nameDisplay = document.getElementById("workoutNameDisplay");
+        if (nameDisplay) nameDisplay.style.display = "none";
       }
 
       function renderError(title, details) {
@@ -1059,7 +1063,7 @@ app.get("/", (req, res) => {
               safeHtml(goalKey) +
               '" value="' +
               safeHtml(existingGoal) +
-              '" placeholder="Short goal for this set" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #ddd; border-radius:10px;" />'
+              '" placeholder="Short goal for this set" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid rgba(0,0,0,0.15); border-radius:10px; background:rgba(255,255,255,0.7);" />'
           );
           html.push("</div>");
 
@@ -1338,6 +1342,7 @@ app.get("/", (req, res) => {
           }
 
           const workoutText = String(data.workoutText || "").trim();
+          const workoutName = String(data.workoutName || "").trim();
 
           if (!workoutText) {
             statusPill.innerHTML = "";
@@ -1351,6 +1356,16 @@ app.get("/", (req, res) => {
 
           await new Promise(r => setTimeout(r, minDelay));
           statusPill.innerHTML = "";
+
+          // Display workout name floating on the right
+          const nameDisplay = document.getElementById("workoutNameDisplay");
+          const nameText = document.getElementById("workoutNameText");
+          if (workoutName && nameDisplay && nameText) {
+            nameText.textContent = workoutName;
+            nameDisplay.style.display = "block";
+          } else if (nameDisplay) {
+            nameDisplay.style.display = "none";
+          }
 
           // Hide cards initially for fade-in effect
           cards.style.opacity = "0";
@@ -2360,11 +2375,11 @@ app.post("/generate-workout", (req, res) => {
       });
 
       if (workout2 && workout2.text) {
-        return res.json({ ok: true, workoutText: workout2.text });
+        return res.json({ ok: true, workoutText: workout2.text, workoutName: workout2.name || "" });
       }
     }
 
-    return res.json({ ok: true, workoutText: workout.text });
+    return res.json({ ok: true, workoutText: workout.text, workoutName: workout.name || "" });
   } catch (e) {
     return res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) });
   }
@@ -3098,9 +3113,6 @@ app.post("/generate-workout", (req, res) => {
 
     while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
 
-    // Prepend workout name as title
-    const header = ["--- " + workoutName + " ---", ""];
-
     const footer = [];
     footer.push("");
     footer.push("Requested: " + String(targetTotal) + String(unitsShort));
@@ -3120,9 +3132,9 @@ app.post("/generate-workout", (req, res) => {
       }
     }
 
-    const full = header.join("\n") + lines.join("\n") + "\n" + footer.join("\n");
+    const full = lines.join("\n") + "\n" + footer.join("\n");
 
-    return { text: full };
+    return { text: full, name: workoutName };
 
     function pickFromTypical(totalD, baseD, choices, pct) {
       const target = totalD * pct;

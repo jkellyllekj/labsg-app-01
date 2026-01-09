@@ -32,7 +32,7 @@ Additional project-specific preferences:
 - Zone-based color system: blue=easy (Zone 1), green=moderate (Zone 2), lime=mod-high (Zone 3), orange=hard (Zone 4), red=sprint (Zone 5)
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
-- Premium form styling: realistic pool water photo background (public/pool-bg.jpg), drop shadow, 16px rounded corners
+- Premium form styling: realistic pool water photo background (public/pool-lanes.jpg), drop shadow, 16px rounded corners
 - Single-column form layout: Distance above Pool length for cleaner mobile/desktop experience
 - Card shadows: 0 6px 16px for more pronounced lift effect
 - Dice emoji button for rerolling individual sets

@@ -675,7 +675,7 @@ app.get("/", (req, res) => {
         if (effort === "moderate") {
           const bg = getVar('--zone-moderate-bg', '#fef3c7');
           const bar = getVar('--zone-moderate-bar', '#f6c87a');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
         }
         if (effort === "strong") {
           const bg = getVar('--zone-strong-bg', '#fed7aa');

@@ -397,23 +397,27 @@ Workout set cards now have deeper drop shadows (0 8px 24px rgba) for more visual
 ### 2026-01-09 — CardGym 2019 Inspiration Features (ROADMAP)
 Features to implement, inspired by user's 2019 printed CardGym cards:
 
-**IN PROGRESS:**
-- Floating cards: Remove white form/results container, let cards float on pool background
-- 3-column layout: Set description (left), rest in red (center), distance (right)
-- Zone renaming: Easy, Steady, Moderate, Strong, Hard
-- Expanded gradients: More set types should show gradient backgrounds
+**COMPLETED 2026-01-09:**
+- DONE: Floating cards: Remove white form/results container, let cards float on pool background
+- DONE: 3-column layout: Set description (left), rest in red (center), distance (right)
+- DONE: Zone renaming: Easy, Steady, Moderate, Strong, Hard
+- DONE: Vertical gradients (top-to-bottom) for multi-zone sets: build, descend, pyramid, reducer
+- DONE: Drill name library: 16 specific drills (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, Hip rotation, Paddle scull, Kickboard balance, 6-3-6)
+- DONE: Snazzy workout names: Context-aware names based on distance, focus, and equipment (e.g., "Steady State", "Speed Demon", "Lane Lines", "Full Tank")
+- DONE: Emoji intensity strip: 5 faces at bottom showing workout difficulty (😊 🙂 😐 😣 🔥)
+- DONE: Inline rest display: ":15 Rest" shown inline in red text
 
-**PLANNED:**
-- Drill name library: Cheetah, Fist, Jazz Hands, DPS, Corkscrew, Scull Forward/Rear, Finger Drag, Travoltas, Shark Fin, Catch-up, Swifts, Timber, Long Dog, River Dance, Long Torpedo, Sweeper, 6 Bi 6, 6 Tri 6, Water Polo, Rotations, Double Wide, Single-Arm, Dog Paddle, Half Lap Torpedo
-- Snazzy workout names: Auto-generate fun names like "Starters!", "Drill Time", "Swimulation", "Power Drills", "Full Tank", "Disappearing 400!", "Reducers", "Descents", "Happiness"
-- Emoji intensity strip: 5 faces (sleepy to exhausted) at bottom showing workout difficulty
-- Inline rest display: ":15 Rest" shown inline in red text
+**REMAINING:**
+- (none currently)
 
 **DEFERRED:**
 - Playing card theme (not needed for web app)
 - Selectable backgrounds (future)
 - Font exploration
 - Multi-sport expansion (CardGym concept for running, cycling, gym)
+
+### 2026-01-09 — Moderate zone border fix
+Fixed white corner artifacts on yellow/moderate zone cards. The issue was the semi-transparent border color (40% opacity) appearing white against the pool background. Changed to use opaque border color matching the bar color.
 
 ### 2026-01-09 — Gradient system for zone transitions (NEEDS EXPANSION)
 Sets that span multiple zones display gradient backgrounds. Currently only triggers on:

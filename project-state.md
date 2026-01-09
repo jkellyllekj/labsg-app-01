@@ -401,8 +401,15 @@ These ideas are documented for potential future development:
 - Inline rest display: Show rest times inline with set description (e.g., "4x50 drill :15 Rest")
 - Multi-sport expansion: Same concept for running, cycling, gym workouts
 
-### 2026-01-09 — Gradient system for zone transitions (planned)
-Sets can span multiple zones (e.g., a build set going from easy to mod-high). Gradients would display left-to-right across the card background, with the accent bar also as a gradient. Implementation uses zoneSpan arrays. Not yet implemented.
+### 2026-01-09 — Gradient system for zone transitions (IMPLEMENTED)
+Sets that span multiple zones now display gradient backgrounds:
+- Build sets: green (easy) → yellow (mod-high) gradient left-to-right
+- Main build sets: blue (moderate) → orange (hard) gradient
+- Descend sets: similar transitions based on context
+- Kick build sets: green (easy) → blue (moderate) gradient
+The accent bar also uses a vertical gradient matching the zone transition.
+Functions added: getZoneSpan(), getZoneColors(), gradientStyleForZones()
+Reroll handler also updated to apply gradients when set content changes.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

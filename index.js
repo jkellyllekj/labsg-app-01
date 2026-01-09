@@ -562,6 +562,70 @@ app.get("/", (req, res) => {
         return "moderate";
       }
 
+      function getZoneSpan(label, body) {
+        const text = (String(label || "") + " " + String(body || "")).toLowerCase();
+        const labelOnly = String(label || "").toLowerCase();
+        
+        // Kick build sets: easy → moderate (check FIRST before generic build)
+        if (labelOnly.includes("kick") && text.includes("build")) {
+          return ["easy", "moderate"];
+        }
+        
+        // Build sets span from starting zone to higher intensity
+        if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
+          // Main builds: moderate → hard
+          if (labelOnly.includes("main")) return ["moderate", "hard"];
+          // Regular builds: easy → mod-high
+          return ["easy", "mod-high"];
+        }
+        
+        // Descend sets go from easier to harder
+        if (text.includes("descend")) {
+          if (labelOnly.includes("main")) return ["mod-high", "hard"];
+          return ["moderate", "mod-high"];
+        }
+        
+        // No zone span - single zone
+        return null;
+      }
+
+      function getZoneColors(zone) {
+        const root = document.documentElement;
+        const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
+        
+        const zones = {
+          easy: { bg: getVar('--zone-easy-bg', '#dcfce7'), bar: getVar('--zone-easy-bar', '#22c55e') },
+          moderate: { bg: getVar('--zone-moderate-bg', '#dbeafe'), bar: getVar('--zone-moderate-bar', '#3b82f6') },
+          'mod-high': { bg: getVar('--zone-modhigh-bg', '#fef3c7'), bar: getVar('--zone-modhigh-bar', '#f6c87a') },
+          hard: { bg: getVar('--zone-hard-bg', '#fed7aa'), bar: getVar('--zone-hard-bar', '#ea580c') },
+          threshold: { bg: getVar('--zone-threshold-bg', '#f6c1c1'), bar: getVar('--zone-threshold-bar', '#d10f24') }
+        };
+        return zones[zone] || zones.moderate;
+      }
+
+      function gradientStyleForZones(zoneSpan) {
+        if (!zoneSpan || zoneSpan.length < 2) return null;
+        
+        const colors = zoneSpan.map(z => getZoneColors(z));
+        
+        // Build background gradient (left to right)
+        const bgStops = colors.map((c, i) => c.bg + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
+        const bgGradient = 'linear-gradient(to right, ' + bgStops + ')';
+        
+        // Build accent bar gradient (top to bottom for vertical bar)
+        const barStops = colors.map((c, i) => c.bar + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
+        const barGradient = 'linear-gradient(to bottom, ' + barStops + ')';
+        
+        // Use first zone's bar color for subtle borders
+        const borderColor = colors[0].bar;
+        
+        return {
+          background: bgGradient,
+          barGradient: barGradient,
+          borderColor: borderColor
+        };
+      }
+
       function colorStyleForEffort(effort) {
         // Zone-based colors using CSS variables for live color picker
         const root = document.documentElement;
@@ -839,7 +903,15 @@ app.get("/", (req, res) => {
           const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
 
           const effortLevel = getEffortLevel(label, body);
-          const boxStyle = colorStyleForEffort(effortLevel);
+          const zoneSpan = getZoneSpan(label, body);
+          const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan) : null;
+          
+          let boxStyle;
+          if (gradientStyle) {
+            boxStyle = "background:" + gradientStyle.background + "; border-left:4px solid; border-image:" + gradientStyle.barGradient + " 1; border-top:1px solid " + gradientStyle.borderColor + "40; border-right:1px solid " + gradientStyle.borderColor + "40; border-bottom:1px solid " + gradientStyle.borderColor + "40;";
+          } else {
+            boxStyle = colorStyleForEffort(effortLevel);
+          }
 
           html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
 
@@ -962,7 +1034,14 @@ app.get("/", (req, res) => {
               if (cardContainer) {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
-                const newStyle = colorStyleForEffort(newEffort);
+                const newZoneSpan = getZoneSpan(label, nextBody);
+                const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
+                let newStyle;
+                if (newGradientStyle) {
+                  newStyle = "background:" + newGradientStyle.background + "; border-left:4px solid; border-image:" + newGradientStyle.barGradient + " 1; border-top:1px solid " + newGradientStyle.borderColor + "40; border-right:1px solid " + newGradientStyle.borderColor + "40; border-bottom:1px solid " + newGradientStyle.borderColor + "40;";
+                } else {
+                  newStyle = colorStyleForEffort(newEffort);
+                }
                 cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;";
               }
             } catch (e) {

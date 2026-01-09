@@ -638,9 +638,9 @@ app.get("/", (req, res) => {
         
         const colors = zoneSpan.map(z => getZoneColors(z));
         
-        // Build background gradient (left to right)
+        // Build background gradient (top to bottom - vertical like CardGym cards)
         const bgStops = colors.map((c, i) => c.bg + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
-        const bgGradient = 'linear-gradient(to right, ' + bgStops + ')';
+        const bgGradient = 'linear-gradient(to bottom, ' + bgStops + ')';
         
         // Build accent bar gradient (top to bottom for vertical bar)
         const barStops = colors.map((c, i) => c.bar + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');

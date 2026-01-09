@@ -366,13 +366,13 @@ For non-standard pool lengths (30m, 33m, 27m etc), set descriptions now show "(X
 ### 2026-01-09 — Long workouts don't always need many subsets (TODO)
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
 
-### 2026-01-09 — Zone-based workout card colors (final)
-Workout set cards have colored backgrounds + left accent bar:
-- Blue background (#dbeafe) + blue bar (#3b82f6): Easy/warm-up/cool-down
-- Green background (#dcfce7) + green bar (#22c55e): Moderate/drill/technique  
-- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Mod-high/build
-- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard/main
-- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Sprint
+### 2026-01-09 — Zone-based workout card colors (updated 2026-01-09)
+Workout set cards have colored backgrounds + left accent bar. Zone colors were swapped and renamed:
+- GREEN background (#dcfce7) + green bar (#22c55e): Easy/warm-up/cool-down (Zone 1)
+- BLUE background (#dbeafe) + blue bar (#3b82f6): Moderate/build/technique (Zone 2)
+- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Mod-high/build (Zone 3)
+- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard/main (Zone 4)
+- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Threshold (Zone 5) - renamed from "Sprint"
 
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.
@@ -380,14 +380,29 @@ Before completing any UI/styling changes, ALWAYS generate a workout and visually
 ### 2026-01-09 — Build set reroll variety
 Build set generation now has 4 pattern variations and 5 description options (build, descend, negative split, build to fast, smooth to strong) so rerolling produces different results.
 
-### 2026-01-09 — Dev color picker for live experimentation
-A floating color picker panel allows real-time adjustment of zone colors (background + accent bar) for all 5 zones. Pick colors, generate a workout, see them applied instantly. Hex codes shown for easy handoff. Remove before production.
+### 2026-01-09 — Dev color picker for live experimentation (updated 2026-01-09)
+Color picker moved from main page to /viewport-lab page. Positioned on right side with tighter spacing. Allows real-time adjustment of zone colors for all 5 zones. Hex codes shown for easy handoff. Remove before production.
 
 ### 2026-01-09 — Distance chips now show units
 Right-side distance chips now display with unit suffix (e.g., "225m" instead of just "225") for clarity.
 
 ### 2026-01-09 — Improved set parsing
 Set distance parser now handles multi-line sets and standalone distances (like "200 easy" without NxD format) more reliably.
+
+### 2026-01-09 — Card drop shadow increased
+Workout set cards now have deeper drop shadows (0 8px 24px rgba) for more visual depth, inspired by user's 2019 CardGym printed cards.
+
+### 2026-01-09 — Future scalability ideas (from CardGym 2019 concept)
+These ideas are documented for potential future development:
+- Zone emoji strip: Row of emoji faces (sleepy to exhausted) showing intensity levels
+- Selectable backgrounds: Click to change background image (beach, pool, ocean scenes)
+- CardGym deck-of-cards theme: Playing card branding (2 of spades, King of hearts) for multi-sport expansion
+- Font exploration: Consider more modern/friendly fonts beyond system defaults
+- Inline rest display: Show rest times inline with set description (e.g., "4x50 drill :15 Rest")
+- Multi-sport expansion: Same concept for running, cycling, gym workouts
+
+### 2026-01-09 — Gradient system for zone transitions (planned)
+Sets can span multiple zones (e.g., a build set going from easy to mod-high). Gradients would display left-to-right across the card background, with the accent bar also as a gradient. Implementation uses zoneSpan arrays. Not yet implemented.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

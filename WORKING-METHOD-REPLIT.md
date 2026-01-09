@@ -63,6 +63,18 @@ If there are no tests, Agent must at least run the app and confirm the expected 
 
 If the change cannot be tested in Replit, Agent must say why and what manual step is required.
 
+For UI changes, Agent must generate a sample output (e.g., generate a workout) and visually verify the result looks correct before marking the change complete.
+
+Thorough testing checklist
+
+Before completing any task, Agent must:
+
+1. Restart the workflow if code was changed.
+2. Generate a sample output and verify it visually (screenshot or API test).
+3. Check console/workflow logs for errors.
+4. Update PROJECT_STATE.md with what changed.
+5. Only then mark the task complete.
+
 Definition of done for each change
 
 A change is done only when all are true.

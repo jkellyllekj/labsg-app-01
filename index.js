@@ -30,16 +30,17 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        --zone-easy-bg: #dbeafe;
-        --zone-easy-bar: #3b82f6;
-        --zone-moderate-bg: #dcfce7;
-        --zone-moderate-bar: #22c55e;
+        /* Zone colors: GREEN=Easy, BLUE=Moderate, YELLOW=Mod-High, ORANGE=Hard, RED=Threshold */
+        --zone-easy-bg: #dcfce7;
+        --zone-easy-bar: #22c55e;
+        --zone-moderate-bg: #dbeafe;
+        --zone-moderate-bar: #3b82f6;
         --zone-modhigh-bg: #fef3c7;
         --zone-modhigh-bar: #f6c87a;
         --zone-hard-bg: #fed7aa;
         --zone-hard-bar: #ea580c;
-        --zone-sprint-bg: #f6c1c1;
-        --zone-sprint-bar: #d10f24;
+        --zone-threshold-bg: #f6c1c1;
+        --zone-threshold-bar: #d10f24;
       }
       @keyframes dolphin-jump {
         0% { transform: translateY(0) rotate(0deg); }
@@ -77,108 +78,10 @@ app.get("/", (req, res) => {
           grid-template-columns: 1fr !important;
         }
       }
-      #devColorPicker {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(255,255,255,0.95);
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        padding: 12px 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        z-index: 9999;
-        font-size: 12px;
-        max-width: 280px;
-      }
-      #devColorPicker.collapsed {
-        padding: 8px 12px;
-      }
-      #devColorPicker .picker-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        font-weight: 700;
-        font-size: 13px;
-      }
-      #devColorPicker.collapsed .picker-content { display: none; }
-      #devColorPicker .zone-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-        padding: 6px 8px;
-        border-radius: 6px;
-      }
-      #devColorPicker .zone-label {
-        width: 70px;
-        font-weight: 600;
-      }
-      #devColorPicker input[type="color"] {
-        width: 32px;
-        height: 24px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        cursor: pointer;
-        padding: 0;
-      }
-      #devColorPicker .hex-display {
-        font-family: monospace;
-        font-size: 10px;
-        color: #666;
-        width: 50px;
-      }
     </style>
     <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.85); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.1);">
       <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
       <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
-    </div>
-
-    <div id="devColorPicker">
-      <div class="picker-header">
-        <span>Zone Colors</span>
-        <button type="button" id="toggleColorPicker" style="border:none; background:transparent; cursor:pointer; font-size:14px;">-</button>
-      </div>
-      <div class="picker-content">
-        <div class="zone-row" style="background:var(--zone-easy-bg); border-left:3px solid var(--zone-easy-bar);">
-          <span class="zone-label">Easy</span>
-          <input type="color" id="colorEasyBg" value="#dbeafe" title="Background" />
-          <span class="hex-display" id="hexEasyBg">#dbeafe</span>
-          <input type="color" id="colorEasyBar" value="#3b82f6" title="Accent bar" />
-          <span class="hex-display" id="hexEasyBar">#3b82f6</span>
-        </div>
-        <div class="zone-row" style="background:var(--zone-moderate-bg); border-left:3px solid var(--zone-moderate-bar);">
-          <span class="zone-label">Moderate</span>
-          <input type="color" id="colorModerateBg" value="#dcfce7" title="Background" />
-          <span class="hex-display" id="hexModerateBg">#dcfce7</span>
-          <input type="color" id="colorModerateBar" value="#22c55e" title="Accent bar" />
-          <span class="hex-display" id="hexModerateBar">#22c55e</span>
-        </div>
-        <div class="zone-row" style="background:var(--zone-modhigh-bg); border-left:3px solid var(--zone-modhigh-bar);">
-          <span class="zone-label">Mod-High</span>
-          <input type="color" id="colorModhighBg" value="#fef3c7" title="Background" />
-          <span class="hex-display" id="hexModhighBg">#fef3c7</span>
-          <input type="color" id="colorModhighBar" value="#f6c87a" title="Accent bar" />
-          <span class="hex-display" id="hexModhighBar">#f6c87a</span>
-        </div>
-        <div class="zone-row" style="background:var(--zone-hard-bg); border-left:3px solid var(--zone-hard-bar);">
-          <span class="zone-label">Hard</span>
-          <input type="color" id="colorHardBg" value="#fed7aa" title="Background" />
-          <span class="hex-display" id="hexHardBg">#fed7aa</span>
-          <input type="color" id="colorHardBar" value="#ea580c" title="Accent bar" />
-          <span class="hex-display" id="hexHardBar">#ea580c</span>
-        </div>
-        <div class="zone-row" style="background:var(--zone-sprint-bg); border-left:3px solid var(--zone-sprint-bar);">
-          <span class="zone-label">Sprint</span>
-          <input type="color" id="colorSprintBg" value="#f6c1c1" title="Background" />
-          <span class="hex-display" id="hexSprintBg">#f6c1c1</span>
-          <input type="color" id="colorSprintBar" value="#d10f24" title="Accent bar" />
-          <span class="hex-display" id="hexSprintBar">#d10f24</span>
-        </div>
-        <div style="margin-top:8px; font-size:10px; color:#666; line-height:1.3;">
-          Tip: Pick colors, generate a workout, then tell me the hex codes you like.
-        </div>
-      </div>
     </div>
 
     <div style="max-width:920px;">
@@ -624,18 +527,18 @@ app.get("/", (req, res) => {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
         
-        // Warm-up and cool-down are always easy (blue - Zone 1)
+        // Warm-up and cool-down are always easy (green - Zone 1)
         if (text.includes("warm") || text.includes("cool")) return "easy";
         
-        // Sprint keywords (red - Zone 5)
-        const sprintWords = ["sprint", "all out", "max effort", "race pace", "100%"];
-        for (const w of sprintWords) if (text.includes(w)) return "sprint";
+        // Threshold keywords (red - Zone 5) - highest intensity
+        const thresholdWords = ["sprint", "all out", "max effort", "race pace", "100%"];
+        for (const w of thresholdWords) if (text.includes(w)) return "threshold";
         
         // Hard keywords (orange - Zone 4)
         const hardWords = ["fast", "strong", "hard", "best average", "race", "threshold"];
         for (const w of hardWords) if (text.includes(w)) return "hard";
         
-        // Main sets are NEVER green - at minimum mod-high (yellow), default hard (orange)
+        // Main sets are NEVER easy/green - at minimum mod-high (yellow), default hard (orange)
         if (labelOnly.includes("main")) {
           // Check if it has mod-high keywords, otherwise default to hard
           const modHighWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
@@ -647,11 +550,11 @@ app.get("/", (req, res) => {
         const modHighWords = ["descend", "build", "negative split", "push"];
         for (const w of modHighWords) if (text.includes(w)) return "mod-high";
         
-        // Moderate keywords (green - Zone 2) - for drill/technique only
+        // Moderate keywords (blue - Zone 2) - for build/technique
         const modWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
         for (const w of modWords) if (text.includes(w)) return "moderate";
         
-        // Easy keywords (blue - Zone 1)
+        // Easy keywords (green - Zone 1)
         const easyWords = ["easy", "relaxed", "recovery", "loosen"];
         for (const w of easyWords) if (text.includes(w)) return "easy";
         
@@ -665,13 +568,13 @@ app.get("/", (req, res) => {
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
         if (effort === "easy") {
-          const bg = getVar('--zone-easy-bg', '#dbeafe');
-          const bar = getVar('--zone-easy-bar', '#3b82f6');
+          const bg = getVar('--zone-easy-bg', '#dcfce7');
+          const bar = getVar('--zone-easy-bar', '#22c55e');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         if (effort === "moderate") {
-          const bg = getVar('--zone-moderate-bg', '#dcfce7');
-          const bar = getVar('--zone-moderate-bar', '#22c55e');
+          const bg = getVar('--zone-moderate-bg', '#dbeafe');
+          const bar = getVar('--zone-moderate-bar', '#3b82f6');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         if (effort === "mod-high") {
@@ -684,9 +587,9 @@ app.get("/", (req, res) => {
           const bar = getVar('--zone-hard-bar', '#ea580c');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
-        if (effort === "sprint") {
-          const bg = getVar('--zone-sprint-bg', '#f6c1c1');
-          const bar = getVar('--zone-sprint-bar', '#d10f24');
+        if (effort === "threshold") {
+          const bg = getVar('--zone-threshold-bg', '#f6c1c1');
+          const bar = getVar('--zone-threshold-bar', '#d10f24');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         return "background:#fff; border:1px solid #e7e7e7;";
@@ -938,7 +841,7 @@ app.get("/", (req, res) => {
           const effortLevel = getEffortLevel(label, body);
           const boxStyle = colorStyleForEffort(effortLevel);
 
-          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 6px 16px rgba(0,50,70,0.12);">');
+          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
 
           html.push('<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">');
 
@@ -1271,71 +1174,6 @@ app.get("/", (req, res) => {
         }
       });
 
-      // Dev color picker functionality
-      const devColorPicker = document.getElementById("devColorPicker");
-      const toggleColorPickerBtn = document.getElementById("toggleColorPicker");
-      
-      toggleColorPickerBtn.addEventListener("click", () => {
-        devColorPicker.classList.toggle("collapsed");
-        toggleColorPickerBtn.textContent = devColorPicker.classList.contains("collapsed") ? "+" : "-";
-      });
-
-      function setupColorInput(inputId, hexDisplayId, cssVarName, zoneRowSelector) {
-        const input = document.getElementById(inputId);
-        const hexDisplay = document.getElementById(hexDisplayId);
-        if (!input || !hexDisplay) return;
-
-        input.addEventListener("input", () => {
-          const val = input.value;
-          document.documentElement.style.setProperty(cssVarName, val);
-          hexDisplay.textContent = val;
-          
-          // Update the zone row preview in the picker
-          const zoneRow = input.closest(".zone-row");
-          if (zoneRow) {
-            if (cssVarName.includes("-bg")) {
-              zoneRow.style.background = val;
-            } else if (cssVarName.includes("-bar")) {
-              zoneRow.style.borderLeftColor = val;
-            }
-          }
-          
-          // Re-render existing cards with new colors
-          const existingCards = document.querySelectorAll('#cards [style*="border-radius:12px"]');
-          existingCards.forEach(card => {
-            const bodyEl = card.querySelector('[data-set-body]');
-            if (bodyEl) {
-              const setIdx = Number(bodyEl.getAttribute('data-set-body'));
-              const labelEl = card.querySelector('[style*="font-weight:700"]');
-              const label = labelEl ? labelEl.textContent.replace('🎲', '').trim() : '';
-              const body = bodyEl.textContent || '';
-              const effort = getEffortLevel(label, body);
-              const newStyle = colorStyleForEffort(effort);
-              card.style.cssText = newStyle + " border-radius:12px; padding:12px; box-shadow:0 6px 16px rgba(0,50,70,0.12);";
-            }
-          });
-        });
-      }
-
-      // Easy zone
-      setupColorInput("colorEasyBg", "hexEasyBg", "--zone-easy-bg");
-      setupColorInput("colorEasyBar", "hexEasyBar", "--zone-easy-bar");
-      
-      // Moderate zone
-      setupColorInput("colorModerateBg", "hexModerateBg", "--zone-moderate-bg");
-      setupColorInput("colorModerateBar", "hexModerateBar", "--zone-moderate-bar");
-      
-      // Mod-high zone
-      setupColorInput("colorModhighBg", "hexModhighBg", "--zone-modhigh-bg");
-      setupColorInput("colorModhighBar", "hexModhighBar", "--zone-modhigh-bar");
-      
-      // Hard zone
-      setupColorInput("colorHardBg", "hexHardBg", "--zone-hard-bg");
-      setupColorInput("colorHardBar", "hexHardBar", "--zone-hard-bar");
-      
-      // Sprint zone
-      setupColorInput("colorSprintBg", "hexSprintBg", "--zone-sprint-bg");
-      setupColorInput("colorSprintBar", "hexSprintBar", "--zone-sprint-bar");
   `;
   /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */
 
@@ -1466,12 +1304,110 @@ app.get("/viewport-lab", (req, res) => {
     }
 
     .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
+
+    #colorPicker {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 8px 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      z-index: 9999;
+      font-size: 11px;
+      max-width: 240px;
+    }
+    #colorPicker.collapsed { padding: 6px 10px; }
+    #colorPicker .picker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    #colorPicker.collapsed .picker-content { display: none; }
+    #colorPicker .zone-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+      padding: 4px 6px;
+      border-radius: 5px;
+    }
+    #colorPicker .zone-label {
+      width: 60px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    #colorPicker input[type="color"] {
+      width: 26px;
+      height: 20px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 0;
+    }
+    #colorPicker .hex-display {
+      font-family: monospace;
+      font-size: 9px;
+      color: #666;
+      width: 46px;
+    }
   </style>
 </head>
 <body>
   <a class="back" href="/">Back to Generator</a>
   <h1>Viewport Lab</h1>
   <p>Test the Swim Workout Generator across multiple screen sizes. Use sliders to adjust widths. Drag frames to reorder.</p>
+
+  <div id="colorPicker">
+    <div class="picker-header">
+      <span>Zone Colors</span>
+      <button type="button" id="togglePicker" style="border:none; background:transparent; cursor:pointer; font-size:12px;">-</button>
+    </div>
+    <div class="picker-content">
+      <div class="zone-row" style="background:#dcfce7; border-left:3px solid #22c55e;">
+        <span class="zone-label">Easy</span>
+        <input type="color" id="colorEasyBg" value="#dcfce7" title="Background" />
+        <span class="hex-display" id="hexEasyBg">#dcfce7</span>
+        <input type="color" id="colorEasyBar" value="#22c55e" title="Accent" />
+        <span class="hex-display" id="hexEasyBar">#22c55e</span>
+      </div>
+      <div class="zone-row" style="background:#dbeafe; border-left:3px solid #3b82f6;">
+        <span class="zone-label">Moderate</span>
+        <input type="color" id="colorModerateBg" value="#dbeafe" title="Background" />
+        <span class="hex-display" id="hexModerateBg">#dbeafe</span>
+        <input type="color" id="colorModerateBar" value="#3b82f6" title="Accent" />
+        <span class="hex-display" id="hexModerateBar">#3b82f6</span>
+      </div>
+      <div class="zone-row" style="background:#fef3c7; border-left:3px solid #f6c87a;">
+        <span class="zone-label">Mod-High</span>
+        <input type="color" id="colorModhighBg" value="#fef3c7" title="Background" />
+        <span class="hex-display" id="hexModhighBg">#fef3c7</span>
+        <input type="color" id="colorModhighBar" value="#f6c87a" title="Accent" />
+        <span class="hex-display" id="hexModhighBar">#f6c87a</span>
+      </div>
+      <div class="zone-row" style="background:#fed7aa; border-left:3px solid #ea580c;">
+        <span class="zone-label">Hard</span>
+        <input type="color" id="colorHardBg" value="#fed7aa" title="Background" />
+        <span class="hex-display" id="hexHardBg">#fed7aa</span>
+        <input type="color" id="colorHardBar" value="#ea580c" title="Accent" />
+        <span class="hex-display" id="hexHardBar">#ea580c</span>
+      </div>
+      <div class="zone-row" style="background:#f6c1c1; border-left:3px solid #d10f24;">
+        <span class="zone-label">Threshold</span>
+        <input type="color" id="colorThresholdBg" value="#f6c1c1" title="Background" />
+        <span class="hex-display" id="hexThresholdBg">#f6c1c1</span>
+        <input type="color" id="colorThresholdBar" value="#d10f24" title="Accent" />
+        <span class="hex-display" id="hexThresholdBar">#d10f24</span>
+      </div>
+      <div style="margin-top:6px; font-size:9px; color:#666; line-height:1.2;">
+        Pick colors, then generate a workout in a frame to see them applied.
+      </div>
+    </div>
+  </div>
 
   <h2>Mobile (3)</h2>
   <div class="row" data-row="mobile">
@@ -1591,6 +1527,57 @@ app.get("/viewport-lab", (req, res) => {
     document.addEventListener('dragend', () => {
       dragging = null;
     });
+
+    // Color picker toggle
+    const colorPicker = document.getElementById('colorPicker');
+    const togglePicker = document.getElementById('togglePicker');
+    togglePicker.addEventListener('click', () => {
+      colorPicker.classList.toggle('collapsed');
+      togglePicker.textContent = colorPicker.classList.contains('collapsed') ? '+' : '-';
+    });
+
+    // Color picker functionality - updates CSS vars in all iframes
+    function setupColorInput(inputId, hexDisplayId, cssVarName) {
+      const input = document.getElementById(inputId);
+      const hexDisplay = document.getElementById(hexDisplayId);
+      if (!input || !hexDisplay) return;
+
+      input.addEventListener('input', () => {
+        const val = input.value;
+        hexDisplay.textContent = val;
+        
+        // Update the zone row preview
+        const zoneRow = input.closest('.zone-row');
+        if (zoneRow) {
+          if (cssVarName.includes('-bg')) {
+            zoneRow.style.background = val;
+          } else if (cssVarName.includes('-bar')) {
+            zoneRow.style.borderLeftColor = val;
+          }
+        }
+        
+        // Push to all iframes
+        document.querySelectorAll('iframe').forEach(iframe => {
+          try {
+            if (iframe.contentDocument) {
+              iframe.contentDocument.documentElement.style.setProperty(cssVarName, val);
+            }
+          } catch (e) {}
+        });
+      });
+    }
+
+    // Setup all color inputs
+    setupColorInput('colorEasyBg', 'hexEasyBg', '--zone-easy-bg');
+    setupColorInput('colorEasyBar', 'hexEasyBar', '--zone-easy-bar');
+    setupColorInput('colorModerateBg', 'hexModerateBg', '--zone-moderate-bg');
+    setupColorInput('colorModerateBar', 'hexModerateBar', '--zone-moderate-bar');
+    setupColorInput('colorModhighBg', 'hexModhighBg', '--zone-modhigh-bg');
+    setupColorInput('colorModhighBar', 'hexModhighBar', '--zone-modhigh-bar');
+    setupColorInput('colorHardBg', 'hexHardBg', '--zone-hard-bg');
+    setupColorInput('colorHardBar', 'hexHardBar', '--zone-hard-bar');
+    setupColorInput('colorThresholdBg', 'hexThresholdBg', '--zone-threshold-bg');
+    setupColorInput('colorThresholdBar', 'hexThresholdBar', '--zone-threshold-bar');
   </script>
 </body>
 </html>`;

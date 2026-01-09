@@ -66,7 +66,15 @@ Additional project-specific preferences:
 - **Clean rebuild over refactor**: Started fresh rather than modifying legacy prototype
 - **Coach plausibility**: Workouts should feel human-written, not algorithmically generated
 - **Custom pool caution**: LLM arithmetic for custom pool lengths cannot be fully trusted - validation required
-- **Zone-based colors**: Five intensity levels: Easy (green), Steady (blue), Moderate (yellow), Strong (orange), Hard (red). "Sprint" is a set type, not a zone.
+- **Zone-based colors**: Five intensity levels: Easy (green), Moderate/Steady (blue), Strong (yellow), Hard (orange), Full Gas (red). "Sprint" is a set type, not a zone.
+- **Zone striation logic**: Cards show gradients/stripes based on actual set content:
+  - Warm-up: always green→blue (easy→moderate)
+  - Cool-down: always blue→green (moderate→easy)
+  - Never skip zone levels (e.g., green→yellow would include blue in between)
+  - Alternating patterns (odds easy evens fast) render as stripes, not gradients
+  - Zones detected per line: detectLineZone() parses each segment, fillZoneGap() ensures no skipped levels
+- **Rest/interval display**: Rest only shows when threshold pace is entered (interval mode). Without pace, no "rest Xs" suffix.
+- **Descend pattern variety**: Not always "descend 1-4" - includes 1-3, 1-5, odds/evens, every 3rd, negative split variants
 - **Freestyle default**: Warm-up and cool-down prefer freestyle when available; other sets use selected stroke variety
 - **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
 - **Minimum 1 second loader**: Jumping dolphin shows for at least 1 second for polished feel

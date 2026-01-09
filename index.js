@@ -2235,10 +2235,10 @@ app.post("/reroll-set", (req, res) => {
         if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " perfect form", restSecondsFor("main", d100, opts));
         if (d50 > 0 && remaining >= d50 * 8) add(8, d50, stroke + " focus stroke count", restSecondsFor("main", d50, opts));
       } else {
-        // All round - mix of efforts including full gas finish
-        const patternChoice = seed % 3;
+        // All round - mix of efforts, always include full gas finish
+        const patternChoice = seed % 4;
         if (patternChoice === 0) {
-          // Build to fast finish
+          // Build to sprint finish
           if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " build", restSecondsFor("main", d100, opts));
           if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " fast", restSecondsFor("main", d50, opts) + 5);
           if (d25 > 0 && remaining >= d25 * 4) add(4, d25, stroke + " sprint all out", restSecondsFor("sprint", d25, opts) + 15);
@@ -2247,10 +2247,16 @@ app.post("/reroll-set", (req, res) => {
           if (d200 > 0 && remaining >= d200 * 3) add(3, d200, stroke + " hard", restSecondsFor("main", d200, opts));
           if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " strong", restSecondsFor("main", d100, opts));
           if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " max effort", restSecondsFor("sprint", d50, opts) + 10);
+        } else if (patternChoice === 2) {
+          // Descend to sprint
+          if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " descend easy to fast", restSecondsFor("main", d100, opts));
+          if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " hard", restSecondsFor("main", d50, opts) + 5);
+          if (d25 > 0 && remaining >= d25 * 4) add(4, d25, stroke + " max sprint", restSecondsFor("sprint", d25, opts) + 15);
         } else {
-          // Classic descend set
-          if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " descend 1-4 easy to fast", restSecondsFor("main", d100, opts));
-          if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " fast finish", restSecondsFor("main", d50, opts) + 5);
+          // Progressive build to full gas
+          if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " steady", restSecondsFor("main", d100, opts));
+          if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " strong", restSecondsFor("main", d100, opts));
+          if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " race pace", restSecondsFor("sprint", d50, opts) + 10);
         }
       }
 
@@ -2919,11 +2925,12 @@ app.post("/generate-workout", (req, res) => {
       return lines.join("\n");
     }
 
-    // Main
+    // Main - with zone variety for rerolls
     {
       const focus = String(opts.focus || "allround");
       const isShortWorkout = opts.totalDistance && opts.totalDistance < 800;
 
+      const d25 = snapToPoolMultiple(25, base);
       const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
       const d200 = snapToPoolMultiple(200, base);
@@ -2933,8 +2940,10 @@ app.post("/generate-workout", (req, res) => {
         if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " steady", restSecondsFor("main", d100));
         if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " smooth", restSecondsFor("main", d50));
       } else if (focus === "sprint") {
-        if (d50 > 0 && remainingObj.value >= d50 * 12) add(lines, remainingObj, 12, d50, stroke + " fast", restSecondsFor("main", d50) + 10);
-        if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " strong", restSecondsFor("main", d100));
+        // Sprint focus: always include full gas
+        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " fast build", restSecondsFor("main", d50) + 10);
+        if (d25 > 0 && remainingObj.value >= d25 * 6) add(lines, remainingObj, 6, d25, stroke + " max sprint", restSecondsFor("sprint", d25) + 20);
+        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " hard", restSecondsFor("main", d100));
       } else if (focus === "threshold") {
         if (d100 > 0 && remainingObj.value >= d100 * 10) add(lines, remainingObj, 10, d100, stroke + " best average", restSecondsFor("main", d100));
         if (d200 > 0 && remainingObj.value >= d200 * 4) add(lines, remainingObj, 4, d200, stroke + " steady strong", restSecondsFor("main", d200));
@@ -2945,9 +2954,34 @@ app.post("/generate-workout", (req, res) => {
         if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " perfect form", restSecondsFor("main", d100));
         if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " focus stroke count", restSecondsFor("main", d50));
       } else {
-        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " steady", restSecondsFor("main", d100));
-        if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, stroke + " strong", restSecondsFor("main", d200));
-        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, stroke + " fast finish", restSecondsFor("main", d50) + 5);
+        // All round with zone variety - 5 patterns, each includes full gas option
+        const patternChoice = seed % 5;
+        if (patternChoice === 0) {
+          // Build to sprint
+          if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " build", restSecondsFor("main", d100));
+          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " fast", restSecondsFor("main", d50) + 5);
+          if (d25 > 0 && remainingObj.value >= d25 * 4) add(lines, remainingObj, 4, d25, stroke + " sprint all out", restSecondsFor("sprint", d25) + 15);
+        } else if (patternChoice === 1) {
+          // Strong sustained with max finish
+          if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, stroke + " hard", restSecondsFor("main", d200));
+          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " strong", restSecondsFor("main", d100));
+          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " max effort", restSecondsFor("sprint", d50) + 10);
+        } else if (patternChoice === 2) {
+          // Descend to sprint
+          if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " descend easy to fast", restSecondsFor("main", d100));
+          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " hard", restSecondsFor("main", d50) + 5);
+          if (d25 > 0 && remainingObj.value >= d25 * 4) add(lines, remainingObj, 4, d25, stroke + " max sprint", restSecondsFor("sprint", d25) + 15);
+        } else if (patternChoice === 3) {
+          // Progressive build to full gas
+          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " steady", restSecondsFor("main", d100));
+          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " strong", restSecondsFor("main", d100));
+          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " race pace", restSecondsFor("sprint", d50) + 10);
+        } else {
+          // Classic strong set with fast finish
+          if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " steady", restSecondsFor("main", d100));
+          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " fast finish", restSecondsFor("main", d50) + 5);
+          if (d25 > 0 && remainingObj.value >= d25 * 4) add(lines, remainingObj, 4, d25, stroke + " all out", restSecondsFor("sprint", d25) + 15);
+        }
       }
 
       if (!fillEasy(lines, remainingObj, "main", stroke)) return null;

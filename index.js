@@ -798,8 +798,56 @@ app.get("/", (req, res) => {
         }
 
         f.push("</div>");
+        
+        // Add emoji intensity strip
+        const intensityStrip = renderEmojiIntensityStrip();
+        if (intensityStrip) {
+          f.push(intensityStrip);
+        }
+        
         footerBox.innerHTML = f.join("");
         footerBox.style.display = "block";
+      }
+      
+      // Emoji intensity strip - 5 faces showing workout difficulty
+      function renderEmojiIntensityStrip() {
+        // Calculate intensity from rendered cards
+        const cards = document.querySelectorAll('[data-effort]');
+        if (!cards.length) return null;
+        
+        let intensitySum = 0;
+        let count = 0;
+        
+        cards.forEach(card => {
+          const effort = card.getAttribute('data-effort');
+          const effortValues = { easy: 1, steady: 2, moderate: 3, strong: 4, hard: 5 };
+          if (effortValues[effort]) {
+            intensitySum += effortValues[effort];
+            count++;
+          }
+        });
+        
+        if (count === 0) return null;
+        
+        const avgIntensity = intensitySum / count;
+        
+        // Map average to 1-5 scale for display
+        const level = Math.min(5, Math.max(1, Math.round(avgIntensity)));
+        
+        // 5 faces from easy to hard
+        const faces = ['\\u{1F60A}', '\\u{1F642}', '\\u{1F610}', '\\u{1F623}', '\\u{1F525}'];
+        
+        let strip = '<div style=\\"margin-top:12px; text-align:center;\\">';
+        strip += '<div style=\\"font-size:12px; color:#888; margin-bottom:6px;\\">Intensity</div>';
+        strip += '<div style=\\"display:flex; justify-content:center; gap:4px; font-size:24px;\\">';
+        
+        for (let i = 0; i < 5; i++) {
+          const opacity = (i + 1) <= level ? '1' : '0.25';
+          strip += '<span style=\\"opacity:' + opacity + ';\\">' + faces[i] + '</span>';
+        }
+        
+        strip += '</div></div>';
+        return strip;
       }
   `;
   /* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
@@ -964,7 +1012,7 @@ app.get("/", (req, res) => {
             boxStyle = colorStyleForEffort(effortLevel);
           }
 
-          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
+          html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
 
           // Header row: label + reroll button
           html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px;">');

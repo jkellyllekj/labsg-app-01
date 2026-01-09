@@ -24,6 +24,166 @@ app.use(express.json());
 app.use(express.static("public"));
 /* __END_APP_SETUP_R020__ */
 
+/* __START_SHARED_FUNCTIONS_R030__ */
+function snapToPoolMultipleShared(dist, poolLen) {
+  const d = Number(dist);
+  if (!Number.isFinite(d) || d <= 0) return 0;
+  const base = Number(poolLen);
+  if (!Number.isFinite(base) || base <= 0) return d;
+  return Math.round(d / base) * base;
+}
+
+// SIMPLIFIED SET BUILDER - Coach-like simple sets (4x100 kick descend 1-4)
+function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
+  const base = poolLen;
+  const target = snapToPoolMultipleShared(targetDistance, base);
+  if (target <= 0) return null;
+
+  const isNonStandardPool = ![25, 50].includes(base);
+  const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
+
+  const makeLine = (reps, dist, text, restSec) => {
+    let suffix = "";
+    if (hasThresholdPace && Number.isFinite(restSec) && restSec > 0) {
+      suffix = " rest " + String(restSec) + "s";
+    }
+    let lengthInfo = "";
+    if (isNonStandardPool && dist > 0 && base > 0 && dist % base === 0 && dist / base > 1) {
+      lengthInfo = " (" + (dist / base) + " lengths)";
+    }
+    return String(reps) + "x" + String(dist) + lengthInfo + " " + (text || "").trim() + suffix;
+  };
+
+  const pickStroke = () => {
+    const allowed = [];
+    if (opts.strokes && opts.strokes.freestyle) allowed.push("freestyle");
+    if (opts.strokes && opts.strokes.backstroke) allowed.push("backstroke");
+    if (opts.strokes && opts.strokes.breaststroke) allowed.push("breaststroke");
+    if (opts.strokes && opts.strokes.butterfly) allowed.push("butterfly");
+    if (!allowed.length) return "freestyle";
+    const k = String(label || "").toLowerCase();
+    if ((k.includes("warm") || k.includes("cool")) && allowed.includes("freestyle")) return "freestyle";
+    return allowed[seed % allowed.length];
+  };
+
+  const restFor = (repDist) => {
+    const k = String(label || "").toLowerCase();
+    let r = 15;
+    if (k.includes("warm") || k.includes("cool")) r = 0;
+    else if (k.includes("drill")) r = 20;
+    else if (k.includes("kick") || k.includes("pull")) r = 15;
+    else if (k.includes("main")) r = 20;
+    if (repDist >= 200) r = Math.max(10, r - 5);
+    if (opts.restPref === "short") r = Math.max(0, r - 5);
+    if (opts.restPref === "more") r = r + 10;
+    return r;
+  };
+
+  // Find best rep distance that fits target cleanly
+  const findBestFit = (preferredDists) => {
+    for (const d of preferredDists) {
+      if (d > 0 && target % d === 0) {
+        const reps = target / d;
+        if (reps >= 2 && reps <= 20) return { reps, dist: d };
+      }
+    }
+    // Fallback: find closest fit
+    for (const d of preferredDists) {
+      if (d > 0) {
+        const reps = Math.floor(target / d);
+        if (reps >= 2) return { reps, dist: d };
+      }
+    }
+    return null;
+  };
+
+  const stroke = pickStroke();
+  const k = String(label || "").toLowerCase();
+  const hasFins = !!opts.fins;
+  const hasPaddles = !!opts.paddles;
+
+  // Named drills
+  const drills = ["Catch-up", "Fist drill", "Fingertip drag", "DPS", "Shark fin", "Zipper", "Scull", "Corkscrew", "Single arm", "Long dog", "Tarzan", "Head up"];
+  const drill = drills[seed % drills.length];
+
+  // Build descriptions for variety
+  const buildDescs = ["build", "descend 1-3", "descend 1-4", "negative split", "smooth to strong"];
+  const buildDesc = buildDescs[seed % buildDescs.length];
+
+  // Preferred distances by set type
+  const d25 = snapToPoolMultipleShared(25, base);
+  const d50 = snapToPoolMultipleShared(50, base);
+  const d75 = snapToPoolMultipleShared(75, base);
+  const d100 = snapToPoolMultipleShared(100, base);
+  const d200 = snapToPoolMultipleShared(200, base);
+
+  // WARM-UP: Simple easy swim
+  if (k.includes("warm")) {
+    const fit = findBestFit([d100, d50, d200, d75, d25].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, stroke + " easy", 0);
+    return makeLine(fit.reps, fit.dist, stroke + " easy", 0);
+  }
+
+  // BUILD: Simple build set
+  if (k.includes("build")) {
+    const fit = findBestFit([d50, d100, d75, d25].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, stroke + " build", 0);
+    return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist));
+  }
+
+  // DRILL: Named drill
+  if (k.includes("drill")) {
+    const fit = findBestFit([d50, d25, d75].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, drill, 0);
+    return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist));
+  }
+
+  // KICK: Simple kick set
+  if (k.includes("kick")) {
+    const finNote = hasFins ? " with fins" : "";
+    const kickDescs = ["kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote];
+    const kickDesc = kickDescs[seed % kickDescs.length];
+    const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, "kick" + finNote, 0);
+    return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist));
+  }
+
+  // PULL: Simple pull set
+  if (k.includes("pull")) {
+    const padNote = hasPaddles ? " with paddles" : "";
+    const pullDescs = ["pull " + buildDesc + padNote, "pull steady" + padNote, "pull strong" + padNote];
+    const pullDesc = pullDescs[seed % pullDescs.length];
+    const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, "pull" + padNote, 0);
+    return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist));
+  }
+
+  // COOL-DOWN: Easy swim
+  if (k.includes("cool")) {
+    const fit = findBestFit([d100, d200, d50].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, stroke + " easy", 0);
+    return makeLine(fit.reps, fit.dist, "easy choice", 0);
+  }
+
+  // MAIN SET: Coach-quality variety
+  const focus = String(opts.focus || "allround");
+  const mainDescs = {
+    sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort"],
+    threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace"],
+    endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace"],
+    technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes"],
+    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast"]
+  };
+  const descs = mainDescs[focus] || mainDescs.allround;
+  const mainDesc = descs[seed % descs.length];
+
+  // Prefer 100s for main sets, then 50s, 200s
+  const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+  if (!fit) return makeLine(1, target, stroke + " swim", 0);
+  return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist));
+}
+/* __END_SHARED_FUNCTIONS_R030__ */
+
 /* __START_ROUTE_HOME_UI_R100__ */
 app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_HTML_R110__ */
@@ -1936,7 +2096,7 @@ app.post("/reroll-set", (req, res) => {
     for (let i = 0; i < 10; i++) {
       // Combine rerollCount with iteration to guarantee different seed each attempt
       const seed = ((rerollCount * 7919) + (i * 9973) + Date.now()) >>> 0;
-      const next = buildOneSetBodyServer({
+      const next = buildOneSetBodyShared({
         label,
         targetDistance,
         poolLen,
@@ -3016,7 +3176,7 @@ app.post("/generate-workout", (req, res) => {
       const setLabel = s.label;
       const setDist = s.dist;
 
-      const body = buildOneSetBodyServerLocal({
+      const body = buildOneSetBodyShared({
         label: setLabel,
         targetDistance: setDist,
         poolLen,

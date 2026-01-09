@@ -2147,8 +2147,11 @@ app.post("/generate-workout", (req, res) => {
       if (!allowed.length) return "freestyle";
 
       const k = String(label2 || "").toLowerCase();
-      if ((k.includes("main") || k.includes("build")) && allowed.includes("freestyle")) return "freestyle";
-
+      
+      // For warm-up and cool-down, prefer freestyle if available
+      if ((k.includes("warm") || k.includes("cool")) && allowed.includes("freestyle")) return "freestyle";
+      
+      // For main/build, use variety from allowed strokes
       const idx = (Number(seed >>> 0) % allowed.length);
       return allowed[idx];
     };
@@ -2235,6 +2238,15 @@ app.post("/generate-workout", (req, res) => {
           const half = remainingObj.value / 2;
           add(lines, remainingObj, 2, half, note, restSecondsFor(kind || "easy", half));
           return true;
+        }
+
+        // Handle small remainders as single or few lengths (e.g., 25m, 50m, 75m)
+        if (remainingObj.value > 0 && remainingObj.value % base === 0) {
+          const reps = Math.floor(remainingObj.value / base);
+          if (reps >= 1 && reps <= 4) {
+            add(lines, remainingObj, reps, base, note, 0);
+            return true;
+          }
         }
 
         return false;
@@ -2390,12 +2402,17 @@ app.post("/generate-workout", (req, res) => {
     // Main
     {
       const focus = String(opts.focus || "allround");
+      const isShortWorkout = opts.totalDistance && opts.totalDistance < 800;
 
       const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
       const d200 = snapToPoolMultiple(200, base);
 
-      if (focus === "sprint") {
+      // Short workouts (under 800m) should be simple - no sprints/threshold
+      if (isShortWorkout) {
+        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " steady", restSecondsFor("main", d100));
+        if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " smooth", restSecondsFor("main", d50));
+      } else if (focus === "sprint") {
         if (d50 > 0 && remainingObj.value >= d50 * 12) add(lines, remainingObj, 12, d50, stroke + " fast", restSecondsFor("main", d50) + 10);
         if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " strong", restSecondsFor("main", d100));
       } else if (focus === "threshold") {
@@ -2495,6 +2512,9 @@ app.post("/generate-workout", (req, res) => {
     sets.push({ label: "Cool down", dist: coolTarget });
 
     const lines = [];
+    
+    // Add total distance to opts so set builder can check for short workouts
+    const optsWithTotal = { ...opts, totalDistance: total };
 
     for (const s of sets) {
       const setLabel = s.label;
@@ -2505,7 +2525,7 @@ app.post("/generate-workout", (req, res) => {
         targetDistance: setDist,
         poolLen,
         unitsShort,
-        opts,
+        opts: optsWithTotal,
         seed: (seed + fnv1a32(setLabel)) >>> 0
       });
 

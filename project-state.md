@@ -327,14 +327,25 @@ Workout cards fade in with 0.3s animation (opacity plus translateY) instead of a
 ### 2026-01-09 — Viewport Lab is a temporary testing tool
 The /viewport-lab route shows the app at multiple screen sizes (mobile, tablet, desktop) for responsive design testing. Link appears on home page during development. Remove before production.
 
-### 2026-01-09 — Aqua pool background theme
-Body background uses a soft aqua gradient (light cyan to pool blue) evoking pool water. Form card uses frosted glass effect (white with 92% opacity) for readability over the aqua background.
+### 2026-01-09 — Pool photo background
+Body background uses a realistic pool water photo (public/pool-lanes.jpg) with glassy water and lane lines. Fallback gradient for slow connections. Form card uses frosted glass effect (white with 85% opacity) for readability.
+
+### 2026-01-09 — Title in visible container
+Title and Viewport Lab link are now wrapped in a white semi-transparent container so they're visible against the pool background.
+
+### 2026-01-09 — Single-column form layout
+Form layout is now single-column (Distance above Pool length) for cleaner mobile and desktop experience. Previous side-by-side layout was removed.
+
+### 2026-01-09 — Zone-based color system (updated)
+Colors now match triathlon coaching zone system:
+- Zone 1 (blue): Easy - chatting pace, warm-up, cool-down
+- Zone 2 (green): Moderate - phrases, steady, drill, technique
+- Zone 3 (lime): Mod-high - single words, build, descend
+- Zone 4 (orange): Hard - hard to speak, fast, strong, threshold
+- Zone 5 (red): Sprint - unable to speak, all out, race pace
 
 ### 2026-01-09 — Responsive mobile-first layout
 Form columns stack vertically on screens under 680px. Slider and controls expand to full width on mobile. Advanced options grid collapses to single column. Tested via Viewport Lab on iPhone 15 (390px) viewport.
-
-### 2026-01-09 — Softened sprint card background
-Sprint cards now use lighter pink background (#fef2f2) while keeping the bold red accent bar (#ef4444). The red felt too harsh; this keeps the color identity without overwhelming the UI.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

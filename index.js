@@ -66,11 +66,13 @@ app.get("/", (req, res) => {
         }
       }
     </style>
-    <h1 style="margin:0 0 6px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
-    <div style="margin:0 0 18px 0; color:#666; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#888; text-decoration:underline;">[Viewport Lab]</a></div>
+    <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.85); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.1);">
+      <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
+      <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
+    </div>
 
     <div style="max-width:920px;">
-      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.5); border-radius:16px; background:rgba(255,255,255,0.92); box-shadow:0 4px 20px rgba(0,80,100,0.1);">
+      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.5); border-radius:16px; background:rgba(255,255,255,0.85); box-shadow:0 4px 20px rgba(0,80,100,0.12);">
         <div class="form-row">
           <div class="form-col">
             <h3 style="margin:0 0 10px 0;">Distance</h3>
@@ -236,7 +238,7 @@ app.get("/", (req, res) => {
         </div>
       </form>
 
-      <div id="resultWrap" style="margin-top:16px; padding:14px; background:#f6f6f6; border-radius:12px; border:1px solid #e7e7e7;">
+      <div id="resultWrap" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.85); border-radius:12px; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <div id="cards" style="display:none;"></div>
@@ -540,17 +542,17 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForEffort(effort) {
-        // Effort-based colors matching Kapisko style:
-        // Level 1 (easy): GREEN - warm-up, cool-down, easy swims
-        // Level 2 (moderate): BLUE - steady, drill, technique
-        // Level 3 (mod-high): YELLOW/CREAM - build, descend
-        // Level 4 (hard): ORANGE - fast, strong, threshold
-        // Level 5 (sprint): RED - all out, race pace
-        if (effort === "easy") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #bbf7d0; border-right:1px solid #bbf7d0; border-bottom:1px solid #bbf7d0;";
-        if (effort === "moderate") return "background:#e0f2fe; border-left:4px solid #0284c7; border-top:1px solid #7dd3fc; border-right:1px solid #7dd3fc; border-bottom:1px solid #7dd3fc;";
-        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #d97706; border-top:1px solid #fcd34d; border-right:1px solid #fcd34d; border-bottom:1px solid #fcd34d;";
-        if (effort === "hard") return "background:#fee2e2; border-left:4px solid #dc2626; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
-        if (effort === "sprint") return "background:#fef2f2; border-left:4px solid #ef4444; border-top:1px solid #fecaca; border-right:1px solid #fecaca; border-bottom:1px solid #fecaca;";
+        // Zone-based colors matching triathlon coaching zones:
+        // Zone 1 (easy): BLUE - chatting pace, warm-up, cool-down
+        // Zone 2 (moderate): GREEN - phrases, steady, drill, technique
+        // Zone 3 (mod-high): LIME/YELLOW - single words, build, descend
+        // Zone 4 (hard): ORANGE - hard to speak, fast, strong, threshold
+        // Zone 5 (sprint): RED - unable to speak, all out, race pace
+        if (effort === "easy") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
+        if (effort === "moderate") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #86efac; border-right:1px solid #86efac; border-bottom:1px solid #86efac;";
+        if (effort === "mod-high") return "background:#ecfccb; border-left:4px solid #84cc16; border-top:1px solid #bef264; border-right:1px solid #bef264; border-bottom:1px solid #bef264;";
+        if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
+        if (effort === "sprint") return "background:#fee2e2; border-left:4px solid #ef4444; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 
@@ -1145,7 +1147,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-bg.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

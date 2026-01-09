@@ -157,7 +157,7 @@ app.get("/", (req, res) => {
               </button>
             </div>
 
-            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid #ddd; border-radius:12px; background:#fafafa;">
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
               <div class="advanced-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
                   <div style="font-weight:700; margin-bottom:8px; color:#222;">Strokes</div>
@@ -781,8 +781,9 @@ app.get("/", (req, res) => {
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
-        html.push('<div style="font-weight:700; margin-bottom:10px;">Your Workout</div>');
-        html.push('<div style="display:flex; flex-direction:column; gap:10px;">');
+        html.push('<div style="background:#fff; border-radius:16px; padding:16px; box-shadow:0 2px 12px rgba(0,60,80,0.06);">');
+        html.push('<div style="font-weight:700; margin-bottom:12px; font-size:16px; color:#222;">Your Workout</div>');
+        html.push('<div style="display:flex; flex-direction:column; gap:12px;">');
 
         let idx = 0;
 
@@ -806,7 +807,7 @@ app.get("/", (req, res) => {
           const effortLevel = getEffortLevel(label, body);
           const boxStyle = colorStyleForEffort(effortLevel);
 
-          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px;">');
+          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,60,80,0.08);">');
 
           html.push('<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">');
 
@@ -846,6 +847,7 @@ app.get("/", (req, res) => {
           html.push("</div>");
         }
 
+        html.push("</div>");
         html.push("</div>");
 
         cards.innerHTML = html.join("");

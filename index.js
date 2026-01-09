@@ -2877,6 +2877,66 @@ app.post("/generate-workout", (req, res) => {
     }
   }
 
+  // Snazzy workout name generator - inspired by CardGym cards
+  function generateWorkoutName(totalDistance, opts, seed) {
+    const focus = opts.focus || "allround";
+    
+    // Distance-based names
+    const shortNames = [
+      "Quick Dip", "Fast Lane", "Starter Set", "Warm Welcome",
+      "Pool Opener", "Light Laps", "Easy Does It", "Swim Snack"
+    ];
+    const mediumNames = [
+      "Steady State", "Lane Lines", "Rhythm & Flow", "Cruise Control",
+      "Smooth Sailing", "Pool Party", "Stroke & Glide", "Lap Stack"
+    ];
+    const longNames = [
+      "Distance Dash", "Long Haul", "Mile Maker", "Endurance Engine",
+      "Big Swim", "Full Tank", "Deep Dive", "Marathon Mode"
+    ];
+    
+    // Focus-based names
+    const focusNames = {
+      sprint: ["Speed Demon", "Fast Finish", "Sprint Session", "Power Push", "Quick Burst"],
+      threshold: ["Threshold Test", "Pace Pusher", "T-Time", "Race Ready", "Tempo Tune"],
+      endurance: ["Distance Day", "Steady Strong", "Long & Smooth", "Endurance Hour"],
+      technique: ["Drill Time", "Form Focus", "Technique Tune", "Perfect Stroke"],
+      allround: ["Mixed Bag", "Full Spectrum", "Variety Pack", "All-Rounder", "Balanced Swim"]
+    };
+    
+    // Equipment-themed names
+    const finsNames = ["Fin Frenzy", "Flipper Time", "Turbo Kick"];
+    const paddlesNames = ["Power Paddles", "Arm Amplifier", "Pull Power"];
+    
+    let pool = [];
+    
+    // Add focus-specific names
+    if (focusNames[focus]) {
+      pool = pool.concat(focusNames[focus]);
+    }
+    
+    // Add equipment-specific names
+    if (opts.fins) pool = pool.concat(finsNames);
+    if (opts.paddles) pool = pool.concat(paddlesNames);
+    
+    // Add distance-appropriate names
+    if (totalDistance <= 1000) {
+      pool = pool.concat(shortNames);
+    } else if (totalDistance <= 2500) {
+      pool = pool.concat(mediumNames);
+    } else {
+      pool = pool.concat(longNames);
+    }
+    
+    // Fallback if pool somehow empty
+    if (pool.length === 0) {
+      pool = ["Swim Session", "Pool Workout", "Lap Time"];
+    }
+    
+    // Use seed to deterministically select from pool
+    return pool[seed % pool.length];
+  }
+
   function buildWorkout({ targetTotal, poolLen, unitsShort, poolLabel, thresholdPace, opts, seed }) {
     const base = poolLen;
     const rawTotal = snapToPoolMultiple(targetTotal, base);
@@ -2885,6 +2945,9 @@ app.post("/generate-workout", (req, res) => {
     const total = evenLengths * base;
 
     const paceSec = parsePaceToSecondsPer100(thresholdPace);
+
+    // Snazzy workout name generator (inspired by CardGym cards)
+    const workoutName = generateWorkoutName(total, opts, seed);
 
     const includeKick = opts.includeKick && total >= snapToPoolMultiple(1500, base);
     const includePull = opts.includePull && total >= snapToPoolMultiple(1500, base);
@@ -2987,6 +3050,9 @@ app.post("/generate-workout", (req, res) => {
 
     while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
 
+    // Prepend workout name as title
+    const header = ["--- " + workoutName + " ---", ""];
+
     const footer = [];
     footer.push("");
     footer.push("Requested: " + String(targetTotal) + String(unitsShort));
@@ -3006,7 +3072,7 @@ app.post("/generate-workout", (req, res) => {
       }
     }
 
-    const full = lines.join("\n") + "\n" + footer.join("\n");
+    const full = header.join("\n") + lines.join("\n") + "\n" + footer.join("\n");
 
     return { text: full };
 

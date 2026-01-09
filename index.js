@@ -30,17 +30,17 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        /* Zone colors: GREEN=Easy, BLUE=Steady, YELLOW=Moderate, ORANGE=Strong, RED=Hard */
+        /* Zone colors: GREEN=Easy, BLUE=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
         --zone-easy-bg: #dcfce7;
         --zone-easy-bar: #22c55e;
-        --zone-steady-bg: #dbeafe;
-        --zone-steady-bar: #3b82f6;
-        --zone-moderate-bg: #fef3c7;
-        --zone-moderate-bar: #f6c87a;
-        --zone-strong-bg: #fed7aa;
-        --zone-strong-bar: #ea580c;
-        --zone-hard-bg: #f6c1c1;
-        --zone-hard-bar: #d10f24;
+        --zone-moderate-bg: #dbeafe;
+        --zone-moderate-bar: #3b82f6;
+        --zone-strong-bg: #fef3c7;
+        --zone-strong-bar: #f6c87a;
+        --zone-hard-bg: #fed7aa;
+        --zone-hard-bar: #ea580c;
+        --zone-fullgas-bg: #f6c1c1;
+        --zone-fullgas-bar: #d10f24;
       }
       @keyframes dolphin-jump {
         0% { transform: translateY(0) rotate(0deg); }
@@ -531,91 +531,91 @@ app.get("/", (req, res) => {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
         
-        // Zone names: easy, steady, moderate, strong, hard
+        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
         
         // Warm-up and cool-down are always easy (green - Zone 1)
         if (text.includes("warm") || text.includes("cool")) return "easy";
         
-        // Hard keywords (red - Zone 5) - highest intensity
-        const hardWords = ["sprint", "all out", "max effort", "race pace", "100%"];
+        // Full Gas keywords (red - Zone 5) - max intensity
+        const fullgasWords = ["sprint", "all out", "max effort", "race pace", "100%", "full gas", "max"];
+        for (const w of fullgasWords) if (text.includes(w)) return "fullgas";
+        
+        // Hard keywords (orange - Zone 4) - sustained hard
+        const hardWords = ["fast", "strong", "best average", "race", "threshold", "hard"];
         for (const w of hardWords) if (text.includes(w)) return "hard";
         
-        // Strong keywords (orange - Zone 4)
-        const strongWords = ["fast", "strong", "best average", "race", "threshold"];
-        for (const w of strongWords) if (text.includes(w)) return "strong";
-        
-        // Main sets are NEVER easy/green - at minimum moderate (yellow), default strong (orange)
+        // Main sets are NEVER easy/green - at minimum strong (yellow), default hard (orange)
         if (labelOnly.includes("main")) {
-          // Check if it has moderate keywords, otherwise default to strong
-          const moderateWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
-          for (const w of moderateWords) if (text.includes(w)) return "moderate";
-          return "strong";
+          // Check if it has strong keywords, otherwise default to hard
+          const strongWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
+          for (const w of strongWords) if (text.includes(w)) return "strong";
+          return "hard";
         }
         
-        // Moderate keywords (creamy yellow - Zone 3)
-        const moderateWords = ["descend", "build", "negative split", "push"];
-        for (const w of moderateWords) if (text.includes(w)) return "moderate";
+        // Strong keywords (yellow - Zone 3) - building effort
+        const strongWords = ["descend", "build", "negative split", "push"];
+        for (const w of strongWords) if (text.includes(w)) return "strong";
         
-        // Steady keywords (blue - Zone 2) - for technique
-        const steadyWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
-        for (const w of steadyWords) if (text.includes(w)) return "steady";
+        // Moderate keywords (blue - Zone 2) - technique work
+        const moderateWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
+        for (const w of moderateWords) if (text.includes(w)) return "moderate";
         
         // Easy keywords (green - Zone 1)
         const easyWords = ["easy", "relaxed", "recovery", "loosen"];
         for (const w of easyWords) if (text.includes(w)) return "easy";
         
-        // Default: steady for technique sets
-        return "steady";
+        // Default: moderate for technique sets
+        return "moderate";
       }
 
       function getZoneSpan(label, body) {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
         
-        // Zone names: easy, steady, moderate, strong, hard
+        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
         
-        // Kick build sets: easy → steady (check FIRST before generic build)
+        // Kick build sets: easy → moderate
         if (labelOnly.includes("kick") && text.includes("build")) {
-          return ["easy", "steady"];
+          return ["easy", "moderate"];
         }
         
-        // Pull build sets: easy → steady
+        // Pull build sets: easy → moderate
         if (labelOnly.includes("pull") && text.includes("build")) {
-          return ["easy", "steady"];
+          return ["easy", "moderate"];
         }
         
-        // Main sets with build/progressive language: moderate → strong or strong → hard
+        // Main sets with build/progressive language: strong → hard or hard → fullgas
         if (labelOnly.includes("main")) {
           if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
-            return ["moderate", "strong"];
+            return ["strong", "hard"];
           }
           if (text.includes("descend") || text.includes("pyramid")) {
-            return ["moderate", "strong"];
-          }
-          // Main with sprint at end
-          if (text.includes("sprint") || text.includes("final") && text.includes("fast")) {
             return ["strong", "hard"];
+          }
+          // Main with sprint/max at end
+          if (text.includes("sprint") || text.includes("max") || text.includes("all out")) {
+            return ["hard", "fullgas"];
           }
         }
         
         // Build sets span from starting zone to higher intensity
         if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
-          return ["easy", "moderate"];
+          return ["easy", "strong"];
         }
         
         // Descend sets go from easier to harder
         if (text.includes("descend")) {
-          return ["steady", "moderate"];
+          return ["moderate", "strong"];
         }
         
         // Pyramid sets
         if (text.includes("pyramid")) {
-          return ["steady", "moderate"];
+          return ["moderate", "strong"];
         }
         
         // Reducers (like the CardGym cards)
         if (text.includes("reducer")) {
-          return ["steady", "strong"];
+          return ["moderate", "hard"];
         }
         
         // No zone span - single zone
@@ -626,15 +626,15 @@ app.get("/", (req, res) => {
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
-        // Zone names: easy, steady, moderate, strong, hard
+        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
         const zones = {
           easy: { bg: getVar('--zone-easy-bg', '#dcfce7'), bar: getVar('--zone-easy-bar', '#22c55e') },
-          steady: { bg: getVar('--zone-steady-bg', '#dbeafe'), bar: getVar('--zone-steady-bar', '#3b82f6') },
-          moderate: { bg: getVar('--zone-moderate-bg', '#fef3c7'), bar: getVar('--zone-moderate-bar', '#f6c87a') },
-          strong: { bg: getVar('--zone-strong-bg', '#fed7aa'), bar: getVar('--zone-strong-bar', '#ea580c') },
-          hard: { bg: getVar('--zone-hard-bg', '#f6c1c1'), bar: getVar('--zone-hard-bar', '#d10f24') }
+          moderate: { bg: getVar('--zone-moderate-bg', '#dbeafe'), bar: getVar('--zone-moderate-bar', '#3b82f6') },
+          strong: { bg: getVar('--zone-strong-bg', '#fef3c7'), bar: getVar('--zone-strong-bar', '#f6c87a') },
+          hard: { bg: getVar('--zone-hard-bg', '#fed7aa'), bar: getVar('--zone-hard-bar', '#ea580c') },
+          fullgas: { bg: getVar('--zone-fullgas-bg', '#f6c1c1'), bar: getVar('--zone-fullgas-bar', '#d10f24') }
         };
-        return zones[zone] || zones.steady;
+        return zones[zone] || zones.moderate;
       }
 
       function gradientStyleForZones(zoneSpan) {
@@ -662,7 +662,7 @@ app.get("/", (req, res) => {
 
       function colorStyleForEffort(effort) {
         // Zone-based colors using CSS variables for live color picker
-        // Zone names: easy, steady, moderate, strong, hard
+        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
@@ -671,24 +671,24 @@ app.get("/", (req, res) => {
           const bar = getVar('--zone-easy-bar', '#22c55e');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
-        if (effort === "steady") {
-          const bg = getVar('--zone-steady-bg', '#dbeafe');
-          const bar = getVar('--zone-steady-bar', '#3b82f6');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
-        }
         if (effort === "moderate") {
-          const bg = getVar('--zone-moderate-bg', '#fef3c7');
-          const bar = getVar('--zone-moderate-bar', '#f6c87a');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
+          const bg = getVar('--zone-moderate-bg', '#dbeafe');
+          const bar = getVar('--zone-moderate-bar', '#3b82f6');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         if (effort === "strong") {
-          const bg = getVar('--zone-strong-bg', '#fed7aa');
-          const bar = getVar('--zone-strong-bar', '#ea580c');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          const bg = getVar('--zone-strong-bg', '#fef3c7');
+          const bar = getVar('--zone-strong-bar', '#f6c87a');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
         }
         if (effort === "hard") {
-          const bg = getVar('--zone-hard-bg', '#f6c1c1');
-          const bar = getVar('--zone-hard-bar', '#d10f24');
+          const bg = getVar('--zone-hard-bg', '#fed7aa');
+          const bar = getVar('--zone-hard-bar', '#ea580c');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "fullgas") {
+          const bg = getVar('--zone-fullgas-bg', '#f6c1c1');
+          const bar = getVar('--zone-fullgas-bar', '#d10f24');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         return "background:#fff; border:1px solid #e7e7e7;";
@@ -1601,32 +1601,32 @@ app.get("/viewport-lab", (req, res) => {
         <span class="hex-display" id="hexEasyBar">#22c55e</span>
       </div>
       <div class="zone-row" style="background:#dbeafe; border-left:3px solid #3b82f6;">
-        <span class="zone-label">Steady</span>
-        <input type="color" id="colorSteadyBg" value="#dbeafe" title="Background" />
-        <span class="hex-display" id="hexSteadyBg">#dbeafe</span>
-        <input type="color" id="colorSteadyBar" value="#3b82f6" title="Accent" />
-        <span class="hex-display" id="hexSteadyBar">#3b82f6</span>
+        <span class="zone-label">Moderate</span>
+        <input type="color" id="colorModerateBg" value="#dbeafe" title="Background" />
+        <span class="hex-display" id="hexModerateBg">#dbeafe</span>
+        <input type="color" id="colorModerateBar" value="#3b82f6" title="Accent" />
+        <span class="hex-display" id="hexModerateBar">#3b82f6</span>
       </div>
       <div class="zone-row" style="background:#fef3c7; border-left:3px solid #f6c87a;">
-        <span class="zone-label">Moderate</span>
-        <input type="color" id="colorModerateBg" value="#fef3c7" title="Background" />
-        <span class="hex-display" id="hexModerateBg">#fef3c7</span>
-        <input type="color" id="colorModerateBar" value="#f6c87a" title="Accent" />
-        <span class="hex-display" id="hexModerateBar">#f6c87a</span>
+        <span class="zone-label">Strong</span>
+        <input type="color" id="colorStrongBg" value="#fef3c7" title="Background" />
+        <span class="hex-display" id="hexStrongBg">#fef3c7</span>
+        <input type="color" id="colorStrongBar" value="#f6c87a" title="Accent" />
+        <span class="hex-display" id="hexStrongBar">#f6c87a</span>
       </div>
       <div class="zone-row" style="background:#fed7aa; border-left:3px solid #ea580c;">
-        <span class="zone-label">Strong</span>
-        <input type="color" id="colorStrongBg" value="#fed7aa" title="Background" />
-        <span class="hex-display" id="hexStrongBg">#fed7aa</span>
-        <input type="color" id="colorStrongBar" value="#ea580c" title="Accent" />
-        <span class="hex-display" id="hexStrongBar">#ea580c</span>
+        <span class="zone-label">Hard</span>
+        <input type="color" id="colorHardBg" value="#fed7aa" title="Background" />
+        <span class="hex-display" id="hexHardBg">#fed7aa</span>
+        <input type="color" id="colorHardBar" value="#ea580c" title="Accent" />
+        <span class="hex-display" id="hexHardBar">#ea580c</span>
       </div>
       <div class="zone-row" style="background:#f6c1c1; border-left:3px solid #d10f24;">
-        <span class="zone-label">Hard</span>
-        <input type="color" id="colorHardBg" value="#f6c1c1" title="Background" />
-        <span class="hex-display" id="hexHardBg">#f6c1c1</span>
-        <input type="color" id="colorHardBar" value="#d10f24" title="Accent" />
-        <span class="hex-display" id="hexHardBar">#d10f24</span>
+        <span class="zone-label">Full Gas</span>
+        <input type="color" id="colorFullgasBg" value="#f6c1c1" title="Background" />
+        <span class="hex-display" id="hexFullgasBg">#f6c1c1</span>
+        <input type="color" id="colorFullgasBar" value="#d10f24" title="Accent" />
+        <span class="hex-display" id="hexFullgasBar">#d10f24</span>
       </div>
       <div style="margin-top:6px; font-size:9px; color:#666; line-height:1.2;">
         Pick colors, then generate a workout in a frame to see them applied.
@@ -1792,17 +1792,17 @@ app.get("/viewport-lab", (req, res) => {
       });
     }
 
-    // Setup all color inputs (Zone names: easy, steady, moderate, strong, hard)
+    // Setup all color inputs (Zone names: easy, moderate, strong, hard, fullgas)
     setupColorInput('colorEasyBg', 'hexEasyBg', '--zone-easy-bg');
     setupColorInput('colorEasyBar', 'hexEasyBar', '--zone-easy-bar');
-    setupColorInput('colorSteadyBg', 'hexSteadyBg', '--zone-steady-bg');
-    setupColorInput('colorSteadyBar', 'hexSteadyBar', '--zone-steady-bar');
     setupColorInput('colorModerateBg', 'hexModerateBg', '--zone-moderate-bg');
     setupColorInput('colorModerateBar', 'hexModerateBar', '--zone-moderate-bar');
     setupColorInput('colorStrongBg', 'hexStrongBg', '--zone-strong-bg');
     setupColorInput('colorStrongBar', 'hexStrongBar', '--zone-strong-bar');
     setupColorInput('colorHardBg', 'hexHardBg', '--zone-hard-bg');
     setupColorInput('colorHardBar', 'hexHardBar', '--zone-hard-bar');
+    setupColorInput('colorFullgasBg', 'hexFullgasBg', '--zone-fullgas-bg');
+    setupColorInput('colorFullgasBar', 'hexFullgasBar', '--zone-fullgas-bar');
   </script>
 </body>
 </html>`;
@@ -2021,18 +2021,16 @@ app.post("/reroll-set", (req, res) => {
 
     // Choose patterns
     if (k.includes("warm")) {
-      // Warm-up varies 1-3 segments for variety
+      // Warm-up varies 1-3 segments for variety - NO DRILL in warm-up (drill belongs in Drill section)
       const options = [
-        // 3 segments: swim + build + drill
+        // 3 segments: swim + build + kick
         () => {
           const d200 = snapToPoolMultiple(200, base);
           if (d200 > 0) add(1, d200, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
           const d25 = snapToPoolMultiple(25, base);
-          // Named drills for warm-up
-          const warmDrills = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
-          if (d25 > 0) add(4, d25, warmDrills[seed % warmDrills.length], restSecondsFor("drill", d25, opts));
+          if (d25 > 0) add(4, d25, "kick easy", restSecondsFor("kick", d25, opts));
         },
         // 2 segments: swim + build
         () => {
@@ -2041,15 +2039,13 @@ app.post("/reroll-set", (req, res) => {
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
         },
-        // 3 segments: swim + kick + drill
+        // 3 segments: swim + kick + easy swim
         () => {
           const d100 = snapToPoolMultiple(100, base);
           if (d100 > 0) add(2, d100, stroke + " easy", 0);
           const d50 = snapToPoolMultiple(50, base);
           if (d50 > 0) add(4, d50, "kick easy", restSecondsFor("kick", d50, opts));
-          // Named drill for option 3
-          const drillOptions = ["Shark fin", "Zipper", "DPS", "Long dog", "Corkscrew"];
-          if (d50 > 0) add(4, d50, drillOptions[seed % drillOptions.length], restSecondsFor("drill", d50, opts));
+          if (d50 > 0) add(4, d50, stroke + " easy", 0);
         },
         // 1 segment: simple long swim (for short warm-ups)
         () => {
@@ -2222,24 +2218,40 @@ app.post("/reroll-set", (req, res) => {
       const d50 = snapToPoolMultiple(50, base);
       const d100 = snapToPoolMultiple(100, base);
       const d200 = snapToPoolMultiple(200, base);
+      const d25 = snapToPoolMultiple(25, base);
 
       if (focus === "sprint") {
-        if (d50 > 0 && remaining >= d50 * 12) add(12, d50, stroke + " fast", restSecondsFor("main", d50, opts) + 10);
-        if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " strong", restSecondsFor("main", d100, opts));
+        // Sprint focus: include full gas efforts
+        if (d50 > 0 && remaining >= d50 * 8) add(8, d50, stroke + " fast build", restSecondsFor("main", d50, opts) + 10);
+        if (d25 > 0 && remaining >= d25 * 6) add(6, d25, stroke + " max sprint", restSecondsFor("sprint", d25, opts) + 20);
+        if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " hard", restSecondsFor("main", d100, opts));
       } else if (focus === "threshold") {
         if (d100 > 0 && remaining >= d100 * 10) add(10, d100, stroke + " best average", restSecondsFor("main", d100, opts));
-        if (d200 > 0 && remaining >= d200 * 4) add(4, d200, stroke + " steady strong", restSecondsFor("main", d200, opts));
+        if (d200 > 0 && remaining >= d200 * 4) add(4, d200, stroke + " hard hold pace", restSecondsFor("main", d200, opts));
       } else if (focus === "endurance") {
-        if (d200 > 0 && remaining >= d200 * 6) add(6, d200, stroke + " steady", restSecondsFor("main", d200, opts));
+        if (d200 > 0 && remaining >= d200 * 6) add(6, d200, stroke + " moderate", restSecondsFor("main", d200, opts));
         if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " smooth", restSecondsFor("main", d100, opts));
       } else if (focus === "technique") {
         if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " perfect form", restSecondsFor("main", d100, opts));
         if (d50 > 0 && remaining >= d50 * 8) add(8, d50, stroke + " focus stroke count", restSecondsFor("main", d50, opts));
       } else {
-        // All round
-        if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " steady", restSecondsFor("main", d100, opts));
-        if (d200 > 0 && remaining >= d200 * 3) add(3, d200, stroke + " strong", restSecondsFor("main", d200, opts));
-        if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " fast finish", restSecondsFor("main", d50, opts) + 5);
+        // All round - mix of efforts including full gas finish
+        const patternChoice = seed % 3;
+        if (patternChoice === 0) {
+          // Build to fast finish
+          if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " build", restSecondsFor("main", d100, opts));
+          if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " fast", restSecondsFor("main", d50, opts) + 5);
+          if (d25 > 0 && remaining >= d25 * 4) add(4, d25, stroke + " sprint all out", restSecondsFor("sprint", d25, opts) + 15);
+        } else if (patternChoice === 1) {
+          // Strong sustained with max finish
+          if (d200 > 0 && remaining >= d200 * 3) add(3, d200, stroke + " hard", restSecondsFor("main", d200, opts));
+          if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " strong", restSecondsFor("main", d100, opts));
+          if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " max effort", restSecondsFor("sprint", d50, opts) + 10);
+        } else {
+          // Classic descend set
+          if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " descend 1-4 easy to fast", restSecondsFor("main", d100, opts));
+          if (d50 > 0 && remaining >= d50 * 6) add(6, d50, stroke + " fast finish", restSecondsFor("main", d50, opts) + 5);
+        }
       }
 
       fillEasy("main");

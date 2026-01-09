@@ -307,13 +307,13 @@ If AI reroll cannot produce a valid set, the system must fall back to a determin
 ### 2026-01-08 — Basic mode first, advanced options are optional
 v1 must produce a good workout with zero configuration. Advanced options can exist, but must not degrade basic output.
 
-### 2026-01-09 — Effort-based color system
-Colors indicate intensity level, not set type:
-- Level 1 (green): Easy (warm-up, cool-down)
-- Level 2 (blue): Moderate
-- Level 3 (yellow): Mod-high
-- Level 4 (orange): Hard
-- Level 5 (red): Sprint
+### 2026-01-09 — Effort-based color system (UPDATED 2026-01-09)
+Colors indicate intensity level, not set type. Five levels:
+- Level 1 (green): Easy/Recovery - warm-up, cool-down, recovery
+- Level 2 (blue): Moderate - technique work, drill, steady
+- Level 3 (yellow): Strong - building effort, descend, build sets
+- Level 4 (orange): Hard - sustained hard effort, threshold, main sets
+- Level 5 (red): Full Gas - max effort, sprints, race pace, all out
 Each level has matching background tint and left accent bar.
 
 ### 2026-01-09 — No "easy" in drill/kick/pull labels
@@ -366,13 +366,13 @@ For non-standard pool lengths (30m, 33m, 27m etc), set descriptions now show "(X
 ### 2026-01-09 — Long workouts don't always need many subsets (TODO)
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
 
-### 2026-01-09 — Zone-based workout card colors (updated 2026-01-09)
-Workout set cards have colored backgrounds + left accent bar. Zone names updated to match coaching terminology:
+### 2026-01-09 — Zone-based workout card colors (UPDATED 2026-01-09)
+Workout set cards have colored backgrounds + left accent bar. Zone names finalized:
 - GREEN background (#dcfce7) + green bar (#22c55e): Easy (Zone 1) - warm-up, cool-down, recovery
-- BLUE background (#dbeafe) + blue bar (#3b82f6): Steady (Zone 2) - technique, drill, kick, pull
-- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Moderate (Zone 3) - building effort
-- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Strong (Zone 4) - main sets, sustained effort
-- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Hard (Zone 5) - max effort sets
+- BLUE background (#dbeafe) + blue bar (#3b82f6): Moderate (Zone 2) - technique, drill, steady work
+- Creamy yellow background (#fef3c7) + warm gold bar (#f6c87a): Strong (Zone 3) - building effort, descend
+- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard (Zone 4) - main sets, sustained effort, threshold
+- Unsaturated red background (#f6c1c1) + bold red bar (#d10f24): Full Gas (Zone 5) - max effort, sprints, all out
 
 Note: "Sprint" is a SET TYPE (like "1x100 Sprint"), not a zone. Zones describe intensity levels.
 
@@ -400,7 +400,7 @@ Features to implement, inspired by user's 2019 printed CardGym cards:
 **COMPLETED 2026-01-09:**
 - DONE: Floating cards: Remove white form/results container, let cards float on pool background
 - DONE: 3-column layout: Set description (left), rest in red (center), distance (right)
-- DONE: Zone renaming: Easy, Steady, Moderate, Strong, Hard
+- DONE: Zone renaming: Easy, Moderate, Strong, Hard, Full Gas
 - DONE: Vertical gradients (top-to-bottom) for multi-zone sets: build, descend, pyramid, reducer
 - DONE: Drill name library: 16 specific drills (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, Hip rotation, Paddle scull, Kickboard balance, 6-3-6)
 - DONE: Snazzy workout names: Context-aware names based on distance, focus, and equipment (e.g., "Steady State", "Speed Demon", "Lane Lines", "Full Tank")
@@ -428,19 +428,27 @@ Goal input boxes now have semi-transparent white background (70% opacity) to ble
 ### 2026-01-09 — Workout name in yellow box
 Workout name now displays in bright yellow box (#fef08a) with rounded corners (12px), padding, and drop shadow - matching CardGym printed card aesthetic. Floats on right side above workout cards.
 
-### 2026-01-09 — Gradient system for zone transitions (NEEDS EXPANSION)
-Sets that span multiple zones display gradient backgrounds. Currently only triggers on:
+### 2026-01-09 — Gradient system for zone transitions (UPDATED 2026-01-09)
+Sets that span multiple zones display gradient backgrounds. Now triggers on:
 - Build sets with "build", "negative split", "smooth to strong" keywords
-- Descend sets
-- Kick build sets
-
-**ISSUE:** Gradients don't appear on enough set types. Need to expand to cover more scenarios like:
-- Main sets that build effort
-- Pyramid sets
-- Any set with progressive intensity language
+- Descend sets (moderate → strong)
+- Kick/Pull build sets (easy → moderate)
+- Main sets with progressive language (strong → hard)
+- Main sets with sprint/max keywords (hard → fullgas)
+- Pyramid sets (moderate → strong)
+- Reducer sets (moderate → hard)
 
 Functions: getZoneSpan(), getZoneColors(), gradientStyleForZones()
 Reroll handler also applies gradients when set content changes.
+
+### 2026-01-09 — No drill in warm-up
+Drill sets belong in the Drill section, not warm-up. Warm-up now uses only swim, build, and kick - no drill. Drill can still appear in mixed sets elsewhere but not in warm-up by default.
+
+### 2026-01-09 — Full Gas efforts in main sets
+Main sets now include "full gas" / sprint / max effort options:
+- Sprint focus: fast build + max sprint + hard
+- All round: variety of patterns including "sprint all out" and "max effort" finishes
+- Keywords that trigger fullgas zone: sprint, all out, max effort, race pace, 100%, full gas, max
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

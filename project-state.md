@@ -217,10 +217,10 @@ Critical (FIXED 2026-01-08):
 - ~~"easy swim" awkward wording~~ FIXED: Changed to "easy drill", "easy kick", etc.
 
 Remaining minor issues:
-- Custom pool distances look robotic (3x99, 1x231) but are mathematically correct
+- ~~Custom pool distances look robotic (3x99, 1x231)~~ FIXED 2026-01-09: Added lap count display "(X lengths)" for non-standard pools
 
 UI defects:
-- Right side chips sometimes missing because set distance parser fails when output is not strictly NxD
+- ~~Right side chips sometimes missing~~ FIXED 2026-01-09: Improved set distance parser to handle multi-line sets and more formats
 - Dice click can error when the set distance cannot be parsed, or when reroll returns invalid output
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
@@ -251,10 +251,11 @@ Completed:
 15. DONE: Default distance 1500m, 25m pool highlighted by default
 
 Remaining:
-- Improve set parsing for more reliable right-side chips in UI
-- Consider improving custom pool distance formatting (currently 3x99 looks robotic)
+- ~~Improve set parsing for more reliable right-side chips in UI~~ DONE 2026-01-09
+- ~~Consider improving custom pool distance formatting~~ DONE 2026-01-09 - Added "(X lengths)" display
 - Premium features: temperature option for more varied workout structures (pyramids, etc.)
-- Remove Viewport Lab link before production release
+- Remove Viewport Lab link and dev color picker before production release
+- Dev color picker added for real-time color experimentation
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 
@@ -359,8 +360,8 @@ The workout results no longer have a title header - the set cards speak for them
 ### 2026-01-09 — User's pool photo as background (compressed)
 Background image is user's own sunny outdoor pool photo with lane lines and pennants. Compressed from 6MB to 133KB for fast loading. Uses background-attachment:fixed for subtle parallax effect.
 
-### 2026-01-09 — Custom pool lengths show lap count (TODO)
-For non-standard pool lengths (30m, 33m, 27m etc), set descriptions should show "(X lengths)" in parentheses so swimmers know lap count. Example: "3x90m (3 lengths)". Not yet implemented.
+### 2026-01-09 — Custom pool lengths show lap count (DONE)
+For non-standard pool lengths (30m, 33m, 27m etc), set descriptions now show "(X lengths)" in parentheses so swimmers know lap count. Example: "3x99 (3 lengths)" for a 33m pool.
 
 ### 2026-01-09 — Long workouts don't always need many subsets (TODO)
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
@@ -378,6 +379,15 @@ Before completing any UI/styling changes, ALWAYS generate a workout and visually
 
 ### 2026-01-09 — Build set reroll variety
 Build set generation now has 4 pattern variations and 5 description options (build, descend, negative split, build to fast, smooth to strong) so rerolling produces different results.
+
+### 2026-01-09 — Dev color picker for live experimentation
+A floating color picker panel allows real-time adjustment of zone colors (background + accent bar) for all 5 zones. Pick colors, generate a workout, see them applied instantly. Hex codes shown for easy handoff. Remove before production.
+
+### 2026-01-09 — Distance chips now show units
+Right-side distance chips now display with unit suffix (e.g., "225m" instead of just "225") for clarity.
+
+### 2026-01-09 — Improved set parsing
+Set distance parser now handles multi-line sets and standalone distances (like "200 easy" without NxD format) more reliably.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

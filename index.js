@@ -29,6 +29,18 @@ app.get("/", (req, res) => {
   /* __START_ROUTE_HOME_UI_HTML_R110__ */
   const HOME_HTML = `
     <style>
+      :root {
+        --zone-easy-bg: #dbeafe;
+        --zone-easy-bar: #3b82f6;
+        --zone-moderate-bg: #dcfce7;
+        --zone-moderate-bar: #22c55e;
+        --zone-modhigh-bg: #fef3c7;
+        --zone-modhigh-bar: #f6c87a;
+        --zone-hard-bg: #fed7aa;
+        --zone-hard-bar: #ea580c;
+        --zone-sprint-bg: #f6c1c1;
+        --zone-sprint-bar: #d10f24;
+      }
       @keyframes dolphin-jump {
         0% { transform: translateY(0) rotate(0deg); }
         20% { transform: translateY(-12px) rotate(-15deg); }
@@ -65,10 +77,108 @@ app.get("/", (req, res) => {
           grid-template-columns: 1fr !important;
         }
       }
+      #devColorPicker {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,255,255,0.95);
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-size: 12px;
+        max-width: 280px;
+      }
+      #devColorPicker.collapsed {
+        padding: 8px 12px;
+      }
+      #devColorPicker .picker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      #devColorPicker.collapsed .picker-content { display: none; }
+      #devColorPicker .zone-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+      }
+      #devColorPicker .zone-label {
+        width: 70px;
+        font-weight: 600;
+      }
+      #devColorPicker input[type="color"] {
+        width: 32px;
+        height: 24px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 0;
+      }
+      #devColorPicker .hex-display {
+        font-family: monospace;
+        font-size: 10px;
+        color: #666;
+        width: 50px;
+      }
     </style>
     <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.85); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.1);">
       <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
       <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
+    </div>
+
+    <div id="devColorPicker">
+      <div class="picker-header">
+        <span>Zone Colors</span>
+        <button type="button" id="toggleColorPicker" style="border:none; background:transparent; cursor:pointer; font-size:14px;">-</button>
+      </div>
+      <div class="picker-content">
+        <div class="zone-row" style="background:var(--zone-easy-bg); border-left:3px solid var(--zone-easy-bar);">
+          <span class="zone-label">Easy</span>
+          <input type="color" id="colorEasyBg" value="#dbeafe" title="Background" />
+          <span class="hex-display" id="hexEasyBg">#dbeafe</span>
+          <input type="color" id="colorEasyBar" value="#3b82f6" title="Accent bar" />
+          <span class="hex-display" id="hexEasyBar">#3b82f6</span>
+        </div>
+        <div class="zone-row" style="background:var(--zone-moderate-bg); border-left:3px solid var(--zone-moderate-bar);">
+          <span class="zone-label">Moderate</span>
+          <input type="color" id="colorModerateBg" value="#dcfce7" title="Background" />
+          <span class="hex-display" id="hexModerateBg">#dcfce7</span>
+          <input type="color" id="colorModerateBar" value="#22c55e" title="Accent bar" />
+          <span class="hex-display" id="hexModerateBar">#22c55e</span>
+        </div>
+        <div class="zone-row" style="background:var(--zone-modhigh-bg); border-left:3px solid var(--zone-modhigh-bar);">
+          <span class="zone-label">Mod-High</span>
+          <input type="color" id="colorModhighBg" value="#fef3c7" title="Background" />
+          <span class="hex-display" id="hexModhighBg">#fef3c7</span>
+          <input type="color" id="colorModhighBar" value="#f6c87a" title="Accent bar" />
+          <span class="hex-display" id="hexModhighBar">#f6c87a</span>
+        </div>
+        <div class="zone-row" style="background:var(--zone-hard-bg); border-left:3px solid var(--zone-hard-bar);">
+          <span class="zone-label">Hard</span>
+          <input type="color" id="colorHardBg" value="#fed7aa" title="Background" />
+          <span class="hex-display" id="hexHardBg">#fed7aa</span>
+          <input type="color" id="colorHardBar" value="#ea580c" title="Accent bar" />
+          <span class="hex-display" id="hexHardBar">#ea580c</span>
+        </div>
+        <div class="zone-row" style="background:var(--zone-sprint-bg); border-left:3px solid var(--zone-sprint-bar);">
+          <span class="zone-label">Sprint</span>
+          <input type="color" id="colorSprintBg" value="#f6c1c1" title="Background" />
+          <span class="hex-display" id="hexSprintBg">#f6c1c1</span>
+          <input type="color" id="colorSprintBar" value="#d10f24" title="Accent bar" />
+          <span class="hex-display" id="hexSprintBar">#d10f24</span>
+        </div>
+        <div style="margin-top:8px; font-size:10px; color:#666; line-height:1.3;">
+          Tip: Pick colors, generate a workout, then tell me the hex codes you like.
+        </div>
+      </div>
     </div>
 
     <div style="max-width:920px;">
@@ -550,13 +660,35 @@ app.get("/", (req, res) => {
       }
 
       function colorStyleForEffort(effort) {
-        // Zone-based colors matching triathlon coaching zones
-        // Background colors + left accent bar
-        if (effort === "easy") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
-        if (effort === "moderate") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #86efac; border-right:1px solid #86efac; border-bottom:1px solid #86efac;";
-        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #f6c87a; border-top:1px solid #f9ddb0; border-right:1px solid #f9ddb0; border-bottom:1px solid #f9ddb0;";
-        if (effort === "hard") return "background:#fed7aa; border-left:4px solid #ea580c; border-top:1px solid #fb923c; border-right:1px solid #fb923c; border-bottom:1px solid #fb923c;";
-        if (effort === "sprint") return "background:#f6c1c1; border-left:4px solid #d10f24; border-top:1px solid #f1a9af; border-right:1px solid #f1a9af; border-bottom:1px solid #f1a9af;";
+        // Zone-based colors using CSS variables for live color picker
+        const root = document.documentElement;
+        const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
+        
+        if (effort === "easy") {
+          const bg = getVar('--zone-easy-bg', '#dbeafe');
+          const bar = getVar('--zone-easy-bar', '#3b82f6');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "moderate") {
+          const bg = getVar('--zone-moderate-bg', '#dcfce7');
+          const bar = getVar('--zone-moderate-bar', '#22c55e');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "mod-high") {
+          const bg = getVar('--zone-modhigh-bg', '#fef3c7');
+          const bar = getVar('--zone-modhigh-bar', '#f6c87a');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "hard") {
+          const bg = getVar('--zone-hard-bg', '#fed7aa');
+          const bar = getVar('--zone-hard-bar', '#ea580c');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
+        if (effort === "sprint") {
+          const bg = getVar('--zone-sprint-bg', '#f6c1c1');
+          const bar = getVar('--zone-sprint-bar', '#d10f24');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+        }
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 
@@ -678,25 +810,29 @@ app.get("/", (req, res) => {
   const HOME_JS_RENDER_CARDS = `
       function computeSetDistanceFromBody(body) {
         const t = String(body || "");
-
-        // Support x and ×
-        const re = /(\\d+)\\s*[x×]\\s*(\\d+)\\s*(m|yd)?/gi;
-
         let sum = 0;
-        let m;
-        while ((m = re.exec(t)) !== null) {
-          const reps = Number(m[1]);
-          const dist = Number(m[2]);
-          if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
-        }
 
-        // Also support single swims like "600 easy" without 1x
-        // Only if no NxD was found.
-        if (sum === 0) {
-          const one = t.match(/(^|\\s)(\\d{2,5})(\\s*(m|yd))?(\\s|$)/);
-          if (one) {
-            const v = Number(one[2]);
-            if (Number.isFinite(v) && v >= 50) sum = v;
+        // Split by newlines to handle multi-line set bodies
+        const lines = t.split(/\\n/);
+        
+        for (const line of lines) {
+          // Support x and × for NxD format (8x50, 4×100, etc)
+          const re = /(\\d+)\\s*[x×]\\s*(\\d+)\\s*(m|yd)?/gi;
+          let m;
+          while ((m = re.exec(line)) !== null) {
+            const reps = Number(m[1]);
+            const dist = Number(m[2]);
+            if (Number.isFinite(reps) && Number.isFinite(dist)) sum += reps * dist;
+          }
+          
+          // Also check for standalone distances like "200 easy" without NxD
+          // Only if this line had no NxD matches
+          if (!/(\\d+)\\s*[x×]\\s*(\\d+)/i.test(line)) {
+            const standaloneMatch = line.match(/(^|\\s)(\\d{2,5})(\\s*(m|yd|meters|yards))?(\\s|$)/i);
+            if (standaloneMatch) {
+              const v = Number(standaloneMatch[2]);
+              if (Number.isFinite(v) && v >= 25 && v <= 5000) sum += v;
+            }
           }
         }
 
@@ -788,9 +924,12 @@ app.get("/", (req, res) => {
           const setDist = computeSetDistanceFromBody(body);
 
           const estSec = estimateSwimSeconds(body, paceSec, label);
+          
+          // Get unit for display
+          const unitShort = unitShortFromPayload(payload);
 
           const rightChips = [];
-          if (Number.isFinite(setDist)) rightChips.push(String(setDist));
+          if (Number.isFinite(setDist)) rightChips.push(String(setDist) + unitShort);
           if (Number.isFinite(estSec)) rightChips.push("Est: " + fmtMmSs(estSec));
 
           const goalKey = String(idx);
@@ -1131,6 +1270,72 @@ app.get("/", (req, res) => {
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }
       });
+
+      // Dev color picker functionality
+      const devColorPicker = document.getElementById("devColorPicker");
+      const toggleColorPickerBtn = document.getElementById("toggleColorPicker");
+      
+      toggleColorPickerBtn.addEventListener("click", () => {
+        devColorPicker.classList.toggle("collapsed");
+        toggleColorPickerBtn.textContent = devColorPicker.classList.contains("collapsed") ? "+" : "-";
+      });
+
+      function setupColorInput(inputId, hexDisplayId, cssVarName, zoneRowSelector) {
+        const input = document.getElementById(inputId);
+        const hexDisplay = document.getElementById(hexDisplayId);
+        if (!input || !hexDisplay) return;
+
+        input.addEventListener("input", () => {
+          const val = input.value;
+          document.documentElement.style.setProperty(cssVarName, val);
+          hexDisplay.textContent = val;
+          
+          // Update the zone row preview in the picker
+          const zoneRow = input.closest(".zone-row");
+          if (zoneRow) {
+            if (cssVarName.includes("-bg")) {
+              zoneRow.style.background = val;
+            } else if (cssVarName.includes("-bar")) {
+              zoneRow.style.borderLeftColor = val;
+            }
+          }
+          
+          // Re-render existing cards with new colors
+          const existingCards = document.querySelectorAll('#cards [style*="border-radius:12px"]');
+          existingCards.forEach(card => {
+            const bodyEl = card.querySelector('[data-set-body]');
+            if (bodyEl) {
+              const setIdx = Number(bodyEl.getAttribute('data-set-body'));
+              const labelEl = card.querySelector('[style*="font-weight:700"]');
+              const label = labelEl ? labelEl.textContent.replace('🎲', '').trim() : '';
+              const body = bodyEl.textContent || '';
+              const effort = getEffortLevel(label, body);
+              const newStyle = colorStyleForEffort(effort);
+              card.style.cssText = newStyle + " border-radius:12px; padding:12px; box-shadow:0 6px 16px rgba(0,50,70,0.12);";
+            }
+          });
+        });
+      }
+
+      // Easy zone
+      setupColorInput("colorEasyBg", "hexEasyBg", "--zone-easy-bg");
+      setupColorInput("colorEasyBar", "hexEasyBar", "--zone-easy-bar");
+      
+      // Moderate zone
+      setupColorInput("colorModerateBg", "hexModerateBg", "--zone-moderate-bg");
+      setupColorInput("colorModerateBar", "hexModerateBar", "--zone-moderate-bar");
+      
+      // Mod-high zone
+      setupColorInput("colorModhighBg", "hexModhighBg", "--zone-modhigh-bg");
+      setupColorInput("colorModhighBar", "hexModhighBar", "--zone-modhigh-bar");
+      
+      // Hard zone
+      setupColorInput("colorHardBg", "hexHardBg", "--zone-hard-bg");
+      setupColorInput("colorHardBar", "hexHardBar", "--zone-hard-bar");
+      
+      // Sprint zone
+      setupColorInput("colorSprintBg", "hexSprintBg", "--zone-sprint-bg");
+      setupColorInput("colorSprintBar", "hexSprintBar", "--zone-sprint-bar");
   `;
   /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */
 
@@ -1563,6 +1768,8 @@ app.post("/reroll-set", (req, res) => {
     const hasFins = !!opts.fins;
     const hasPaddles = !!opts.paddles;
 
+    const isNonStandardPool = ![25, 50].includes(base);
+    
     const makeLine = (reps, dist, text, restSec) => {
       const r = Number(reps);
       const d = Number(dist);
@@ -1572,7 +1779,17 @@ app.post("/reroll-set", (req, res) => {
       if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
 
       const strokeText = (text || "").trim();
-      return String(r) + "x" + String(d) + " " + strokeText + suffix;
+      
+      // Add lap count for non-standard pools to help swimmers
+      let lengthInfo = "";
+      if (isNonStandardPool && d > 0 && base > 0 && d % base === 0) {
+        const lengths = d / base;
+        if (lengths > 1) {
+          lengthInfo = " (" + lengths + " lengths)";
+        }
+      }
+      
+      return String(r) + "x" + String(d) + lengthInfo + " " + strokeText + suffix;
     };
 
     const lines = [];
@@ -2140,6 +2357,8 @@ app.post("/generate-workout", (req, res) => {
   function buildOneSetBodyServerLocal({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
     const base = poolLen;
 
+    const isNonStandardPool = ![25, 50].includes(base);
+    
     const makeLine = (reps, dist, text, restSec) => {
       const r = Number(reps);
       const d = Number(dist);
@@ -2149,7 +2368,17 @@ app.post("/generate-workout", (req, res) => {
       if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
 
       const strokeText = (text || "").trim();
-      return String(r) + "x" + String(d) + " " + strokeText + suffix;
+      
+      // Add lap count for non-standard pools to help swimmers
+      let lengthInfo = "";
+      if (isNonStandardPool && d > 0 && base > 0 && d % base === 0) {
+        const lengths = d / base;
+        if (lengths > 1) {
+          lengthInfo = " (" + lengths + " lengths)";
+        }
+      }
+      
+      return String(r) + "x" + String(d) + lengthInfo + " " + strokeText + suffix;
     };
 
     const pickStrokeForSet = (label2) => {

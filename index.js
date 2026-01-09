@@ -21,6 +21,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
+app.use(express.static("public"));
 /* __END_APP_SETUP_R020__ */
 
 /* __START_ROUTE_HOME_UI_R100__ */
@@ -49,30 +50,17 @@ app.get("/", (req, res) => {
       }
       .form-row {
         display: flex;
-        gap: 18px;
-        flex-wrap: wrap;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 20px;
       }
       .form-col {
-        flex: 1 1 300px;
-        min-width: 0;
+        width: 100%;
       }
       .distance-slider {
         width: 100%;
-        max-width: 400px;
+        max-width: 100%;
       }
       @media (max-width: 680px) {
-        .form-row {
-          flex-direction: column;
-          gap: 20px;
-        }
-        .form-col {
-          width: 100%;
-        }
-        .distance-slider {
-          max-width: none;
-          width: 100%;
-        }
         .advanced-grid {
           grid-template-columns: 1fr !important;
         }
@@ -559,9 +547,9 @@ app.get("/", (req, res) => {
         // Level 4 (hard): ORANGE - fast, strong, threshold
         // Level 5 (sprint): RED - all out, race pace
         if (effort === "easy") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #bbf7d0; border-right:1px solid #bbf7d0; border-bottom:1px solid #bbf7d0;";
-        if (effort === "moderate") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
-        if (effort === "mod-high") return "background:#fef9c3; border-left:4px solid #eab308; border-top:1px solid #fde047; border-right:1px solid #fde047; border-bottom:1px solid #fde047;";
-        if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
+        if (effort === "moderate") return "background:#e0f2fe; border-left:4px solid #0284c7; border-top:1px solid #7dd3fc; border-right:1px solid #7dd3fc; border-bottom:1px solid #7dd3fc;";
+        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #d97706; border-top:1px solid #fcd34d; border-right:1px solid #fcd34d; border-bottom:1px solid #fcd34d;";
+        if (effort === "hard") return "background:#fee2e2; border-left:4px solid #dc2626; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
         if (effort === "sprint") return "background:#fef2f2; border-left:4px solid #ef4444; border-top:1px solid #fecaca; border-right:1px solid #fecaca; border-bottom:1px solid #fecaca;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
@@ -781,7 +769,7 @@ app.get("/", (req, res) => {
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
-        html.push('<div style="background:#fff; border-radius:16px; padding:16px; box-shadow:0 2px 12px rgba(0,60,80,0.06);">');
+        html.push('<div style="background:#fff; border-radius:16px; padding:12px; box-shadow:0 4px 20px rgba(0,50,70,0.10);">');
         html.push('<div style="font-weight:700; margin-bottom:12px; font-size:16px; color:#222;">Your Workout</div>');
         html.push('<div style="display:flex; flex-direction:column; gap:12px;">');
 
@@ -807,7 +795,7 @@ app.get("/", (req, res) => {
           const effortLevel = getEffortLevel(label, body);
           const boxStyle = colorStyleForEffort(effortLevel);
 
-          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,60,80,0.08);">');
+          html.push('<div style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 6px 16px rgba(0,50,70,0.12);">');
 
           html.push('<div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">');
 
@@ -1157,7 +1145,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #e0f4f8 0%, #c9e8f0 30%, #b8e0eb 100%); min-height:100vh;">
+<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-bg.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

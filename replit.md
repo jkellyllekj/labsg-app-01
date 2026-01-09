@@ -29,12 +29,15 @@ Additional project-specific preferences:
 - Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
-- Effort-based color system: green=easy, blue=moderate, yellow=mod-high, orange=hard, red=sprint
+- Effort-based color system: green=easy, sky-blue=moderate, cream-yellow=mod-high, red=hard, red=sprint
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
-- Premium form styling: gradient background, drop shadow, 16px rounded corners
+- Premium form styling: realistic pool water photo background (public/pool-bg.jpg), drop shadow, 16px rounded corners
+- Single-column form layout: Distance above Pool length for cleaner mobile/desktop experience
+- Card shadows: 0 6px 16px for more pronounced lift effect
 - Dice emoji button for rerolling individual sets
 - Advanced options with grid layout: strokes on left, equipment on right
+- Static assets served from public/ folder
 
 ### Routes
 - `/` - Main workout generator page

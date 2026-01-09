@@ -568,58 +568,107 @@ app.get("/", (req, res) => {
         return "moderate";
       }
 
+      // Parse a single line to detect its zone
+      function detectLineZone(line) {
+        const t = String(line || "").toLowerCase();
+        
+        // Fullgas (red) - maximum intensity
+        if (t.includes("sprint") || t.includes("all out") || t.includes("max effort") || 
+            t.includes("race pace") || t.includes("full gas") || t.includes("100%")) {
+          return "fullgas";
+        }
+        
+        // Hard (orange) - sustained hard
+        if (t.includes("fast") || t.includes("strong") || t.includes("hard") || 
+            t.includes("threshold") || t.includes("best average")) {
+          return "hard";
+        }
+        
+        // Strong (yellow) - building effort, moderate-hard
+        if (t.includes("build") || t.includes("descend") || t.includes("negative") || 
+            t.includes("push") || t.includes("moderate")) {
+          return "strong";
+        }
+        
+        // Moderate (blue) - steady, technique
+        if (t.includes("steady") || t.includes("smooth") || t.includes("drill") || 
+            t.includes("technique") || t.includes("focus") || t.includes("form") || 
+            t.includes("choice") || t.includes("relaxed")) {
+          return "moderate";
+        }
+        
+        // Easy (green)
+        if (t.includes("easy") || t.includes("recovery") || t.includes("loosen") || 
+            t.includes("warm") || t.includes("cool")) {
+          return "easy";
+        }
+        
+        return null; // Unknown
+      }
+      
+      // Zone order for filling gaps (never skip levels)
+      const ZONE_ORDER = ["easy", "moderate", "strong", "hard", "fullgas"];
+      
+      // Fill gaps between two zones so we never skip levels
+      function fillZoneGap(fromZone, toZone) {
+        const fromIdx = ZONE_ORDER.indexOf(fromZone);
+        const toIdx = ZONE_ORDER.indexOf(toZone);
+        if (fromIdx < 0 || toIdx < 0) return [fromZone, toZone];
+        
+        const result = [];
+        if (fromIdx <= toIdx) {
+          for (let i = fromIdx; i <= toIdx; i++) result.push(ZONE_ORDER[i]);
+        } else {
+          for (let i = fromIdx; i >= toIdx; i--) result.push(ZONE_ORDER[i]);
+        }
+        return result;
+      }
+
       function getZoneSpan(label, body) {
-        const text = (String(label || "") + " " + String(body || "")).toLowerCase();
         const labelOnly = String(label || "").toLowerCase();
+        const lines = String(body || "").split("\n").filter(l => l.trim());
         
-        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
-        
-        // Kick build sets: easy → moderate
-        if (labelOnly.includes("kick") && text.includes("build")) {
+        // Warm-up: always easy→moderate (green→blue)
+        if (labelOnly.includes("warm")) {
           return ["easy", "moderate"];
         }
         
-        // Pull build sets: easy → moderate
-        if (labelOnly.includes("pull") && text.includes("build")) {
-          return ["easy", "moderate"];
+        // Cool-down: always moderate→easy (blue→green) 
+        if (labelOnly.includes("cool")) {
+          return ["moderate", "easy"];
         }
         
-        // Main sets with build/progressive language: strong → hard or hard → fullgas
-        if (labelOnly.includes("main")) {
-          if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
-            return ["strong", "hard"];
-          }
-          if (text.includes("descend") || text.includes("pyramid")) {
-            return ["strong", "hard"];
-          }
-          // Main with sprint/max at end
-          if (text.includes("sprint") || text.includes("max") || text.includes("all out")) {
-            return ["hard", "fullgas"];
-          }
+        // Parse actual segments from body
+        const lineZones = [];
+        for (const line of lines) {
+          const zone = detectLineZone(line);
+          if (zone) lineZones.push(zone);
         }
         
-        // Build sets span from starting zone to higher intensity
-        if (text.includes("build") || text.includes("negative split") || text.includes("smooth to strong")) {
-          return ["easy", "strong"];
+        // No zones detected - single solid color
+        if (lineZones.length === 0) return null;
+        
+        // Single zone - solid color
+        if (lineZones.length === 1) return null;
+        
+        // Check for alternating pattern (striped: easy-hard-easy-hard or similar)
+        const isAlternating = lineZones.length >= 3 && lineZones.every((z, i) => 
+          z === lineZones[i % 2 === 0 ? 0 : 1]
+        );
+        
+        if (isAlternating && lineZones[0] !== lineZones[1]) {
+          // Return alternating pattern for stripes
+          return lineZones.slice(0, Math.min(lineZones.length, 6));
         }
         
-        // Descend sets go from easier to harder
-        if (text.includes("descend")) {
-          return ["moderate", "strong"];
-        }
+        // Progressive pattern: fill gaps between first and last zone
+        const firstZone = lineZones[0];
+        const lastZone = lineZones[lineZones.length - 1];
         
-        // Pyramid sets
-        if (text.includes("pyramid")) {
-          return ["moderate", "strong"];
-        }
+        if (firstZone === lastZone) return null; // No gradient needed
         
-        // Reducers (like the CardGym cards)
-        if (text.includes("reducer")) {
-          return ["moderate", "hard"];
-        }
-        
-        // No zone span - single zone
-        return null;
+        // Fill the gap so we never skip levels
+        return fillZoneGap(firstZone, lastZone);
       }
 
       function getZoneColors(zone) {
@@ -642,21 +691,45 @@ app.get("/", (req, res) => {
         
         const colors = zoneSpan.map(z => getZoneColors(z));
         
-        // Build background gradient (top to bottom - vertical like CardGym cards)
+        // Check if this is an alternating/striped pattern (more than 2 zones with repetition)
+        const isStriped = zoneSpan.length >= 3;
+        
+        if (isStriped) {
+          // Create hard-edged stripes for alternating patterns
+          const stripeHeight = 100 / zoneSpan.length;
+          const bgStops = [];
+          const barStops = [];
+          
+          for (let i = 0; i < colors.length; i++) {
+            const start = Math.round(i * stripeHeight);
+            const end = Math.round((i + 1) * stripeHeight);
+            bgStops.push(colors[i].bg + ' ' + start + '%');
+            bgStops.push(colors[i].bg + ' ' + end + '%');
+            barStops.push(colors[i].bar + ' ' + start + '%');
+            barStops.push(colors[i].bar + ' ' + end + '%');
+          }
+          
+          const bgGradient = 'linear-gradient(to bottom, ' + bgStops.join(', ') + ')';
+          const barGradient = 'linear-gradient(to bottom, ' + barStops.join(', ') + ')';
+          
+          return {
+            background: bgGradient,
+            barGradient: barGradient,
+            borderColor: colors[0].bar
+          };
+        }
+        
+        // Smooth gradient for progressive builds (2 zones with fill)
         const bgStops = colors.map((c, i) => c.bg + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
         const bgGradient = 'linear-gradient(to bottom, ' + bgStops + ')';
         
-        // Build accent bar gradient (top to bottom for vertical bar)
         const barStops = colors.map((c, i) => c.bar + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
         const barGradient = 'linear-gradient(to bottom, ' + barStops + ')';
-        
-        // Use first zone's bar color for subtle borders
-        const borderColor = colors[0].bar;
         
         return {
           background: bgGradient,
           barGradient: barGradient,
-          borderColor: borderColor
+          borderColor: colors[0].bar
         };
       }
 
@@ -1922,6 +1995,7 @@ app.post("/reroll-set", (req, res) => {
     return {
       focus: typeof payload.focus === "string" ? payload.focus : "allround",
       restPref: typeof payload.restPref === "string" ? payload.restPref : "balanced",
+      thresholdPace: typeof payload.thresholdPace === "string" ? payload.thresholdPace : "",
       includeKick: b(payload.includeKick),
       includePull: b(payload.includePull),
       fins: b(payload.equip_fins),
@@ -1995,13 +2069,19 @@ app.post("/reroll-set", (req, res) => {
 
     const isNonStandardPool = ![25, 50].includes(base);
     
+    // Check if user provided threshold pace (for interval display)
+    const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
+    
     const makeLine = (reps, dist, text, restSec) => {
       const r = Number(reps);
       const d = Number(dist);
       const rest = Number(restSec);
 
+      // Only show rest when threshold pace is provided (interval mode)
       let suffix = "";
-      if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
+      if (hasThresholdPace && Number.isFinite(rest) && rest > 0) {
+        suffix = " rest " + String(rest) + "s";
+      }
 
       const strokeText = (text || "").trim();
       
@@ -2102,10 +2182,14 @@ app.post("/reroll-set", (req, res) => {
 
       const buildDescriptions = [
         stroke + " build",
-        stroke + " descend 1 to 4",
+        stroke + " descend 1-3",
+        stroke + " descend 1-4",
+        stroke + " descend 1-5",
         stroke + " negative split",
         stroke + " build to fast",
-        stroke + " smooth to strong"
+        stroke + " smooth to strong",
+        stroke + " odds easy evens fast",
+        stroke + " every 3rd fast"
       ];
       const desc = buildDescriptions[seed % buildDescriptions.length];
       const desc2 = buildDescriptions[(seed + 1) % buildDescriptions.length];
@@ -2261,10 +2345,12 @@ app.post("/reroll-set", (req, res) => {
           if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " strong", restSecondsFor("main", d100, opts));
           if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " max effort", restSecondsFor("sprint", d50, opts) + 10);
         } else if (patternChoice === 2) {
-          // Descend 1-4 repeated (classic coach set: 12x100 descend 1-4)
-          if (d100 > 0 && remaining >= d100 * 12) add(12, d100, stroke + " descend 1-4", restSecondsFor("main", d100, opts));
-          else if (d100 > 0 && remaining >= d100 * 8) add(8, d100, stroke + " descend 1-4", restSecondsFor("main", d100, opts));
-          else if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " descend 1-4", restSecondsFor("main", d100, opts));
+          // Descend variations - pick based on seed
+          const descendVariants = ["descend 1-3", "descend 1-4", "descend 1-5", "odds easy evens fast", "every 3rd hard", "negative split"];
+          const descendDesc = stroke + " " + descendVariants[seed % descendVariants.length];
+          if (d100 > 0 && remaining >= d100 * 12) add(12, d100, descendDesc, restSecondsFor("main", d100, opts));
+          else if (d100 > 0 && remaining >= d100 * 8) add(8, d100, descendDesc, restSecondsFor("main", d100, opts));
+          else if (d100 > 0 && remaining >= d100 * 4) add(4, d100, descendDesc, restSecondsFor("main", d100, opts));
         } else if (patternChoice === 3) {
           // Progressive build: moderate to strong to hard
           if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " moderate", restSecondsFor("main", d100, opts));
@@ -2461,6 +2547,7 @@ app.post("/generate-workout", (req, res) => {
     return {
       focus: typeof payload.focus === "string" ? payload.focus : "allround",
       restPref: typeof payload.restPref === "string" ? payload.restPref : "balanced",
+      thresholdPace: typeof payload.thresholdPace === "string" ? payload.thresholdPace : "",
       includeKick: payload.includeKick === undefined ? true : b(payload.includeKick),
       includePull: b(payload.includePull),
       fins: b(payload.equip_fins),
@@ -2637,13 +2724,19 @@ app.post("/generate-workout", (req, res) => {
 
     const isNonStandardPool = ![25, 50].includes(base);
     
+    // Check if user provided threshold pace (for interval display)
+    const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
+    
     const makeLine = (reps, dist, text, restSec) => {
       const r = Number(reps);
       const d = Number(dist);
       const rest = Number(restSec);
 
+      // Only show rest when threshold pace is provided (interval mode)
       let suffix = "";
-      if (Number.isFinite(rest) && rest > 0) suffix = " rest " + String(rest) + "s";
+      if (hasThresholdPace && Number.isFinite(rest) && rest > 0) {
+        suffix = " rest " + String(rest) + "s";
+      }
 
       const strokeText = (text || "").trim();
       
@@ -2825,10 +2918,14 @@ app.post("/generate-workout", (req, res) => {
 
       const buildDescriptions = [
         stroke + " build",
-        stroke + " descend 1 to 4",
+        stroke + " descend 1-3",
+        stroke + " descend 1-4",
+        stroke + " descend 1-5",
         stroke + " negative split",
         stroke + " build to fast",
-        stroke + " smooth to strong"
+        stroke + " smooth to strong",
+        stroke + " odds easy evens fast",
+        stroke + " every 3rd fast"
       ];
       const desc = buildDescriptions[seed % buildDescriptions.length];
       const desc2 = buildDescriptions[(seed + 1) % buildDescriptions.length];
@@ -3001,10 +3098,12 @@ app.post("/generate-workout", (req, res) => {
           if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " strong", restSecondsFor("main", d100));
           if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " max effort", restSecondsFor("sprint", d50) + 10);
         } else if (patternChoice === 2) {
-          // Descend 1-4 repeated (classic coach set: 12x100 descend 1-4)
-          if (d100 > 0 && remainingObj.value >= d100 * 12) add(lines, remainingObj, 12, d100, stroke + " descend 1-4", restSecondsFor("main", d100));
-          else if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " descend 1-4", restSecondsFor("main", d100));
-          else if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " descend 1-4", restSecondsFor("main", d100));
+          // Descend variations - pick based on seed
+          const descendVariants = ["descend 1-3", "descend 1-4", "descend 1-5", "odds easy evens fast", "every 3rd hard", "negative split"];
+          const descendDesc = stroke + " " + descendVariants[seed % descendVariants.length];
+          if (d100 > 0 && remainingObj.value >= d100 * 12) add(lines, remainingObj, 12, d100, descendDesc, restSecondsFor("main", d100));
+          else if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, descendDesc, restSecondsFor("main", d100));
+          else if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, descendDesc, restSecondsFor("main", d100));
         } else if (patternChoice === 3) {
           // Progressive build: moderate to strong to hard
           if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " moderate", restSecondsFor("main", d100));

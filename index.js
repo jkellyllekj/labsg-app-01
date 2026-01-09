@@ -47,14 +47,44 @@ app.get("/", (req, res) => {
       .workout-fade-in {
         animation: fade-in-up 0.3s ease-out forwards;
       }
+      .form-row {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .form-col {
+        flex: 1 1 300px;
+        min-width: 0;
+      }
+      .distance-slider {
+        width: 100%;
+        max-width: 400px;
+      }
+      @media (max-width: 680px) {
+        .form-row {
+          flex-direction: column;
+          gap: 20px;
+        }
+        .form-col {
+          width: 100%;
+        }
+        .distance-slider {
+          max-width: none;
+          width: 100%;
+        }
+        .advanced-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
     </style>
     <h1 style="margin:0 0 6px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
     <div style="margin:0 0 18px 0; color:#666; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#888; text-decoration:underline;">[Viewport Lab]</a></div>
 
     <div style="max-width:920px;">
-      <form id="genForm" style="padding:20px; border:1px solid #e0e0e0; border-radius:16px; background:linear-gradient(180deg, #fafbfc 0%, #f3f4f6 100%); box-shadow:0 4px 16px rgba(0,0,0,0.06);">
-        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start;">
-          <div style="min-width:320px;">
+      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.5); border-radius:16px; background:rgba(255,255,255,0.92); box-shadow:0 4px 20px rgba(0,80,100,0.1);">
+        <div class="form-row">
+          <div class="form-col">
             <h3 style="margin:0 0 10px 0;">Distance</h3>
 
             <label style="display:block; margin-bottom:6px;">
@@ -68,12 +98,12 @@ app.get("/", (req, res) => {
               max="10000"
               step="100"
               value="1500"
-              style="width: 320px;"
+              class="distance-slider"
             />
             <input type="hidden" name="distance" id="distanceHidden" value="1500" />
           </div>
 
-          <div style="min-width:360px;">
+          <div class="form-col">
             <h3 style="margin:0 0 10px 0;">Pool length</h3>
 
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
@@ -128,7 +158,7 @@ app.get("/", (req, res) => {
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid #ddd; border-radius:12px; background:#fafafa;">
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+              <div class="advanced-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
                   <div style="font-weight:700; margin-bottom:8px; color:#222;">Strokes</div>
                   <label style="display:block; margin:6px 0;">
@@ -532,7 +562,7 @@ app.get("/", (req, res) => {
         if (effort === "moderate") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
         if (effort === "mod-high") return "background:#fef9c3; border-left:4px solid #eab308; border-top:1px solid #fde047; border-right:1px solid #fde047; border-bottom:1px solid #fde047;";
         if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
-        if (effort === "sprint") return "background:#fee2e2; border-left:4px solid #ef4444; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
+        if (effort === "sprint") return "background:#fef2f2; border-left:4px solid #ef4444; border-top:1px solid #fecaca; border-right:1px solid #fecaca; border-bottom:1px solid #fecaca;";
         return "background:#fff; border:1px solid #e7e7e7;";
       }
 
@@ -1125,7 +1155,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #e0f4f8 0%, #c9e8f0 30%, #b8e0eb 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

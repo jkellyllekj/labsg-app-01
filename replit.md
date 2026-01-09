@@ -29,7 +29,7 @@ Additional project-specific preferences:
 - Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
-- Workout cards: white with subtle transparency (rgba(255,255,255,0.85)) to match form panel, no colored borders
+- Workout cards: zone-based colored backgrounds with left accent bar (blue=easy, green=drill, cream/gold=build, orange-red=main, red=sprint)
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
 - Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes-compressed.jpg, 133KB), drop shadow, 16px rounded corners, no "Your Workout" title

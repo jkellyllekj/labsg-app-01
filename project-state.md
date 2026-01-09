@@ -365,13 +365,13 @@ For non-standard pool lengths (30m, 33m, 27m etc), set descriptions should show 
 ### 2026-01-09 — Long workouts don't always need many subsets (TODO)
 Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
 
-### 2026-01-09 — Zone-based workout card colors restored
+### 2026-01-09 — Zone-based workout card colors (final)
 Workout set cards have colored backgrounds + left accent bar:
 - Blue background (#dbeafe) + blue bar (#3b82f6): Easy/warm-up/cool-down
 - Green background (#dcfce7) + green bar (#22c55e): Moderate/drill/technique  
-- Creamy yellow background (#fef3c7) + brown bar (#92400e): Mod-high/build
-- Orange background (#ffedd5) + orange bar (#f97316): Hard/main
-- Red background (#fee2e2) + red bar (#ef4444): Sprint
+- Creamy yellow background (#fef3c7) + gold bar (#d97706): Mod-high/build
+- Deeper orange background (#fed7aa) + red-orange bar (#ea580c): Hard/main
+- Red background (#fecaca) + red bar (#dc2626): Sprint
 
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.

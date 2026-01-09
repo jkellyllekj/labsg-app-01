@@ -339,13 +339,31 @@ Form layout is now single-column (Distance above Pool length) for cleaner mobile
 ### 2026-01-09 — Zone-based color system (updated)
 Colors now match triathlon coaching zone system:
 - Zone 1 (blue): Easy - chatting pace, warm-up, cool-down
-- Zone 2 (green): Moderate - phrases, steady, drill, technique
-- Zone 3 (lime): Mod-high - single words, build, descend
-- Zone 4 (orange): Hard - hard to speak, fast, strong, threshold
+- Zone 2 (green): Moderate - phrases, drill, technique (NOT for main sets)
+- Zone 3 (creamy yellow with brown bar): Mod-high - single words, build, descend
+- Zone 4 (orange): Hard - hard to speak, fast, strong, threshold, main sets default
 - Zone 5 (red): Sprint - unable to speak, all out, race pace
 
 ### 2026-01-09 — Responsive mobile-first layout
 Form columns stack vertically on screens under 680px. Slider and controls expand to full width on mobile. Advanced options grid collapses to single column. Tested via Viewport Lab on iPhone 15 (390px) viewport.
+
+### 2026-01-09 — Main sets never green
+Main sets are never Zone 2 (green). At minimum they show Zone 3 (yellow/cream) if using "steady" or "smooth", otherwise default to Zone 4 (orange/hard). Only drill, kick, pull technique sets can be green.
+
+### 2026-01-09 — Build/mod-high color is creamy yellow with brown bar
+Zone 3 (mod-high/build) uses creamy yellow background (#fef3c7) with brown accent bar (#92400e), not lime/green.
+
+### 2026-01-09 — Removed "Your Workout" title
+The workout results no longer have a title header - the set cards speak for themselves.
+
+### 2026-01-09 — User's pool photo as background
+Background image is user's own sunny outdoor pool photo with lane lines and pennants.
+
+### 2026-01-09 — Custom pool lengths show lap count (TODO)
+For non-standard pool lengths (30m, 33m, 27m etc), set descriptions should show "(X lengths)" in parentheses so swimmers know lap count. Example: "3x90m (3 lengths)". Not yet implemented.
+
+### 2026-01-09 — Long workouts don't always need many subsets (TODO)
+Long workouts (3000m+) don't always need 3-5 subsets per category. Sometimes a simpler structure (single main set, single drill set) is preferred. Not yet implemented.
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

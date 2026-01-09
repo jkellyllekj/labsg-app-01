@@ -512,32 +512,40 @@ app.get("/", (req, res) => {
 
       function getEffortLevel(label, body) {
         const text = (String(label || "") + " " + String(body || "")).toLowerCase();
+        const labelOnly = String(label || "").toLowerCase();
         
-        // Warm-up and cool-down are always easy (green)
+        // Warm-up and cool-down are always easy (blue - Zone 1)
         if (text.includes("warm") || text.includes("cool")) return "easy";
         
-        // Sprint keywords (red)
+        // Sprint keywords (red - Zone 5)
         const sprintWords = ["sprint", "all out", "max effort", "race pace", "100%"];
         for (const w of sprintWords) if (text.includes(w)) return "sprint";
         
-        // Hard keywords (orange)
+        // Hard keywords (orange - Zone 4)
         const hardWords = ["fast", "strong", "hard", "best average", "race", "threshold"];
         for (const w of hardWords) if (text.includes(w)) return "hard";
         
-        // Moderate-high keywords (yellow)
+        // Main sets are NEVER green - at minimum mod-high (yellow), default hard (orange)
+        if (labelOnly.includes("main")) {
+          // Check if it has mod-high keywords, otherwise default to hard
+          const modHighWords = ["descend", "build", "negative split", "push", "steady", "smooth"];
+          for (const w of modHighWords) if (text.includes(w)) return "mod-high";
+          return "hard";
+        }
+        
+        // Moderate-high keywords (creamy yellow - Zone 3)
         const modHighWords = ["descend", "build", "negative split", "push"];
         for (const w of modHighWords) if (text.includes(w)) return "mod-high";
         
-        // Moderate keywords (blue)
+        // Moderate keywords (green - Zone 2) - for drill/technique only
         const modWords = ["steady", "smooth", "drill", "technique", "focus", "form", "choice"];
         for (const w of modWords) if (text.includes(w)) return "moderate";
         
-        // Easy keywords (green)
+        // Easy keywords (blue - Zone 1)
         const easyWords = ["easy", "relaxed", "recovery", "loosen"];
         for (const w of easyWords) if (text.includes(w)) return "easy";
         
-        // Default: moderate for technique sets, hard for main
-        if (text.includes("main")) return "hard";
+        // Default: moderate for technique sets
         return "moderate";
       }
 
@@ -550,7 +558,7 @@ app.get("/", (req, res) => {
         // Zone 5 (sprint): RED - unable to speak, all out, race pace
         if (effort === "easy") return "background:#dbeafe; border-left:4px solid #3b82f6; border-top:1px solid #93c5fd; border-right:1px solid #93c5fd; border-bottom:1px solid #93c5fd;";
         if (effort === "moderate") return "background:#dcfce7; border-left:4px solid #22c55e; border-top:1px solid #86efac; border-right:1px solid #86efac; border-bottom:1px solid #86efac;";
-        if (effort === "mod-high") return "background:#ecfccb; border-left:4px solid #84cc16; border-top:1px solid #bef264; border-right:1px solid #bef264; border-bottom:1px solid #bef264;";
+        if (effort === "mod-high") return "background:#fef3c7; border-left:4px solid #92400e; border-top:1px solid #fcd34d; border-right:1px solid #fcd34d; border-bottom:1px solid #fcd34d;";
         if (effort === "hard") return "background:#ffedd5; border-left:4px solid #f97316; border-top:1px solid #fdba74; border-right:1px solid #fdba74; border-bottom:1px solid #fdba74;";
         if (effort === "sprint") return "background:#fee2e2; border-left:4px solid #ef4444; border-top:1px solid #fca5a5; border-right:1px solid #fca5a5; border-bottom:1px solid #fca5a5;";
         return "background:#fff; border:1px solid #e7e7e7;";
@@ -771,8 +779,6 @@ app.get("/", (req, res) => {
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
-        html.push('<div style="background:#fff; border-radius:16px; padding:12px; box-shadow:0 4px 20px rgba(0,50,70,0.10);">');
-        html.push('<div style="font-weight:700; margin-bottom:12px; font-size:16px; color:#222;">Your Workout</div>');
         html.push('<div style="display:flex; flex-direction:column; gap:12px;">');
 
         let idx = 0;
@@ -837,7 +843,6 @@ app.get("/", (req, res) => {
           html.push("</div>");
         }
 
-        html.push("</div>");
         html.push("</div>");
 
         cards.innerHTML = html.join("");
@@ -1147,7 +1152,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes.jpg?v=6') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

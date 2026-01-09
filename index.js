@@ -626,7 +626,7 @@ app.get("/", (req, res) => {
 
       function getZoneSpan(label, body) {
         const labelOnly = String(label || "").toLowerCase();
-        const lines = String(body || "").split("\n").filter(l => l.trim());
+        const lines = String(body || "").split("\\n").filter(l => l.trim());
         
         // Warm-up: always easy→moderate (green→blue)
         if (labelOnly.includes("warm")) {
@@ -2718,424 +2718,154 @@ app.post("/generate-workout", (req, res) => {
     return 1.15;
   }
 
-  // FIX: generator needs its own set builder (reroll route has one, but it is scoped there)
+  // SIMPLIFIED SET BUILDER - Coach-like simple sets (4x100 kick descend 1-4)
   function buildOneSetBodyServerLocal({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
     const base = poolLen;
+    const target = snapToPoolMultiple(targetDistance, base);
+    if (target <= 0) return null;
 
     const isNonStandardPool = ![25, 50].includes(base);
-    
-    // Check if user provided threshold pace (for interval display)
     const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
-    
+
     const makeLine = (reps, dist, text, restSec) => {
-      const r = Number(reps);
-      const d = Number(dist);
-      const rest = Number(restSec);
-
-      // Only show rest when threshold pace is provided (interval mode)
       let suffix = "";
-      if (hasThresholdPace && Number.isFinite(rest) && rest > 0) {
-        suffix = " rest " + String(rest) + "s";
+      if (hasThresholdPace && Number.isFinite(restSec) && restSec > 0) {
+        suffix = " rest " + String(restSec) + "s";
       }
-
-      const strokeText = (text || "").trim();
-      
-      // Add lap count for non-standard pools to help swimmers
       let lengthInfo = "";
-      if (isNonStandardPool && d > 0 && base > 0 && d % base === 0) {
-        const lengths = d / base;
-        if (lengths > 1) {
-          lengthInfo = " (" + lengths + " lengths)";
-        }
+      if (isNonStandardPool && dist > 0 && base > 0 && dist % base === 0 && dist / base > 1) {
+        lengthInfo = " (" + (dist / base) + " lengths)";
       }
-      
-      return String(r) + "x" + String(d) + lengthInfo + " " + strokeText + suffix;
+      return String(reps) + "x" + String(dist) + lengthInfo + " " + (text || "").trim() + suffix;
     };
 
-    const pickStrokeForSet = (label2) => {
+    const pickStroke = () => {
       const allowed = [];
       if (opts.strokes.freestyle) allowed.push("freestyle");
       if (opts.strokes.backstroke) allowed.push("backstroke");
       if (opts.strokes.breaststroke) allowed.push("breaststroke");
       if (opts.strokes.butterfly) allowed.push("butterfly");
       if (!allowed.length) return "freestyle";
-
-      const k = String(label2 || "").toLowerCase();
-      
-      // For warm-up and cool-down, prefer freestyle if available
+      const k = String(label || "").toLowerCase();
       if ((k.includes("warm") || k.includes("cool")) && allowed.includes("freestyle")) return "freestyle";
-      
-      // For main/build, use variety from allowed strokes
-      const idx = (Number(seed >>> 0) % allowed.length);
-      return allowed[idx];
+      return allowed[seed % allowed.length];
     };
 
-    const restSecondsFor = (label2, repDist) => {
-      const k = String(label2 || "").toLowerCase();
-      let baseRest = 15;
-
-      if (k.includes("warm")) baseRest = 0;
-      else if (k.includes("drill")) baseRest = 20;
-      else if (k.includes("kick")) baseRest = 15;
-      else if (k.includes("pull")) baseRest = 15;
-      else if (k.includes("build")) baseRest = 15;
-      else if (k.includes("main")) baseRest = 20;
-      else if (k.includes("cool")) baseRest = 0;
-
-      if (repDist >= 200) baseRest = Math.max(10, baseRest - 5);
-      if (repDist <= 50 && k.includes("main")) baseRest = baseRest + 10;
-
-      const r = String(opts.restPref || "balanced");
-      if (r === "short") baseRest = Math.max(0, baseRest - 5);
-      if (r === "more") baseRest = baseRest + 10;
-
-      return baseRest;
+    const restFor = (repDist) => {
+      const k = String(label || "").toLowerCase();
+      let r = 15;
+      if (k.includes("warm") || k.includes("cool")) r = 0;
+      else if (k.includes("drill")) r = 20;
+      else if (k.includes("kick") || k.includes("pull")) r = 15;
+      else if (k.includes("main")) r = 20;
+      if (repDist >= 200) r = Math.max(10, r - 5);
+      if (opts.restPref === "short") r = Math.max(0, r - 5);
+      if (opts.restPref === "more") r = r + 10;
+      return r;
     };
 
-    const add = (lines, remainingObj, reps, dist, note, rest) => {
-      const seg = reps * dist;
-      if (seg <= 0) return false;
-      if (seg > remainingObj.value) return false;
-      lines.push(makeLine(reps, dist, note, rest));
-      remainingObj.value -= seg;
-      return true;
+    // Find best rep distance that fits target cleanly
+    const findBestFit = (preferredDists) => {
+      for (const d of preferredDists) {
+        if (d > 0 && target % d === 0) {
+          const reps = target / d;
+          if (reps >= 2 && reps <= 20) return { reps, dist: d };
+        }
+      }
+      // Fallback: find closest fit
+      for (const d of preferredDists) {
+        if (d > 0) {
+          const reps = Math.floor(target / d);
+          if (reps >= 2) return { reps, dist: d };
+        }
+      }
+      return null;
     };
 
-    const fillEasy = (lines, remainingObj, kind, stroke) => {
-      const d100 = snapToPoolMultiple(100, base);
-      const d50 = snapToPoolMultiple(50, base);
-      const d200 = snapToPoolMultiple(200, base);
-
-      const k2 = String(kind || "").toLowerCase();
-
-      // Named drills for filler
-      const fillerDrills = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
-      const fillerDrill = fillerDrills[seed % fillerDrills.length];
-      
-      const note =
-        k2.includes("main") ? (stroke + " steady") :
-        k2.includes("drill") ? fillerDrill :
-        k2.includes("kick") ? "kick relaxed" :
-        k2.includes("pull") ? "pull relaxed" :
-        k2.includes("build") ? (stroke + " build") :
-        (stroke + " easy");
-
-      while (remainingObj.value >= (d200 || base) && d200 > 0 && remainingObj.value % d200 === 0 && remainingObj.value >= d200) {
-        if (lines.length >= 4) break;
-        add(lines, remainingObj, 1, d200, note, restSecondsFor(kind || "easy", d200));
-      }
-
-      if (d100 > 0) {
-        const reps100 = Math.floor(remainingObj.value / d100);
-        if (reps100 >= 2) {
-          const r = Math.min(reps100, 6);
-          add(lines, remainingObj, r, d100, note, restSecondsFor(kind || "easy", d100));
-        }
-      }
-
-      if (d50 > 0) {
-        const reps50 = Math.floor(remainingObj.value / d50);
-        if (reps50 >= 2) {
-          const r = Math.min(reps50, 10);
-          add(lines, remainingObj, r, d50, note, restSecondsFor(kind || "easy", d50));
-        }
-      }
-
-      if (remainingObj.value > 0) {
-        const allowedSingles = [200, 300, 400, 500, 600, 800, 1000]
-          .map(v => snapToPoolMultiple(v, base))
-          .filter(v => v > 0);
-
-        const canSingle = allowedSingles.includes(remainingObj.value);
-        if (canSingle) {
-          add(lines, remainingObj, 1, remainingObj.value, note, 0);
-          return true;
-        }
-
-        if (remainingObj.value % 2 === 0) {
-          const half = remainingObj.value / 2;
-          add(lines, remainingObj, 2, half, note, restSecondsFor(kind || "easy", half));
-          return true;
-        }
-
-        // Handle small remainders as single or few lengths (e.g., 25m, 50m, 75m)
-        if (remainingObj.value > 0 && remainingObj.value % base === 0) {
-          const reps = Math.floor(remainingObj.value / base);
-          if (reps >= 1 && reps <= 4) {
-            add(lines, remainingObj, reps, base, note, 0);
-            return true;
-          }
-        }
-
-        return false;
-      }
-
-      return true;
-    };
-
-    const lines = [];
-    const remainingObj = { value: snapToPoolMultiple(targetDistance, base) };
-    if (remainingObj.value <= 0) return null;
-
-    const stroke = pickStrokeForSet(label);
+    const stroke = pickStroke();
+    const k = String(label || "").toLowerCase();
     const hasFins = !!opts.fins;
     const hasPaddles = !!opts.paddles;
-    const k = String(label || "").toLowerCase();
 
+    // Named drills
+    const drills = ["Catch-up", "Fist drill", "Fingertip drag", "DPS", "Shark fin", "Zipper", "Scull", "Corkscrew", "Single arm", "Long dog", "Tarzan", "Head up"];
+    const drill = drills[seed % drills.length];
+
+    // Build descriptions for variety
+    const buildDescs = ["build", "descend 1-3", "descend 1-4", "negative split", "smooth to strong"];
+    const buildDesc = buildDescs[seed % buildDescs.length];
+
+    // Preferred distances by set type
+    const d25 = snapToPoolMultiple(25, base);
+    const d50 = snapToPoolMultiple(50, base);
+    const d75 = snapToPoolMultiple(75, base);
+    const d100 = snapToPoolMultiple(100, base);
+    const d200 = snapToPoolMultiple(200, base);
+
+    // WARM-UP: Simple easy swim
     if (k.includes("warm")) {
-      const d200 = snapToPoolMultiple(200, base);
-      const d50 = snapToPoolMultiple(50, base);
-      const d25 = snapToPoolMultiple(25, base);
-
-      const choice = seed % 3;
-
-      if (choice === 0) {
-        if (d200 > 0) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
-        if (d50 > 0) add(lines, remainingObj, 4, d50, stroke + " build", restSecondsFor("build", d50));
-        // Named drills
-        const namedDrills1 = ["Catch-up", "Fingertip drag", "Fist drill", "Scull", "Single arm"];
-        if (d25 > 0) add(lines, remainingObj, 4, d25, namedDrills1[seed % namedDrills1.length], restSecondsFor("drill", d25));
-      } else if (choice === 1) {
-        const d300 = snapToPoolMultiple(300, base);
-        if (d300 > 0) add(lines, remainingObj, 1, d300, stroke + " easy", 0);
-        if (d50 > 0) add(lines, remainingObj, 6, d50, stroke + " build", restSecondsFor("build", d50));
-      } else {
-        const d100 = snapToPoolMultiple(100, base);
-        if (d100 > 0) add(lines, remainingObj, 2, d100, stroke + " easy", 0);
-        if (d50 > 0) add(lines, remainingObj, 4, d50, "kick easy", restSecondsFor("kick", d50));
-        const namedDrills2 = ["Shark fin", "Zipper", "DPS", "Long dog", "Corkscrew"];
-        if (d50 > 0) add(lines, remainingObj, 4, d50, namedDrills2[seed % namedDrills2.length], restSecondsFor("drill", d50));
-      }
-
-      if (!fillEasy(lines, remainingObj, "warm", stroke)) return null;
-      return lines.join("\n");
+      const fit = findBestFit([d100, d50, d200, d75, d25].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, stroke + " easy", 0);
+      return makeLine(fit.reps, fit.dist, stroke + " easy", 0);
     }
 
+    // BUILD: Simple build set
     if (k.includes("build")) {
-      const d50 = snapToPoolMultiple(50, base);
-      const d100 = snapToPoolMultiple(100, base);
-      const d75 = snapToPoolMultiple(75, base);
-
-      const buildDescriptions = [
-        stroke + " build",
-        stroke + " descend 1-3",
-        stroke + " descend 1-4",
-        stroke + " descend 1-5",
-        stroke + " negative split",
-        stroke + " build to fast",
-        stroke + " smooth to strong",
-        stroke + " odds easy evens fast",
-        stroke + " every 3rd fast"
-      ];
-      const desc = buildDescriptions[seed % buildDescriptions.length];
-      const desc2 = buildDescriptions[(seed + 1) % buildDescriptions.length];
-
-      // Variety of patterns based on seed
-      const patternChoice = seed % 4;
-      if (patternChoice === 0) {
-        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, desc, restSecondsFor("build", d50));
-        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, desc2, restSecondsFor("build", d100));
-      } else if (patternChoice === 1) {
-        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, desc, restSecondsFor("build", d100));
-        if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, desc2, restSecondsFor("build", d50));
-      } else if (patternChoice === 2) {
-        if (d75 > 0 && remainingObj.value >= d75 * 4) add(lines, remainingObj, 4, d75, desc, restSecondsFor("build", d75));
-        if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, desc2, restSecondsFor("build", d50));
-      } else {
-        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, desc, restSecondsFor("build", d50));
-      }
-
-      if (!fillEasy(lines, remainingObj, "build", stroke)) return null;
-      return lines.join("\n");
+      const fit = findBestFit([d50, d100, d75, d25].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, stroke + " build", 0);
+      return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist));
     }
 
+    // DRILL: Named drill
     if (k.includes("drill")) {
-      const d50 = snapToPoolMultiple(50, base);
-      const d25 = snapToPoolMultiple(25, base);
-      const remaining = remainingObj.value;
-
-      // Named drill library
-      const namedDrills = [
-        "Catch-up", "Fist drill", "Fingertip drag", "DPS",
-        "Shark fin", "Zipper", "Scull", "Corkscrew",
-        "Single arm", "Long dog", "Tarzan", "Head up"
-      ];
-      const drill1 = namedDrills[seed % namedDrills.length];
-      const drill2 = namedDrills[(seed + 5) % namedDrills.length];
-
-      // Calculate how many reps of each distance fit
-      if (d50 > 0) {
-        const maxReps = Math.floor(remaining / d50);
-        if (maxReps >= 6) {
-          add(lines, remainingObj, 6, d50, drill1, restSecondsFor("drill", d50));
-        } else if (maxReps >= 4) {
-          add(lines, remainingObj, 4, d50, drill1, restSecondsFor("drill", d50));
-        } else if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d50, drill1, restSecondsFor("drill", d50));
-        }
-      }
-      // Fill remaining with 25s if needed
-      if (d25 > 0 && remainingObj.value >= d25 * 4) {
-        const reps25 = Math.min(8, Math.floor(remainingObj.value / d25));
-        if (reps25 >= 4) {
-          add(lines, remainingObj, reps25, d25, drill2, restSecondsFor("drill", d25));
-        }
-      }
-
-      if (!fillEasy(lines, remainingObj, "drill", stroke)) return null;
-      return lines.join("\n");
+      const fit = findBestFit([d50, d25, d75].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, drill, 0);
+      return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist));
     }
 
+    // KICK: Simple kick set
     if (k.includes("kick")) {
-      const d100 = snapToPoolMultiple(100, base);
-      const d50 = snapToPoolMultiple(50, base);
-      const d75 = snapToPoolMultiple(75, base);
       const finNote = hasFins ? " with fins" : "";
-      const remaining = remainingObj.value;
-
-      // Prefer 100s, then 75s, then 50s - always break into at least 2 reps
-      if (d100 > 0) {
-        const maxReps = Math.floor(remaining / d100);
-        if (maxReps >= 4) {
-          add(lines, remainingObj, 4, d100, "kick steady" + finNote, restSecondsFor("kick", d100));
-        } else if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d100, "kick choice" + finNote, restSecondsFor("kick", d100));
-        }
-      }
-      if (d75 > 0 && remainingObj.value >= d75 * 2) {
-        const maxReps = Math.min(4, Math.floor(remainingObj.value / d75));
-        if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d75, "kick build" + finNote, restSecondsFor("kick", d75));
-        }
-      }
-      if (d50 > 0 && remainingObj.value >= d50 * 2) {
-        const maxReps = Math.min(6, Math.floor(remainingObj.value / d50));
-        if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d50, "kick fast" + finNote, restSecondsFor("kick", d50));
-        }
-      }
-
-      if (!fillEasy(lines, remainingObj, "kick", stroke)) return null;
-      return lines.join("\n");
+      const kickDescs = ["kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote];
+      const kickDesc = kickDescs[seed % kickDescs.length];
+      const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, "kick" + finNote, 0);
+      return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist));
     }
 
+    // PULL: Simple pull set
     if (k.includes("pull")) {
-      const d100 = snapToPoolMultiple(100, base);
-      const d50 = snapToPoolMultiple(50, base);
       const padNote = hasPaddles ? " with paddles" : "";
-      const remaining = remainingObj.value;
-
-      // Prefer 100s, then 50s - always break into at least 2 reps
-      if (d100 > 0) {
-        const maxReps = Math.floor(remaining / d100);
-        if (maxReps >= 4) {
-          add(lines, remainingObj, 4, d100, "pull steady" + padNote, restSecondsFor("pull", d100));
-        } else if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d100, "pull strong" + padNote, restSecondsFor("pull", d100));
-        }
-      }
-      if (d50 > 0 && remainingObj.value >= d50 * 2) {
-        const maxReps = Math.min(6, Math.floor(remainingObj.value / d50));
-        if (maxReps >= 2) {
-          add(lines, remainingObj, maxReps, d50, "pull build" + padNote, restSecondsFor("pull", d50));
-        }
-      }
-
-      if (!fillEasy(lines, remainingObj, "pull", stroke)) return null;
-      return lines.join("\n");
+      const pullDescs = ["pull " + buildDesc + padNote, "pull steady" + padNote, "pull strong" + padNote];
+      const pullDesc = pullDescs[seed % pullDescs.length];
+      const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, "pull" + padNote, 0);
+      return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist));
     }
 
+    // COOL-DOWN: Easy swim
     if (k.includes("cool")) {
-      const d200 = snapToPoolMultiple(200, base);
-      const d100 = snapToPoolMultiple(100, base);
-
-      if (d200 > 0 && remainingObj.value >= d200) add(lines, remainingObj, 1, d200, stroke + " easy", 0);
-      if (d100 > 0 && remainingObj.value >= d100) add(lines, remainingObj, 1, d100, "easy mixed", 0);
-
-      if (!fillEasy(lines, remainingObj, "cool", stroke)) return null;
-      return lines.join("\n");
+      const fit = findBestFit([d100, d200, d50].filter(x => x > 0));
+      if (!fit) return makeLine(1, target, stroke + " easy", 0);
+      return makeLine(fit.reps, fit.dist, "easy choice", 0);
     }
 
-    // Main - with zone variety for rerolls
-    {
-      const focus = String(opts.focus || "allround");
-      const isShortWorkout = opts.totalDistance && opts.totalDistance < 800;
+    // MAIN SET: Coach-quality variety
+    const focus = String(opts.focus || "allround");
+    const mainDescs = {
+      sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort"],
+      threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace"],
+      endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace"],
+      technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes"],
+      allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast"]
+    };
+    const descs = mainDescs[focus] || mainDescs.allround;
+    const mainDesc = descs[seed % descs.length];
 
-      const d25 = snapToPoolMultiple(25, base);
-      const d50 = snapToPoolMultiple(50, base);
-      const d100 = snapToPoolMultiple(100, base);
-      const d200 = snapToPoolMultiple(200, base);
-
-      // Short workouts (under 800m) should be simple - no sprints/threshold
-      if (isShortWorkout) {
-        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " steady", restSecondsFor("main", d100));
-        if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " smooth", restSecondsFor("main", d50));
-      } else if (focus === "sprint") {
-        // Sprint focus: always include full gas
-        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " fast build", restSecondsFor("main", d50) + 10);
-        if (d25 > 0 && remainingObj.value >= d25 * 6) add(lines, remainingObj, 6, d25, stroke + " max sprint", restSecondsFor("sprint", d25) + 20);
-        if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " hard", restSecondsFor("main", d100));
-      } else if (focus === "threshold") {
-        if (d100 > 0 && remainingObj.value >= d100 * 10) add(lines, remainingObj, 10, d100, stroke + " best average", restSecondsFor("main", d100));
-        if (d200 > 0 && remainingObj.value >= d200 * 4) add(lines, remainingObj, 4, d200, stroke + " steady strong", restSecondsFor("main", d200));
-      } else if (focus === "endurance") {
-        if (d200 > 0 && remainingObj.value >= d200 * 6) add(lines, remainingObj, 6, d200, stroke + " steady", restSecondsFor("main", d200));
-        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " smooth", restSecondsFor("main", d100));
-      } else if (focus === "technique") {
-        if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, stroke + " perfect form", restSecondsFor("main", d100));
-        if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " focus stroke count", restSecondsFor("main", d50));
-      } else {
-        // All round - 8 different coach-quality patterns with varied structures and zones
-        const patternChoice = seed % 8;
-        if (patternChoice === 0) {
-          // Build to sprint finish
-          if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " build", restSecondsFor("main", d100));
-          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " fast", restSecondsFor("main", d50) + 5);
-          if (d25 > 0 && remainingObj.value >= d25 * 4) add(lines, remainingObj, 4, d25, stroke + " sprint all out", restSecondsFor("sprint", d25) + 15);
-        } else if (patternChoice === 1) {
-          // Strong sustained with max finish
-          if (d200 > 0 && remainingObj.value >= d200 * 3) add(lines, remainingObj, 3, d200, stroke + " hard", restSecondsFor("main", d200));
-          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " strong", restSecondsFor("main", d100));
-          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " max effort", restSecondsFor("sprint", d50) + 10);
-        } else if (patternChoice === 2) {
-          // Descend variations - pick based on seed
-          const descendVariants = ["descend 1-3", "descend 1-4", "descend 1-5", "odds easy evens fast", "every 3rd hard", "negative split"];
-          const descendDesc = stroke + " " + descendVariants[seed % descendVariants.length];
-          if (d100 > 0 && remainingObj.value >= d100 * 12) add(lines, remainingObj, 12, d100, descendDesc, restSecondsFor("main", d100));
-          else if (d100 > 0 && remainingObj.value >= d100 * 8) add(lines, remainingObj, 8, d100, descendDesc, restSecondsFor("main", d100));
-          else if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, descendDesc, restSecondsFor("main", d100));
-        } else if (patternChoice === 3) {
-          // Progressive build: moderate to strong to hard
-          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " moderate", restSecondsFor("main", d100));
-          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " strong", restSecondsFor("main", d100));
-          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " race pace", restSecondsFor("sprint", d50) + 10);
-        } else if (patternChoice === 4) {
-          // Ladder up and down: 50-100-200-100-50
-          if (d50 > 0 && remainingObj.value >= d50 * 2) add(lines, remainingObj, 2, d50, stroke + " fast", restSecondsFor("main", d50));
-          if (d100 > 0 && remainingObj.value >= d100 * 2) add(lines, remainingObj, 2, d100, stroke + " strong", restSecondsFor("main", d100));
-          if (d200 > 0 && remainingObj.value >= d200 * 1) add(lines, remainingObj, 1, d200, stroke + " hard", restSecondsFor("main", d200));
-          if (d100 > 0 && remainingObj.value >= d100 * 2) add(lines, remainingObj, 2, d100, stroke + " strong", restSecondsFor("main", d100));
-          if (d50 > 0 && remainingObj.value >= d50 * 2) add(lines, remainingObj, 2, d50, stroke + " max sprint", restSecondsFor("sprint", d50) + 10);
-        } else if (patternChoice === 5) {
-          // Broken swim with sprints
-          if (d200 > 0 && remainingObj.value >= d200 * 4) add(lines, remainingObj, 4, d200, stroke + " steady", restSecondsFor("main", d200));
-          if (d25 > 0 && remainingObj.value >= d25 * 8) add(lines, remainingObj, 8, d25, stroke + " sprint all out", restSecondsFor("sprint", d25) + 20);
-        } else if (patternChoice === 6) {
-          // 50s focus with mixed intensity
-          if (d50 > 0 && remainingObj.value >= d50 * 8) add(lines, remainingObj, 8, d50, stroke + " odds easy evens fast", restSecondsFor("main", d50));
-          if (d50 > 0 && remainingObj.value >= d50 * 6) add(lines, remainingObj, 6, d50, stroke + " build 1-3", restSecondsFor("main", d50));
-          if (d50 > 0 && remainingObj.value >= d50 * 4) add(lines, remainingObj, 4, d50, stroke + " all out", restSecondsFor("sprint", d50) + 10);
-        } else {
-          // Straight hard set with descend finish
-          if (d100 > 0 && remainingObj.value >= d100 * 6) add(lines, remainingObj, 6, d100, stroke + " hard", restSecondsFor("main", d100));
-          if (d100 > 0 && remainingObj.value >= d100 * 4) add(lines, remainingObj, 4, d100, stroke + " descend to max", restSecondsFor("main", d100) + 5);
-          if (d50 > 0 && remainingObj.value >= d50 * 2) add(lines, remainingObj, 2, d50, stroke + " max effort", restSecondsFor("sprint", d50) + 15);
-        }
-      }
-
-      if (!fillEasy(lines, remainingObj, "main", stroke)) return null;
-      return lines.join("\n");
-    }
+    // Prefer 100s for main sets, then 50s, 200s
+    const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+    if (!fit) return makeLine(1, target, stroke + " swim", 0);
+    return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist));
   }
 
   // Snazzy workout name generator - inspired by CardGym cards

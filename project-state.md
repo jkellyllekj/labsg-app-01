@@ -231,31 +231,31 @@ UI defects:
 
 ## Next single step
 
-Tested 2026-01-09: All core fixes and UI polish complete.
+**STATUS 2026-01-09: v1 Feature Complete**
 
-Completed:
-1. DONE: Fixed minimal workout bug (allocation logic rewritten)
-2. DONE: Drill/Kick/Pull now use proper rep structures (6x50 drill, 4x75 kick)
-3. DONE: Custom pools end at start end (even lengths enforced)
-4. DONE: Wording cleaned up (no more "easy swim")
-5. DONE: Fixed slider bug (distance label now updates when slider moves)
-6. DONE: Serpentine-style UI with color-coded cards and left accent bars
-7. DONE: Effort-based color system (5 levels: green/blue/yellow/orange/red)
-8. DONE: Reroll seed-based variety (6 drill/kick/pull description variations)
-9. DONE: Jumping dolphin animation during generation
-10. DONE: Minimum 1 second loader display
-11. DONE: Smooth 0.3s fade-in for workout results
-12. DONE: Premium form styling (gradient background, drop shadow, rounded corners)
-13. DONE: Updated header with cleaner tagline
-14. DONE: Viewport Lab testing page at /viewport-lab (temporary)
-15. DONE: Default distance 1500m, 25m pool highlighted by default
+All core functionality and polish is done. App is ready for user testing.
 
-Remaining:
-- ~~Improve set parsing for more reliable right-side chips in UI~~ DONE 2026-01-09
-- ~~Consider improving custom pool distance formatting~~ DONE 2026-01-09 - Added "(X lengths)" display
-- Premium features: temperature option for more varied workout structures (pyramids, etc.)
-- Remove Viewport Lab link and dev color picker before production release
-- Dev color picker added for real-time color experimentation
+### Completed This Session (2026-01-09):
+- DONE: Reroll variety - multiple seed derivations (seedA/B/C/D) for independent randomization
+- DONE: Dice button reliability - finally block resets button state
+- DONE: Multi-part sets ~20% - triggers for main sets 400m+, exact distance validation
+- DONE: Drill display improvement - shows "drill choice (X, Y)" for 6+ rep sets
+- DONE: UI polish - reduced padding, enhanced dolphin, smooth scroll to workout title
+
+### Previously Completed:
+- DONE: Core workout generation with coach-quality structure
+- DONE: All pool types working (25m, 50m, 25yd, Custom)
+- DONE: Distance slider 500-10000m
+- DONE: Zone-based colored cards with gradients
+- DONE: 16-drill name library, snazzy names, emoji intensity strip
+- DONE: Jumping dolphin loader, fade-in animation
+- DONE: Premium form styling with pool background
+
+### Future Improvements (Not Blocking v1):
+- More workout name variety (templates)
+- Remove Viewport Lab link before production
+- Temperature option for more/less creative workouts
+- User accounts and saved workouts (v2)
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 

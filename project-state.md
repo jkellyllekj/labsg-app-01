@@ -450,6 +450,31 @@ Main sets now include "full gas" / sprint / max effort options:
 - All round: variety of patterns including "sprint all out" and "max effort" finishes
 - Keywords that trigger fullgas zone: sprint, all out, max effort, race pace, 100%, full gas, max
 
+### 2026-01-09 — Simple sets as default (current)
+Sets are now simple, coach-style single lines: "4x100 kick descend 1-4", "6x50 drill".
+Multi-part sets (pyramids, complex structures) were removed but need to return ~20% of the time.
+
+### 2026-01-09 — PENDING FIXES (TODO list)
+
+**Reroll Issues (Critical):**
+1. Reroll produces same results repeatedly - needs more entropy (rerollCount + timestamp jitter)
+2. Effort level doesn't change on reroll - should vary
+3. Dice buttons stop responding after multiple clicks - need to reset disabled/loading state
+4. Multi-part sets removed entirely - need ~20% probability for complex sets
+
+**Drill Display:**
+- "8x50 Shark fin" looks odd - should show drill variety/suggestions nicely (e.g., "8x50 drill choice" with drill names listed below)
+
+**UI/Visual Polish:**
+1. Left/right border too wide on main containers - reduce by half
+2. Dolphin animation: make bigger, silhouette style, flying out of water and splashing back
+3. Verify 0.3s fade-in on workout results is working
+4. Add smooth scroll to workout title after results appear
+5. Parallax background effect not working (background-attachment:fixed may be broken)
+
+**Workout Name Variety:**
+- Should have endless unique names, not repeating same ones
+
 <!-- __END_PS_DECISIONS_PS100__ -->
 
 <!-- __END_FILE_PROJECT_STATE_PS000__ -->

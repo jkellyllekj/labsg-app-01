@@ -454,26 +454,26 @@ Main sets now include "full gas" / sprint / max effort options:
 Sets are now simple, coach-style single lines: "4x100 kick descend 1-4", "6x50 drill".
 Multi-part sets (pyramids, complex structures) were removed but need to return ~20% of the time.
 
-### 2026-01-09 — PENDING FIXES (TODO list)
+### 2026-01-09 — FIXES COMPLETED
 
-**Reroll Issues (Critical):**
-1. Reroll produces same results repeatedly - needs more entropy (rerollCount + timestamp jitter)
-2. Effort level doesn't change on reroll - should vary
-3. Dice buttons stop responding after multiple clicks - need to reset disabled/loading state
-4. Multi-part sets removed entirely - need ~20% probability for complex sets
+**Reroll Issues (FIXED 2026-01-09):**
+1. DONE: Reroll variety - uses multiple seed derivations (seedA/B/C/D) for independent randomization
+2. DONE: Effort level varies - descriptions shuffled based on seed
+3. DONE: Dice buttons work - finally block resets button state
+4. DONE: Multi-part sets ~20% - triggers for main sets 400m+ with exact distance validation
 
-**Drill Display:**
-- "8x50 Shark fin" looks odd - should show drill variety/suggestions nicely (e.g., "8x50 drill choice" with drill names listed below)
+**Drill Display (FIXED 2026-01-09):**
+- DONE: Shows "drill choice (Catch-up, Fist drill)" for longer drill sets (6+ reps)
 
-**UI/Visual Polish:**
-1. Left/right border too wide on main containers - reduce by half
-2. Dolphin animation: make bigger, silhouette style, flying out of water and splashing back
-3. Verify 0.3s fade-in on workout results is working
-4. Add smooth scroll to workout title after results appear
-5. Parallax background effect not working (background-attachment:fixed may be broken)
+**UI/Visual Polish (FIXED 2026-01-09):**
+1. DONE: Body padding reduced from 20px to 10px
+2. DONE: Dolphin animation enhanced - 28px size, dynamic jumping with scale/opacity/rotation
+3. DONE: 0.3s fade-in working (verified)
+4. DONE: Smooth scroll to workout title after results appear (350ms delay)
+5. DONE: Parallax via background-attachment:fixed
 
 **Workout Name Variety:**
-- Should have endless unique names, not repeating same ones
+- Needs more name templates (future improvement)
 
 <!-- __END_PS_DECISIONS_PS100__ -->
 

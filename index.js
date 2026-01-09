@@ -33,7 +33,17 @@ function snapToPoolMultipleShared(dist, poolLen) {
   return Math.round(d / base) * base;
 }
 
-// SIMPLIFIED SET BUILDER - Coach-like simple sets (4x100 kick descend 1-4)
+// Shuffle array deterministically based on seed
+function shuffleWithSeed(arr, seed) {
+  const result = arr.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = ((seed * (i + 1) * 9973) >>> 0) % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
 function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
   const base = poolLen;
   const target = snapToPoolMultipleShared(targetDistance, base);
@@ -41,6 +51,12 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   const isNonStandardPool = ![25, 50].includes(base);
   const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
+  
+  // Use different seed bits for different decisions
+  const seedA = seed >>> 0;
+  const seedB = ((seed * 7919) >>> 0);
+  const seedC = ((seed * 104729) >>> 0);
+  const seedD = ((seed * 224737) >>> 0);
 
   const makeLine = (reps, dist, text, restSec) => {
     let suffix = "";
@@ -63,10 +79,10 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     if (!allowed.length) return "freestyle";
     const k = String(label || "").toLowerCase();
     if ((k.includes("warm") || k.includes("cool")) && allowed.includes("freestyle")) return "freestyle";
-    return allowed[seed % allowed.length];
+    return allowed[seedB % allowed.length];
   };
 
-  const restFor = (repDist) => {
+  const restFor = (repDist, intensity) => {
     const k = String(label || "").toLowerCase();
     let r = 15;
     if (k.includes("warm") || k.includes("cool")) r = 0;
@@ -74,21 +90,24 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     else if (k.includes("kick") || k.includes("pull")) r = 15;
     else if (k.includes("main")) r = 20;
     if (repDist >= 200) r = Math.max(10, r - 5);
+    if (intensity === "hard" || intensity === "fast") r = r + 5;
     if (opts.restPref === "short") r = Math.max(0, r - 5);
     if (opts.restPref === "more") r = r + 10;
-    return r;
+    // Add some variation based on seed
+    r = r + (seedD % 3) - 1;
+    return Math.max(0, r);
   };
 
-  // Find best rep distance that fits target cleanly
-  const findBestFit = (preferredDists) => {
-    for (const d of preferredDists) {
+  // Find best rep distance - now with seed-based preference shuffling
+  const findBestFit = (preferredDists, useSeed) => {
+    const dists = useSeed ? shuffleWithSeed(preferredDists, seedC) : preferredDists;
+    for (const d of dists) {
       if (d > 0 && target % d === 0) {
         const reps = target / d;
         if (reps >= 2 && reps <= 20) return { reps, dist: d };
       }
     }
-    // Fallback: find closest fit
-    for (const d of preferredDists) {
+    for (const d of dists) {
       if (d > 0) {
         const reps = Math.floor(target / d);
         if (reps >= 2) return { reps, dist: d };
@@ -102,13 +121,22 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const hasFins = !!opts.fins;
   const hasPaddles = !!opts.paddles;
 
-  // Named drills
-  const drills = ["Catch-up", "Fist drill", "Fingertip drag", "DPS", "Shark fin", "Zipper", "Scull", "Corkscrew", "Single arm", "Long dog", "Tarzan", "Head up"];
-  const drill = drills[seed % drills.length];
+  // Named drills - expanded list
+  const drills = [
+    "Catch-up", "Fist drill", "Fingertip drag", "DPS", "Shark fin", "Zipper", 
+    "Scull", "Corkscrew", "Single arm", "Long dog", "Tarzan", "Head up",
+    "Hip rotation", "6-3-6", "Kickboard balance", "Paddle scull"
+  ];
+  const drill = drills[seedA % drills.length];
+  const drill2 = drills[(seedA + 7) % drills.length];
 
-  // Build descriptions for variety
-  const buildDescs = ["build", "descend 1-3", "descend 1-4", "negative split", "smooth to strong"];
-  const buildDesc = buildDescs[seed % buildDescs.length];
+  // Build descriptions - expanded
+  const buildDescs = [
+    "build", "descend 1-3", "descend 1-4", "descend 1-5", "negative split", 
+    "smooth to strong", "build to fast", "odds easy evens strong",
+    "every 3rd fast", "last 2 fast"
+  ];
+  const buildDesc = buildDescs[seedA % buildDescs.length];
 
   // Preferred distances by set type
   const d25 = snapToPoolMultipleShared(25, base);
@@ -117,70 +145,150 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const d100 = snapToPoolMultipleShared(100, base);
   const d200 = snapToPoolMultipleShared(200, base);
 
-  // WARM-UP: Simple easy swim
+  // ~20% chance of multi-part set for main sets (seed % 5 === 0)
+  const wantMultiPart = (seedA % 5) === 0 && target >= 400 && k.includes("main");
+
+  // WARM-UP: Simple easy swim with variety
   if (k.includes("warm")) {
-    const fit = findBestFit([d100, d50, d200, d75, d25].filter(x => x > 0));
-    if (!fit) return makeLine(1, target, stroke + " easy", 0);
-    return makeLine(fit.reps, fit.dist, stroke + " easy", 0);
+    const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
+    const warmDesc = warmDescs[seedA % warmDescs.length];
+    const fit = findBestFit([d100, d50, d200, d75, d25].filter(x => x > 0), true);
+    if (!fit) return makeLine(1, target, warmDesc, 0);
+    return makeLine(fit.reps, fit.dist, warmDesc, 0);
   }
 
-  // BUILD: Simple build set
+  // BUILD: Build set with variety
   if (k.includes("build")) {
-    const fit = findBestFit([d50, d100, d75, d25].filter(x => x > 0));
+    const fit = findBestFit([d50, d100, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, stroke + " build", 0);
-    return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist));
+    return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist, "moderate"));
   }
 
-  // DRILL: Named drill
+  // DRILL: Named drill with nice display
   if (k.includes("drill")) {
-    const fit = findBestFit([d50, d25, d75].filter(x => x > 0));
+    const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, drill, 0);
-    return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist));
+    
+    // If many reps, show drill choice suggestion
+    if (fit.reps >= 6 && (seedB % 3) === 0) {
+      return makeLine(fit.reps, fit.dist, "drill choice (" + drill + ", " + drill2 + ")", restFor(fit.dist, "easy"));
+    }
+    return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist, "easy"));
   }
 
-  // KICK: Simple kick set
+  // KICK: Kick set with variety
   if (k.includes("kick")) {
     const finNote = hasFins ? " with fins" : "";
-    const kickDescs = ["kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote];
-    const kickDesc = kickDescs[seed % kickDescs.length];
-    const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0));
+    const kickDescs = [
+      "kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote,
+      "kick strong" + finNote, "streamline kick" + finNote, "kick on side" + finNote
+    ];
+    const kickDesc = kickDescs[seedA % kickDescs.length];
+    const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, "kick" + finNote, 0);
-    return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist));
+    return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist, "moderate"));
   }
 
-  // PULL: Simple pull set
+  // PULL: Pull set with variety
   if (k.includes("pull")) {
     const padNote = hasPaddles ? " with paddles" : "";
-    const pullDescs = ["pull " + buildDesc + padNote, "pull steady" + padNote, "pull strong" + padNote];
-    const pullDesc = pullDescs[seed % pullDescs.length];
-    const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+    const pullDescs = [
+      "pull " + buildDesc + padNote, "pull steady" + padNote, "pull strong" + padNote,
+      "pull smooth" + padNote, "pull focus DPS" + padNote, "pull hold pace" + padNote
+    ];
+    const pullDesc = pullDescs[seedA % pullDescs.length];
+    const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, "pull" + padNote, 0);
-    return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist));
+    return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist, "moderate"));
   }
 
-  // COOL-DOWN: Easy swim
+  // COOL-DOWN: Easy swim with variety
   if (k.includes("cool")) {
-    const fit = findBestFit([d100, d200, d50].filter(x => x > 0));
-    if (!fit) return makeLine(1, target, stroke + " easy", 0);
-    return makeLine(fit.reps, fit.dist, "easy choice", 0);
+    const coolDescs = ["easy choice", stroke + " easy", "easy swim", "choice loosen up", "relaxed swim"];
+    const coolDesc = coolDescs[seedA % coolDescs.length];
+    const fit = findBestFit([d100, d200, d50].filter(x => x > 0), true);
+    if (!fit) return makeLine(1, target, coolDesc, 0);
+    return makeLine(fit.reps, fit.dist, coolDesc, 0);
   }
 
-  // MAIN SET: Coach-quality variety
+  // MAIN SET: Coach-quality variety with optional multi-part
   const focus = String(opts.focus || "allround");
+  
+  // Multi-part set patterns (~20% of the time for main sets 400m+)
+  // CRITICAL: Total must equal target exactly - try all patterns until one works
+  if (wantMultiPart) {
+    const multiPatterns = [
+      // Two-part: build + fast (50/50 split)
+      () => {
+        const repDist = d100 > 0 ? d100 : d50;
+        if (repDist <= 0) return null;
+        const totalReps = target / repDist;
+        if (!Number.isInteger(totalReps) || totalReps < 4) return null;
+        const r1 = Math.floor(totalReps / 2);
+        const r2 = totalReps - r1;
+        if (r1 >= 2 && r2 >= 2 && r1 * repDist + r2 * repDist === target) {
+          return makeLine(r1, repDist, stroke + " build", restFor(repDist, "moderate")) + "\n" +
+                 makeLine(r2, repDist, stroke + " fast", restFor(repDist, "hard"));
+        }
+        return null;
+      },
+      // Three-part ladder: steady + strong + fast (equal thirds)
+      () => {
+        const repDist = d100 > 0 ? d100 : d50;
+        if (repDist <= 0) return null;
+        const totalReps = target / repDist;
+        if (!Number.isInteger(totalReps) || totalReps < 6 || totalReps % 3 !== 0) return null;
+        const r = totalReps / 3;
+        if (r >= 2 && r * repDist * 3 === target) {
+          return makeLine(r, repDist, stroke + " steady", restFor(repDist, "easy")) + "\n" +
+                 makeLine(r, repDist, stroke + " strong", restFor(repDist, "moderate")) + "\n" +
+                 makeLine(r, repDist, stroke + " fast", restFor(repDist, "hard"));
+        }
+        return null;
+      },
+      // Mixed distance: 50s + 100s (requires exact math)
+      () => {
+        if (d50 <= 0 || d100 <= 0) return null;
+        // Try: r1 x 50 + r2 x 100 = target where r1,r2 >= 2
+        // Iterate to find valid combo
+        for (let r2 = 2; r2 <= 10; r2++) {
+          const remaining = target - r2 * d100;
+          if (remaining > 0 && remaining % d50 === 0) {
+            const r1 = remaining / d50;
+            if (r1 >= 2 && r1 <= 12 && r1 * d50 + r2 * d100 === target) {
+              return makeLine(r1, d50, stroke + " build", restFor(d50, "moderate")) + "\n" +
+                     makeLine(r2, d100, stroke + " strong", restFor(d100, "hard"));
+            }
+          }
+        }
+        return null;
+      }
+    ];
+    
+    // Try preferred pattern first, then try others
+    const startIdx = seedB % multiPatterns.length;
+    for (let i = 0; i < multiPatterns.length; i++) {
+      const idx = (startIdx + i) % multiPatterns.length;
+      const result = multiPatterns[idx]();
+      if (result) return result;
+    }
+  }
+
+  // Simple single-line main set (default)
   const mainDescs = {
-    sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort"],
-    threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace"],
-    endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace"],
-    technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes"],
-    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast"]
+    sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"],
+    threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace", stroke + " controlled fast", stroke + " tempo"],
+    endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace", stroke + " aerobic", stroke + " consistent"],
+    technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", stroke + " smooth technique", stroke + " efficient"],
+    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast", stroke + " controlled"]
   };
   const descs = mainDescs[focus] || mainDescs.allround;
-  const mainDesc = descs[seed % descs.length];
+  const mainDesc = descs[seedA % descs.length];
 
-  // Prefer 100s for main sets, then 50s, 200s
-  const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0));
+  // Shuffle distance preferences for variety
+  const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0), true);
   if (!fit) return makeLine(1, target, stroke + " swim", 0);
-  return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist));
+  return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist, "hard"));
 }
 /* __END_SHARED_FUNCTIONS_R030__ */
 
@@ -203,16 +311,18 @@ app.get("/", (req, res) => {
         --zone-fullgas-bar: #d10f24;
       }
       @keyframes dolphin-jump {
-        0% { transform: translateY(0) rotate(0deg); }
-        20% { transform: translateY(-12px) rotate(-15deg); }
-        40% { transform: translateY(-20px) rotate(-10deg); }
-        60% { transform: translateY(-12px) rotate(5deg); }
-        80% { transform: translateY(-4px) rotate(0deg); }
-        100% { transform: translateY(0) rotate(0deg); }
+        0% { transform: translateY(10px) rotate(30deg) scale(0.9); opacity: 0.7; }
+        15% { transform: translateY(-15px) rotate(10deg) scale(1.1); opacity: 1; }
+        35% { transform: translateY(-30px) rotate(-10deg) scale(1.15); opacity: 1; }
+        50% { transform: translateY(-35px) rotate(-20deg) scale(1.1); opacity: 1; }
+        70% { transform: translateY(-20px) rotate(-5deg) scale(1.05); opacity: 1; }
+        85% { transform: translateY(0px) rotate(15deg) scale(0.95); opacity: 0.8; }
+        100% { transform: translateY(10px) rotate(30deg) scale(0.9); opacity: 0.7; }
       }
       .dolphin-jump {
         display: inline-block;
-        animation: dolphin-jump 0.7s ease-in-out infinite;
+        animation: dolphin-jump 1.2s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,100,150,0.3));
       }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(12px); }
@@ -1538,7 +1648,7 @@ app.get("/", (req, res) => {
         e.preventDefault();
         clearUI();
 
-        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;"><span class="dolphin-jump">🐬</span> Generating...</span>';
+        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:8px;"><span class="dolphin-jump" style="font-size:28px;">🐬</span> Generating...</span>';
         const loaderStartTime = Date.now();
 
         const payload = formToPayload();
@@ -1629,6 +1739,14 @@ app.get("/", (req, res) => {
             cards.style.transform = "translateY(0)";
           });
 
+          // Smooth scroll to workout name/cards after they appear
+          setTimeout(() => {
+            const scrollTarget = nameDisplay && nameDisplay.style.display !== "none" ? nameDisplay : cards;
+            if (scrollTarget) {
+              scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }, 350);
+
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);
 
@@ -1657,7 +1775,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Workout Generator</title>
 </head>
-<body style="padding:20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes-compressed.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh; background-attachment:fixed;">
+<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes-compressed.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

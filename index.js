@@ -254,7 +254,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px;"><span id="workoutNameText" style="font-weight:700; font-size:18px; color:#222; text-shadow:0 1px 2px rgba(255,255,255,0.8);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#222; background:#fef08a; padding:8px 16px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
@@ -1011,12 +1011,14 @@ app.get("/", (req, res) => {
           
           let boxStyle;
           if (gradientStyle) {
-            boxStyle = "background:" + gradientStyle.background + "; border-left:4px solid; border-image:" + gradientStyle.barGradient + " 1; border-top:1px solid " + gradientStyle.borderColor + "40; border-right:1px solid " + gradientStyle.borderColor + "40; border-bottom:1px solid " + gradientStyle.borderColor + "40;";
+            // Use box-shadow for border effect instead of actual borders to preserve rounded corners
+            boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + gradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
           } else {
             boxStyle = colorStyleForEffort(effortLevel);
           }
 
-          html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,50,70,0.18);">');
+          const extraShadow = gradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
+          html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;' + extraShadow + '">');
 
           // Header row: label + reroll button
           html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px;">');
@@ -1170,11 +1172,12 @@ app.get("/", (req, res) => {
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
                 let newStyle;
                 if (newGradientStyle) {
-                  newStyle = "background:" + newGradientStyle.background + "; border-left:4px solid; border-image:" + newGradientStyle.barGradient + " 1; border-top:1px solid " + newGradientStyle.borderColor + "40; border-right:1px solid " + newGradientStyle.borderColor + "40; border-bottom:1px solid " + newGradientStyle.borderColor + "40;";
+                  newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + newGradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
                 } else {
                   newStyle = colorStyleForEffort(newEffort);
                 }
-                cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;";
+                const extraShadow = newGradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
+                cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;" + extraShadow;
               }
             } catch (e) {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);

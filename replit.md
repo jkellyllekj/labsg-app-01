@@ -31,7 +31,10 @@ Additional project-specific preferences:
 - Chips-based UI for workout display with reroll functionality
 - Workout cards: zone-based colored backgrounds with left accent bar, floating directly on pool background (no white container)
   - Zone colors: Easy (green), Steady (blue), Moderate (yellow), Strong (orange), Hard (red)
-  - Gradients for multi-zone sets: build, descend, pyramid, reducer, pull/kick builds
+  - Vertical gradients (top-to-bottom) for multi-zone sets: build, descend, pyramid, reducer
+- Snazzy workout name generator: context-aware names based on distance, focus, and equipment
+- Named drill library: 16 specific drill names (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, etc.)
+- Emoji intensity strip: 5 faces (😊 🙂 😐 😣 🔥) in footer showing workout difficulty
 - Jumping dolphin animation during workout generation (minimum 1 second display)
 - Smooth 0.3s fade-in animation for workout results
 - Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes-compressed.jpg, 133KB), drop shadow, 16px rounded corners, no "Your Workout" title
@@ -72,6 +75,9 @@ Additional project-specific preferences:
 - **Short workout guard**: Workouts under 800m skip sprints/threshold and use simple steady/smooth sets
 - **Stroke variety**: When multiple strokes selected, sets use variety based on seed (not always freestyle)
 - **Equipment integration**: Fins appear in kick sets, paddles appear in pull sets when selected
+- **Snazzy names**: Workout names are context-aware (distance + focus + equipment) for personality
+- **Named drills**: 16 specific drill names replace generic "choice drill" for authenticity
+- **Emoji intensity**: 5-face strip in footer visualizes average workout intensity
 
 ## External Dependencies
 

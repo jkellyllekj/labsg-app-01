@@ -328,17 +328,17 @@ app.get("/", (req, res) => {
       .loader-wrapper {
         position: relative;
         display: inline-block;
-        width: 52px;
-        height: 36px;
+        width: 60px;
+        height: 70px;
         vertical-align: bottom;
         pointer-events: none;
       }
       .loader-wrapper .dolphin-loop {
         position: absolute;
-        bottom: 0;
-        left: 50%;
+        bottom: 30px;
+        left: 40%;
         transform: translateX(-50%);
-        font-size: 34px;
+        font-size: 42px;
         animation: dolphin-loop 3s linear infinite;
         filter: drop-shadow(0 4px 8px rgba(0,100,150,0.35));
       }
@@ -349,20 +349,20 @@ app.get("/", (req, res) => {
       .dolphin-fading {
         animation: dolphin-fadeout 0.35s ease-out forwards;
       }
-      /* Splash animation - exit only (at base where dolphin lands) */
+      /* Splash animation - exit only (at base where dolphin lands), rotated so drops point UP */
       .loader-wrapper .splash-out {
         position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%) scale(0);
+        bottom: 30px;
+        left: 40%;
+        transform: translateX(-50%) rotate(-90deg) scale(0);
         opacity: 0;
         pointer-events: none;
-        font-size: 22px;
+        font-size: 28px;
       }
       @keyframes splash-exit {
-        0% { transform: translateX(-50%) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) scale(1.5); opacity: 1; }
-        100% { transform: translateX(-50%) scale(2); opacity: 0; }
+        0% { transform: translateX(-50%) rotate(-90deg) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) rotate(-90deg) scale(1.5); opacity: 1; }
+        100% { transform: translateX(-50%) rotate(-90deg) scale(2); opacity: 0; }
       }
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;

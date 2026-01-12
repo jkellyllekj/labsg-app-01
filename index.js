@@ -310,27 +310,26 @@ app.get("/", (req, res) => {
         --zone-fullgas-bg: #f6c1c1;
         --zone-fullgas-bar: #d10f24;
       }
-      /* Dolphin animation - smooth continuous loop with many keyframes */
+      /* Dolphin animation - single loop that goes higher and lands at end */
       @keyframes dolphin-loop {
         0% { transform: translateY(0) rotate(0deg) scale(1); }
-        8% { transform: translateY(-8px) rotate(-25deg) scale(1.02); }
-        16% { transform: translateY(-18px) rotate(-55deg) scale(1.05); }
-        25% { transform: translateY(-28px) rotate(-90deg) scale(1.08); }
-        33% { transform: translateY(-35px) rotate(-120deg) scale(1.1); }
-        42% { transform: translateY(-38px) rotate(-155deg) scale(1.1); }
-        50% { transform: translateY(-35px) rotate(-180deg) scale(1.08); }
-        58% { transform: translateY(-30px) rotate(-210deg) scale(1.06); }
-        67% { transform: translateY(-22px) rotate(-245deg) scale(1.04); }
-        75% { transform: translateY(-14px) rotate(-280deg) scale(1.02); }
-        83% { transform: translateY(-6px) rotate(-315deg) scale(1.01); }
-        92% { transform: translateY(-1px) rotate(-345deg) scale(1); }
+        6% { transform: translateY(-12px) rotate(-22deg) scale(1.03); }
+        12% { transform: translateY(-26px) rotate(-50deg) scale(1.06); }
+        20% { transform: translateY(-42px) rotate(-85deg) scale(1.1); }
+        28% { transform: translateY(-52px) rotate(-115deg) scale(1.12); }
+        38% { transform: translateY(-56px) rotate(-155deg) scale(1.12); }
+        48% { transform: translateY(-52px) rotate(-190deg) scale(1.1); }
+        58% { transform: translateY(-44px) rotate(-225deg) scale(1.08); }
+        68% { transform: translateY(-32px) rotate(-265deg) scale(1.05); }
+        78% { transform: translateY(-18px) rotate(-305deg) scale(1.03); }
+        88% { transform: translateY(-6px) rotate(-340deg) scale(1.01); }
         100% { transform: translateY(0) rotate(-360deg) scale(1); }
       }
       .loader-wrapper {
         position: relative;
         display: inline-block;
-        width: 44px;
-        height: 44px;
+        width: 52px;
+        height: 52px;
         vertical-align: middle;
         pointer-events: none;
       }
@@ -339,8 +338,8 @@ app.get("/", (req, res) => {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 28px;
-        animation: dolphin-loop 2.5s linear infinite;
+        font-size: 34px;
+        animation: dolphin-loop 3s linear infinite;
         filter: drop-shadow(0 4px 8px rgba(0,100,150,0.35));
       }
       @keyframes dolphin-fadeout {
@@ -578,15 +577,17 @@ app.get("/", (req, res) => {
           </div>
         </div>
 
-        <div style="margin-top:14px;">
-          <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
-            Generate
-          </button>
-          <button id="copyBtn" type="button" style="margin-left:8px; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
-            Copy
-          </button>
-          <span id="statusPill" style="margin-left:10px; font-size:13px; color:#555;"></span>
-          <span id="dolphinLoader" style="display:none; vertical-align:middle; margin-left:6px;"></span>
+        <div style="margin-top:14px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
+              Generate
+            </button>
+            <button id="copyBtn" type="button" style="padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
+              Copy
+            </button>
+            <span id="statusPill" style="font-size:13px; color:#555;"></span>
+          </div>
+          <span id="dolphinLoader" style="display:none; vertical-align:middle;"></span>
         </div>
       </form>
     </div>
@@ -596,7 +597,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px; margin-top:30px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
@@ -1824,17 +1825,25 @@ app.get("/", (req, res) => {
             return;
           }
 
-          // Wait for dolphin to complete 1-2 full loop cycles (2.5s per cycle)
-          // This ensures the dolphin animation ends at its natural resting position
+          // Wait for dolphin to complete current loop cycle (3s per cycle)
+          // This ensures the dolphin animation ends at its natural resting position (100% keyframe)
           const elapsed = Date.now() - loaderStartTime;
-          const cycleTime = 2500; // Updated to match new animation duration
+          const cycleTime = 3000; // Updated to match new animation duration
           const timeInCurrentCycle = elapsed % cycleTime;
-          // When timeInCurrentCycle is 0, dolphin just started a new loop - wait full cycle
-          // When timeInCurrentCycle > 0, wait for remainder of current cycle
+          // Calculate exact time until cycle lands at 100% keyframe
           const timeUntilCycleEnd = timeInCurrentCycle === 0 ? cycleTime : (cycleTime - timeInCurrentCycle);
-          // Ensure at least one full cycle completes before teardown
-          const minDelay = elapsed < cycleTime ? (cycleTime - elapsed) : timeUntilCycleEnd;
-          await new Promise(r => setTimeout(r, Math.max(200, minDelay)));
+          // Ensure at least one full cycle completes
+          const exactDelay = elapsed < cycleTime ? (cycleTime - elapsed) : timeUntilCycleEnd;
+          
+          // Wait exactly until cycle end to hit landing point
+          if (exactDelay > 0) {
+            await new Promise(r => setTimeout(r, exactDelay));
+          }
+
+          // IMMEDIATELY pause animation at landing point before it starts new arc
+          if (dolphinSpanEl) {
+            dolphinSpanEl.style.animationPlayState = 'paused';
+          }
 
           // Exit sequence: fade out dolphin while exit splash pops (dolphin diving back)
           if (dolphinSpanEl && splashOutEl) {

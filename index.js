@@ -310,19 +310,28 @@ app.get("/", (req, res) => {
         --zone-fullgas-bg: #f6c1c1;
         --zone-fullgas-bar: #d10f24;
       }
+      /* Dolphin animation - smooth continuous loop with many keyframes */
       @keyframes dolphin-loop {
         0% { transform: translateY(0) rotate(0deg) scale(1); }
-        20% { transform: translateY(-35px) rotate(-60deg) scale(1.08); }
-        45% { transform: translateY(-55px) rotate(-140deg) scale(1.12); }
-        70% { transform: translateY(-35px) rotate(-220deg) scale(1.05); }
-        90% { transform: translateY(-10px) rotate(-300deg) scale(1.02); }
+        8% { transform: translateY(-8px) rotate(-25deg) scale(1.02); }
+        16% { transform: translateY(-18px) rotate(-55deg) scale(1.05); }
+        25% { transform: translateY(-28px) rotate(-90deg) scale(1.08); }
+        33% { transform: translateY(-35px) rotate(-120deg) scale(1.1); }
+        42% { transform: translateY(-38px) rotate(-155deg) scale(1.1); }
+        50% { transform: translateY(-35px) rotate(-180deg) scale(1.08); }
+        58% { transform: translateY(-30px) rotate(-210deg) scale(1.06); }
+        67% { transform: translateY(-22px) rotate(-245deg) scale(1.04); }
+        75% { transform: translateY(-14px) rotate(-280deg) scale(1.02); }
+        83% { transform: translateY(-6px) rotate(-315deg) scale(1.01); }
+        92% { transform: translateY(-1px) rotate(-345deg) scale(1); }
         100% { transform: translateY(0) rotate(-360deg) scale(1); }
       }
       .loader-wrapper {
         position: relative;
         display: inline-block;
-        width: 72px;
-        height: 72px;
+        width: 44px;
+        height: 44px;
+        vertical-align: middle;
         pointer-events: none;
       }
       .loader-wrapper .dolphin-loop {
@@ -330,9 +339,9 @@ app.get("/", (req, res) => {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 48px;
-        animation: dolphin-loop 3s ease-in-out infinite;
-        filter: drop-shadow(0 6px 12px rgba(0,100,150,0.4));
+        font-size: 28px;
+        animation: dolphin-loop 2.5s linear infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,100,150,0.35));
       }
       @keyframes dolphin-fadeout {
         from { opacity: 1; }
@@ -341,26 +350,40 @@ app.get("/", (req, res) => {
       .dolphin-fading {
         animation: dolphin-fadeout 0.35s ease-out forwards;
       }
-      .loader-wrapper .splash-overlay {
+      /* Splash animations - entrance and exit */
+      .loader-wrapper .splash-in {
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%) scale(0);
         opacity: 0;
         pointer-events: none;
+        font-size: 22px;
       }
-      @keyframes splash-pop {
+      @keyframes splash-entrance {
         0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-        40% { transform: translate(-50%, -55%) scale(1.6); opacity: 1; }
-        100% { transform: translate(-50%, -60%) scale(2.2); opacity: 0; }
+        50% { transform: translate(-50%, -55%) scale(1.4); opacity: 1; }
+        100% { transform: translate(-50%, -60%) scale(0.8); opacity: 0; }
       }
-      .splash-overlay.splash-active {
-        opacity: 1;
-        animation: splash-pop 0.55s ease-out forwards;
+      .splash-in.splash-active {
+        animation: splash-entrance 0.45s ease-out forwards;
       }
-      .splash-icon {
-        display: inline-block;
-        font-size: 32px;
+      .loader-wrapper .splash-out {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        pointer-events: none;
+        font-size: 22px;
+      }
+      @keyframes splash-exit {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        40% { transform: translate(-50%, -45%) scale(1.5); opacity: 1; }
+        100% { transform: translate(-50%, -40%) scale(2); opacity: 0; }
+      }
+      .splash-out.splash-active {
+        animation: splash-exit 0.5s ease-out forwards;
       }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
@@ -563,7 +586,7 @@ app.get("/", (req, res) => {
             Copy
           </button>
           <span id="statusPill" style="margin-left:10px; font-size:13px; color:#555;"></span>
-          <div id="dolphinLoader" style="display:none; position:absolute; right:16px; top:50%; transform:translateY(-50%);"></div>
+          <span id="dolphinLoader" style="display:none; vertical-align:middle; margin-left:6px;"></span>
         </div>
       </form>
     </div>
@@ -1725,14 +1748,20 @@ app.get("/", (req, res) => {
         // Reset min-height after clearing
         cards.style.minHeight = "";
 
-        // Show dolphin INSIDE form box (right side) with layered structure
-        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="dolphin-loop">🐬</span><span class="splash-overlay"><span class="splash-icon">💦</span></span></div>';
-        dolphinLoader.style.display = "block";
+        // Show dolphin inline after "Generating..." with entrance and exit splashes
+        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="splash-in">💦</span><span class="dolphin-loop">🐬</span><span class="splash-out">💦</span></div>';
+        dolphinLoader.style.display = "inline-block";
         statusPill.textContent = "Generating...";
         const loaderStartTime = Date.now();
         const loaderWrapper = dolphinLoader.querySelector(".loader-wrapper");
+        const splashInEl = loaderWrapper ? loaderWrapper.querySelector(".splash-in") : null;
         const dolphinSpanEl = loaderWrapper ? loaderWrapper.querySelector(".dolphin-loop") : null;
-        const splashEl = loaderWrapper ? loaderWrapper.querySelector(".splash-overlay") : null;
+        const splashOutEl = loaderWrapper ? loaderWrapper.querySelector(".splash-out") : null;
+        
+        // Trigger entrance splash immediately (dolphin jumping out of water)
+        if (splashInEl) {
+          splashInEl.classList.add('splash-active');
+        }
 
         const payload = formToPayload();
 
@@ -1795,26 +1824,26 @@ app.get("/", (req, res) => {
             return;
           }
 
-          // Always wait for dolphin to complete its current loop cycle
+          // Wait for dolphin to complete 1-2 full loop cycles (2.5s per cycle)
           // This ensures the dolphin animation ends at its natural resting position
           const elapsed = Date.now() - loaderStartTime;
-          const cycleTime = 3000;
+          const cycleTime = 2500; // Updated to match new animation duration
           const timeInCurrentCycle = elapsed % cycleTime;
           // When timeInCurrentCycle is 0, dolphin just started a new loop - wait full cycle
           // When timeInCurrentCycle > 0, wait for remainder of current cycle
           const timeUntilCycleEnd = timeInCurrentCycle === 0 ? cycleTime : (cycleTime - timeInCurrentCycle);
-          // If less than one cycle has passed, ensure at least one full cycle completes
+          // Ensure at least one full cycle completes before teardown
           const minDelay = elapsed < cycleTime ? (cycleTime - elapsed) : timeUntilCycleEnd;
           await new Promise(r => setTimeout(r, Math.max(200, minDelay)));
 
-          // Cross-fade: fade out dolphin while splash pops (via CSS classes only)
-          if (dolphinSpanEl && splashEl) {
+          // Exit sequence: fade out dolphin while exit splash pops (dolphin diving back)
+          if (dolphinSpanEl && splashOutEl) {
             dolphinSpanEl.classList.add('dolphin-fading');
-            splashEl.classList.add('splash-active');
+            splashOutEl.classList.add('splash-active');
           }
           
-          // Wait for animations to complete (0.55s splash animation)
-          await new Promise(r => setTimeout(r, 600));
+          // Wait for exit animations to complete (0.5s splash + 0.35s fadeout)
+          await new Promise(r => setTimeout(r, 550));
           
           // Clear loader and status
           dolphinLoader.innerHTML = "";

@@ -336,7 +336,7 @@ app.get("/", (req, res) => {
       .loader-wrapper .dolphin-loop {
         position: absolute;
         bottom: 30px;
-        left: 40%;
+        left: calc(40% - 10px);
         transform: translateX(-50%);
         font-size: 42px;
         animation: dolphin-loop 3s linear infinite;
@@ -353,16 +353,16 @@ app.get("/", (req, res) => {
       .loader-wrapper .splash-out {
         position: absolute;
         bottom: 30px;
-        left: 40%;
-        transform: translateX(-50%) rotate(-90deg) scale(0);
+        left: calc(40% + 20px);
+        transform: translateX(-50%) rotate(-120deg) scale(0);
         opacity: 0;
         pointer-events: none;
         font-size: 28px;
       }
       @keyframes splash-exit {
-        0% { transform: translateX(-50%) rotate(-90deg) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) rotate(-90deg) scale(1.5); opacity: 1; }
-        100% { transform: translateX(-50%) rotate(-90deg) scale(2); opacity: 0; }
+        0% { transform: translateX(-50%) rotate(-120deg) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) rotate(-120deg) scale(1.5); opacity: 1; }
+        100% { transform: translateX(-50%) rotate(-120deg) scale(2); opacity: 0; }
       }
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;

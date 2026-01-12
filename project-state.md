@@ -467,9 +467,9 @@ Multi-part sets (pyramids, complex structures) were removed but need to return ~
 
 **UI/Visual Polish (FIXED 2026-01-09):**
 1. DONE: Body padding reduced from 20px to 10px
-2. DONE: Dolphin animation enhanced - 28px size, dynamic jumping with scale/opacity/rotation
-3. DONE: 0.3s fade-in working (verified)
-4. DONE: Smooth scroll to workout title after results appear (350ms delay)
+2. DONE: Dolphin animation enhanced - 40px size, loopy loop (360 degree arc), positioned RIGHT of "Generating..."
+3. DONE: 0.5s fade-in for workout results (smooth slide up)
+4. DONE: Smooth scroll to workout title after results appear (550ms delay, syncs with fade)
 5. DONE: Parallax via background-attachment:fixed
 
 **Workout Name Variety:**

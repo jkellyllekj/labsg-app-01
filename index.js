@@ -310,26 +310,26 @@ app.get("/", (req, res) => {
         --zone-fullgas-bg: #f6c1c1;
         --zone-fullgas-bar: #d10f24;
       }
-      @keyframes dolphin-jump {
-        0% { transform: translateY(10px) rotate(30deg) scale(0.9); opacity: 0.7; }
-        15% { transform: translateY(-15px) rotate(10deg) scale(1.1); opacity: 1; }
-        35% { transform: translateY(-30px) rotate(-10deg) scale(1.15); opacity: 1; }
-        50% { transform: translateY(-35px) rotate(-20deg) scale(1.1); opacity: 1; }
-        70% { transform: translateY(-20px) rotate(-5deg) scale(1.05); opacity: 1; }
-        85% { transform: translateY(0px) rotate(15deg) scale(0.95); opacity: 0.8; }
-        100% { transform: translateY(10px) rotate(30deg) scale(0.9); opacity: 0.7; }
+      @keyframes dolphin-loop {
+        0% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 1; }
+        15% { transform: translateY(-40px) translateX(10px) rotate(-30deg) scale(1.1); opacity: 1; }
+        30% { transform: translateY(-60px) translateX(15px) rotate(-90deg) scale(1.15); opacity: 1; }
+        50% { transform: translateY(-50px) translateX(5px) rotate(-180deg) scale(1.1); opacity: 1; }
+        70% { transform: translateY(-30px) translateX(-5px) rotate(-270deg) scale(1.05); opacity: 1; }
+        85% { transform: translateY(-10px) translateX(-3px) rotate(-330deg) scale(1); opacity: 1; }
+        100% { transform: translateY(0) translateX(0) rotate(-360deg) scale(1); opacity: 1; }
       }
-      .dolphin-jump {
+      .dolphin-loop {
         display: inline-block;
-        animation: dolphin-jump 1.2s ease-in-out infinite;
-        filter: drop-shadow(0 4px 8px rgba(0,100,150,0.3));
+        animation: dolphin-loop 1.5s ease-in-out infinite;
+        filter: drop-shadow(0 6px 12px rgba(0,100,150,0.4));
       }
       @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(12px); }
+        from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .workout-fade-in {
-        animation: fade-in-up 0.3s ease-out forwards;
+        animation: fade-in-up 0.5s ease-out forwards;
       }
       .form-row {
         display: flex;
@@ -1648,7 +1648,7 @@ app.get("/", (req, res) => {
         e.preventDefault();
         clearUI();
 
-        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:8px;"><span class="dolphin-jump" style="font-size:28px;">🐬</span> Generating...</span>';
+        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:10px;">Generating... <span class="dolphin-loop" style="font-size:40px;">🐬</span></span>';
         const loaderStartTime = Date.now();
 
         const payload = formToPayload();
@@ -1734,7 +1734,7 @@ app.get("/", (req, res) => {
 
           // Trigger fade-in animation
           requestAnimationFrame(() => {
-            cards.style.transition = "opacity 0.3s ease-out, transform 0.3s ease-out";
+            cards.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
             cards.style.opacity = "1";
             cards.style.transform = "translateY(0)";
           });
@@ -1745,7 +1745,7 @@ app.get("/", (req, res) => {
             if (scrollTarget) {
               scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
             }
-          }, 350);
+          }, 550);
 
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);

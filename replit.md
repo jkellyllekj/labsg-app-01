@@ -64,9 +64,9 @@ Additional project-specific preferences:
 - Snazzy workout name generator: context-aware names based on distance, focus, and equipment
 - Named drill library: 16 specific drill names (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, etc.)
 - Emoji intensity strip: 5 faces (😊 🙂 😐 😣 🔥) in footer showing workout difficulty
-- Jumping dolphin animation during workout generation (minimum 1 second display, 28px size)
-- Smooth 0.3s fade-in animation for workout results
-- Smooth scroll to workout title after 350ms delay
+- Jumping dolphin animation during workout generation (minimum 1 second display, 40px size, loopy loop on RIGHT of text)
+- Smooth 0.5s fade-in animation for workout results
+- Smooth scroll to workout title after 550ms delay (syncs with fade)
 - Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes-compressed.jpg, 133KB), drop shadow, 16px rounded corners
 - Parallax background effect with background-attachment:fixed
 - Single-column form layout: Distance above Pool length

@@ -286,6 +286,10 @@ Core functionality works. Animation fully redesigned based on user feedback.
 10. **Entrance splash REMOVED** - Dolphin takes off cleanly without splash
 11. **Exit splash repositioned** - Splash now appears at base/landing point (bottom:0), not centered
 12. **Instant disappear** - Dolphin disappears immediately (display:none) when exit splash plays, like diving underwater
+13. **Splash rotated** - Splash emoji rotated 90deg counterclockwise so drops point upward (water splashing up)
+14. **Both 25% bigger** - Dolphin 34px→42px, splash 22px→28px
+15. **Both moved LEFT** - Changed left from 50% to 40% for more buffer from right edge
+16. **Both raised 30px** - Dolphin and splash start 30px higher, wrapper height increased to 70px
 
 ### Animation Sequence (now working):
 1. Click Generate → "Generating..." text appears (left side), dolphin appears (right side) on same line as Generate button

@@ -354,15 +354,15 @@ app.get("/", (req, res) => {
         position: absolute;
         bottom: 30px;
         left: calc(40% + 20px);
-        transform: translateX(-50%) rotate(-120deg) scale(0);
+        transform: translateX(-50%) rotate(-132deg) scale(0);
         opacity: 0;
         pointer-events: none;
         font-size: 28px;
       }
       @keyframes splash-exit {
-        0% { transform: translateX(-50%) rotate(-120deg) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) rotate(-120deg) scale(1.5); opacity: 1; }
-        100% { transform: translateX(-50%) rotate(-120deg) scale(2); opacity: 0; }
+        0% { transform: translateX(-50%) rotate(-132deg) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) rotate(-132deg) scale(1.5); opacity: 1; }
+        100% { transform: translateX(-50%) rotate(-132deg) scale(2); opacity: 0; }
       }
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;
@@ -400,7 +400,7 @@ app.get("/", (req, res) => {
       }
     </style>
     <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.9); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.15); max-width:520px; box-sizing:border-box;">
-      <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Workout Generator</h1>
+      <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Gen</h1>
       <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
     </div>
 
@@ -1918,7 +1918,7 @@ app.get("/", (req, res) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Swim Workout Generator</title>
+  <title>Swim Gen</title>
 </head>
 <body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes-compressed.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}

@@ -22,7 +22,14 @@ The application runs as a single-file Express server serving both the API and a 
 - Smooth scroll to workout title after 350ms delay
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
-**Session Just Completed (2026-01-09):**
+**Session Just Completed (2026-01-12):**
+1. Refined dolphin animation timing - cycle-aware delay ensures dolphin always completes its loop before teardown
+2. Fixed edge case where exact 3s multiples caused mid-loop cutoff
+3. Implemented cross-fade: dolphin fades out (0.35s) while splash pops (0.55s) via CSS-only classes
+4. Added 30px margin-top to workout title for proper scroll clearance
+5. Simplified scroll using native scrollIntoView with block:start
+
+**Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization
 2. Fixed dice button stuck state - finally block resets button
 3. Added multi-part sets (~20%) with exact distance validation

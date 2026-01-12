@@ -311,32 +311,70 @@ app.get("/", (req, res) => {
         --zone-fullgas-bar: #d10f24;
       }
       @keyframes dolphin-loop {
-        0% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 1; }
-        15% { transform: translateY(-40px) translateX(10px) rotate(-30deg) scale(1.1); opacity: 1; }
-        30% { transform: translateY(-60px) translateX(15px) rotate(-90deg) scale(1.15); opacity: 1; }
-        50% { transform: translateY(-50px) translateX(5px) rotate(-180deg) scale(1.1); opacity: 1; }
-        70% { transform: translateY(-30px) translateX(-5px) rotate(-270deg) scale(1.05); opacity: 1; }
-        85% { transform: translateY(-10px) translateX(-3px) rotate(-330deg) scale(1); opacity: 1; }
-        100% { transform: translateY(0) translateX(0) rotate(-360deg) scale(1); opacity: 1; }
+        0% { transform: translateY(0) rotate(0deg) scale(1); }
+        20% { transform: translateY(-35px) rotate(-60deg) scale(1.08); }
+        45% { transform: translateY(-55px) rotate(-140deg) scale(1.12); }
+        70% { transform: translateY(-35px) rotate(-220deg) scale(1.05); }
+        90% { transform: translateY(-10px) rotate(-300deg) scale(1.02); }
+        100% { transform: translateY(0) rotate(-360deg) scale(1); }
       }
-      .dolphin-loop {
+      .loader-wrapper {
+        position: relative;
         display: inline-block;
-        animation: dolphin-loop 1.5s ease-in-out infinite;
+        width: 72px;
+        height: 72px;
+        pointer-events: none;
+      }
+      .loader-wrapper .dolphin-loop {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 48px;
+        animation: dolphin-loop 3s ease-in-out infinite;
         filter: drop-shadow(0 6px 12px rgba(0,100,150,0.4));
+      }
+      @keyframes dolphin-fadeout {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+      .dolphin-fading {
+        animation: dolphin-fadeout 0.35s ease-out forwards;
+      }
+      .loader-wrapper .splash-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      @keyframes splash-pop {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        40% { transform: translate(-50%, -55%) scale(1.6); opacity: 1; }
+        100% { transform: translate(-50%, -60%) scale(2.2); opacity: 0; }
+      }
+      .splash-overlay.splash-active {
+        opacity: 1;
+        animation: splash-pop 0.55s ease-out forwards;
+      }
+      .splash-icon {
+        display: inline-block;
+        font-size: 32px;
       }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .workout-fade-in {
-        animation: fade-in-up 0.5s ease-out forwards;
+        animation: fade-in-up 0.7s ease-out forwards;
       }
       @keyframes fade-out-down {
         from { opacity: 1; transform: translateY(0); }
         to { opacity: 0; transform: translateY(16px); }
       }
       .workout-fade-out {
-        animation: fade-out-down 0.3s ease-in forwards;
+        animation: fade-out-down 0.7s ease-in forwards;
       }
       .form-row {
         display: flex;
@@ -535,7 +573,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px; margin-top:30px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
@@ -1674,8 +1712,8 @@ app.get("/", (req, res) => {
             nameDisplay.classList.add("workout-fade-out");
           }
           
-          // Wait for fade-out to complete
-          await new Promise(r => setTimeout(r, 300));
+          // Wait for fade-out to complete (0.7s animation)
+          await new Promise(r => setTimeout(r, 700));
           
           // Remove fade-out class and clear
           cards.classList.remove("workout-fade-out");
@@ -1687,11 +1725,14 @@ app.get("/", (req, res) => {
         // Reset min-height after clearing
         cards.style.minHeight = "";
 
-        // Show dolphin INSIDE form box (right side)
-        dolphinLoader.innerHTML = '<span class="dolphin-loop" style="font-size:48px;">🐬</span>';
+        // Show dolphin INSIDE form box (right side) with layered structure
+        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="dolphin-loop">🐬</span><span class="splash-overlay"><span class="splash-icon">💦</span></span></div>';
         dolphinLoader.style.display = "block";
         statusPill.textContent = "Generating...";
         const loaderStartTime = Date.now();
+        const loaderWrapper = dolphinLoader.querySelector(".loader-wrapper");
+        const dolphinSpanEl = loaderWrapper ? loaderWrapper.querySelector(".dolphin-loop") : null;
+        const splashEl = loaderWrapper ? loaderWrapper.querySelector(".splash-overlay") : null;
 
         const payload = formToPayload();
 
@@ -1754,12 +1795,28 @@ app.get("/", (req, res) => {
             return;
           }
 
-          // Ensure dolphin loops for at least 1.5 seconds (one full loop cycle)
+          // Always wait for dolphin to complete its current loop cycle
+          // This ensures the dolphin animation ends at its natural resting position
           const elapsed = Date.now() - loaderStartTime;
-          const minDelay = Math.max(0, 1500 - elapsed);
-          await new Promise(r => setTimeout(r, minDelay));
+          const cycleTime = 3000;
+          const timeInCurrentCycle = elapsed % cycleTime;
+          // When timeInCurrentCycle is 0, dolphin just started a new loop - wait full cycle
+          // When timeInCurrentCycle > 0, wait for remainder of current cycle
+          const timeUntilCycleEnd = timeInCurrentCycle === 0 ? cycleTime : (cycleTime - timeInCurrentCycle);
+          // If less than one cycle has passed, ensure at least one full cycle completes
+          const minDelay = elapsed < cycleTime ? (cycleTime - elapsed) : timeUntilCycleEnd;
+          await new Promise(r => setTimeout(r, Math.max(200, minDelay)));
 
-          // Clear dolphin and status
+          // Cross-fade: fade out dolphin while splash pops (via CSS classes only)
+          if (dolphinSpanEl && splashEl) {
+            dolphinSpanEl.classList.add('dolphin-fading');
+            splashEl.classList.add('splash-active');
+          }
+          
+          // Wait for animations to complete (0.55s splash animation)
+          await new Promise(r => setTimeout(r, 600));
+          
+          // Clear loader and status
           dolphinLoader.innerHTML = "";
           dolphinLoader.style.display = "none";
           statusPill.innerHTML = "";
@@ -1794,24 +1851,25 @@ app.get("/", (req, res) => {
           void cards.offsetWidth;
           if (nameDisplayEl) void nameDisplayEl.offsetWidth;
 
-          // STEP 2: Scroll to workout area first (before fade)
+          // STEP 2: Scroll to workout area - title has padding-top:20px for clearance
           const scrollTarget = nameDisplayEl && nameDisplayEl.style.display !== "none" ? nameDisplayEl : cards;
           if (scrollTarget) {
+            // Use scrollIntoView with block:start - title's padding-top provides clearance
             scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
           }
 
-          // STEP 3: After scroll starts, fade in BOTH title AND cards
-          await new Promise(r => setTimeout(r, 400));
+          // STEP 3: Wait for scroll to complete before fading in (longer delay for deliberate feel)
+          await new Promise(r => setTimeout(r, 700));
           
-          // Fade in title first
+          // Fade in title first (0.7s)
           if (nameDisplayEl && nameDisplayEl.style.display !== "none") {
-            nameDisplayEl.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+            nameDisplayEl.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
             nameDisplayEl.style.opacity = "1";
             nameDisplayEl.style.transform = "translateY(0)";
           }
           
-          // Fade in cards
-          cards.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+          // Fade in cards (0.7s)
+          cards.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
           cards.style.opacity = "1";
           cards.style.transform = "translateY(0)";
 

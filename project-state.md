@@ -74,9 +74,28 @@ Future integrations:
 - Watch sync (Apple Watch, Wear OS, Samsung)
 - Print-friendly output
 
-Monetization intent:
-- Free tier: simple workouts, possibly with ads
-- Premium tier: more strokes, equipment options, creativity slider, watch sync, saved workouts, advanced features
+Monetization intent (updated 2026-01-12):
+**Three-tier model based on generation method:**
+
+- **Free tier**: Local/deterministic generation only
+  - Standard pools only (25m, 50m, 25yd)
+  - Limited stroke options (freestyle default)
+  - Pre-built workout library (~500 variations)
+  - Possibly with ads
+  
+- **Mid tier**: Enhanced local generation
+  - Custom pool lengths (any size)
+  - All strokes and equipment options
+  - Full deterministic algorithm with variety
+  - No ads
+  
+- **Premium tier**: AI-powered generation (OpenAI API calls)
+  - Real prompt-based generation for maximum variety
+  - Coach-style custom workouts
+  - Advanced customization (creativity slider, etc.)
+  - Watch sync, saved workouts, advanced features
+
+**Note (2026-01-12):** Current local/deterministic generation is surprisingly good quality. The algorithm produces coach-plausible workouts fast without API costs. This opens up the tiered model above where free/mid tiers use local generation and only premium uses actual AI calls
 
 Far future features (frozen for v1):
 - User accounts and saved workouts

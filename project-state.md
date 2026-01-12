@@ -282,12 +282,16 @@ Core functionality works. Animation fully redesigned based on user feedback.
 6. **Title cut-off FIXED** - Added scroll-margin-top:20px for proper clearance when scrolling to workout
 7. **Button row layout** - Flexbox with justify-content:space-between, buttons/status on left, dolphin on right
 8. **Dolphin right buffer ADDED** - Added 30px margin-right to dolphinLoader for proper spacing from right edge
+9. **Dolphin baseline aligned** - Dolphin now launches from same line as Generate button (changed flex to align-items:flex-end, reduced loader height to 36px, dolphin at bottom:0)
+10. **Entrance splash REMOVED** - Dolphin takes off cleanly without splash
+11. **Exit splash repositioned** - Splash now appears at base/landing point (bottom:0), not centered
+12. **Instant disappear** - Dolphin disappears immediately (display:none) when exit splash plays, like diving underwater
 
 ### Animation Sequence (now working):
-1. Click Generate → "Generating..." text appears (left side), dolphin appears (right side) with entrance splash
-2. Dolphin does smooth loopy loop (3s per cycle), goes higher (-56px)
+1. Click Generate → "Generating..." text appears (left side), dolphin appears (right side) on same line as Generate button
+2. Dolphin takes off and does smooth loopy loop (3s per cycle), goes up to -56px
 3. Wait for loop cycle to complete at landing point (100% keyframe)
-4. Animation pauses → exit splash plays → dolphin fades out
+4. Dolphin disappears instantly → exit splash plays at base → loader clears
 5. Smooth scroll down to workout area (with scroll-margin clearance)
 6. Workout title and cards fade in (0.7s)
 

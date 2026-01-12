@@ -1184,9 +1184,7 @@ app.get("/", (req, res) => {
         // Build summary chips (without Total since it's in yellow box now)
         const chips = [];
         if (s.poolText) chips.push("Pool: " + s.poolText);
-        if (info.requestedLine) chips.push(info.requestedLine);
         if (info.totalLengthsLine) chips.push(info.totalLengthsLine);
-        if (info.endsLine) chips.push(info.endsLine);
         if (info.estTotalTimeLine) chips.push(info.estTotalTimeLine);
 
         const seen = new Set();

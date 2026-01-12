@@ -593,10 +593,10 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:14px; color:#111; background:#ffff00; padding:4px 12px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
-        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:14px; color:#111; background:#ffff00; padding:4px 12px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="footerBox" style="display:none; margin-top:8px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
@@ -1225,7 +1225,7 @@ app.get("/", (req, res) => {
         footerBox.style.display = "block";
       }
       
-      // Emoji intensity strip - 5 faces showing workout difficulty
+      // Emoji intensity strip - 5 faces with gradient background like CardGym
       function renderEmojiIntensityStrip() {
         // Calculate intensity from rendered cards
         const cards = document.querySelectorAll('[data-effort]');
@@ -1236,7 +1236,7 @@ app.get("/", (req, res) => {
         
         cards.forEach(card => {
           const effort = card.getAttribute('data-effort');
-          const effortValues = { easy: 1, steady: 2, moderate: 3, strong: 4, hard: 5 };
+          const effortValues = { easy: 1, steady: 2, moderate: 3, strong: 4, hard: 5, fullgas: 5 };
           if (effortValues[effort]) {
             intensitySum += effortValues[effort];
             count++;
@@ -1250,16 +1250,21 @@ app.get("/", (req, res) => {
         // Map average to 1-5 scale for display
         const level = Math.min(5, Math.max(1, Math.round(avgIntensity)));
         
-        // 5 faces from easy to hard
-        const faces = ['\\u{1F60A}', '\\u{1F642}', '\\u{1F610}', '\\u{1F623}', '\\u{1F525}'];
+        // 5 faces from easy to hard - matching CardGym style
+        const faces = ['\\u{1F634}', '\\u{2615}', '\\u{1F44D}', '\\u{1F4AA}', '\\u{1F525}'];
         
-        let strip = '<div style=\\"margin-top:12px; text-align:center;\\">';
-        strip += '<div style=\\"font-size:12px; color:#888; margin-bottom:6px;\\">Intensity</div>';
-        strip += '<div style=\\"display:flex; justify-content:center; gap:4px; font-size:24px;\\">';
+        // Gradient background colors matching CardGym: blue -> green -> yellow -> orange -> red
+        const bgColors = ['#b9f0fd', '#cfffc0', '#fcf3d5', '#ffc374', '#fe5050'];
+        
+        let strip = '<div style=\\"margin-top:12px;\\">';
+        strip += '<div style=\\"display:flex; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
         
         for (let i = 0; i < 5; i++) {
-          const opacity = (i + 1) <= level ? '1' : '0.25';
-          strip += '<span style=\\"opacity:' + opacity + ';\\">' + faces[i] + '</span>';
+          const isActive = (i + 1) <= level;
+          const opacity = isActive ? '1' : '0.4';
+          strip += '<div style=\\"flex:1; padding:8px 4px; background:' + bgColors[i] + '; text-align:center;\\">';
+          strip += '<span style=\\"font-size:28px; opacity:' + opacity + ';\\">' + faces[i] + '</span>';
+          strip += '</div>';
         }
         
         strip += '</div></div>';
@@ -1464,7 +1469,8 @@ app.get("/", (req, res) => {
           const subTextColor = textColor === '#fff' ? '#eee' : '#666';
           html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
           if (Number.isFinite(setDist)) {
-            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap; color:' + textColor + ';">' + String(setDist) + unitShort + "</div>");
+            const distColor = textColor === '#fff' ? '#99ccff' : '#0066cc';
+            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
           }
           if (Number.isFinite(estSec)) {
             html.push('<div style="font-size:12px; color:' + subTextColor + '; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");

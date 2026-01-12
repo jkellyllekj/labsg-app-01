@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^22.13.11",
+    "@types/node": "^22.19.5",
     "express": "^5.2.1",
-    "openai": "^6.15.0"
+    "openai": "^6.16.0"
   }
 }

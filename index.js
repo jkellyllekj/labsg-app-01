@@ -355,15 +355,15 @@ app.get("/", (req, res) => {
         position: absolute;
         bottom: 30px;
         left: calc(40% + 20px);
-        transform: translateX(-50%) rotate(-132deg) scale(0);
+        transform: translateX(-50%) rotate(-144deg) scale(0);
         opacity: 0;
         pointer-events: none;
         font-size: 28px;
       }
       @keyframes splash-exit {
-        0% { transform: translateX(-50%) rotate(-132deg) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) rotate(-132deg) scale(1.5); opacity: 1; }
-        100% { transform: translateX(-50%) rotate(-132deg) scale(2); opacity: 0; }
+        0% { transform: translateX(-50%) rotate(-144deg) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) rotate(-144deg) scale(1.5); opacity: 1; }
+        100% { transform: translateX(-50%) rotate(-144deg) scale(2); opacity: 0; }
       }
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;
@@ -388,11 +388,11 @@ app.get("/", (req, res) => {
       }
       .reroll-dolphin {
         display: inline-block;
-        font-size: 22px;
-        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+        font-size: 28px;
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
       }
       .reroll-dolphin.spinning {
-        animation: reroll-spin 1s ease-in-out;
+        animation: reroll-spin 1.25s ease-in-out;
       }
       .form-row {
         display: flex;

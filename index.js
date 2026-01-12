@@ -329,15 +329,15 @@ app.get("/", (req, res) => {
         position: relative;
         display: inline-block;
         width: 52px;
-        height: 52px;
-        vertical-align: middle;
+        height: 36px;
+        vertical-align: bottom;
         pointer-events: none;
       }
       .loader-wrapper .dolphin-loop {
         position: absolute;
-        top: 50%;
+        bottom: 0;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translateX(-50%);
         font-size: 34px;
         animation: dolphin-loop 3s linear infinite;
         filter: drop-shadow(0 4px 8px rgba(0,100,150,0.35));
@@ -349,37 +349,20 @@ app.get("/", (req, res) => {
       .dolphin-fading {
         animation: dolphin-fadeout 0.35s ease-out forwards;
       }
-      /* Splash animations - entrance and exit */
-      .loader-wrapper .splash-in {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-        pointer-events: none;
-        font-size: 22px;
-      }
-      @keyframes splash-entrance {
-        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-        50% { transform: translate(-50%, -55%) scale(1.4); opacity: 1; }
-        100% { transform: translate(-50%, -60%) scale(0.8); opacity: 0; }
-      }
-      .splash-in.splash-active {
-        animation: splash-entrance 0.45s ease-out forwards;
-      }
+      /* Splash animation - exit only (at base where dolphin lands) */
       .loader-wrapper .splash-out {
         position: absolute;
-        top: 50%;
+        bottom: 0;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0);
+        transform: translateX(-50%) scale(0);
         opacity: 0;
         pointer-events: none;
         font-size: 22px;
       }
       @keyframes splash-exit {
-        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-        40% { transform: translate(-50%, -45%) scale(1.5); opacity: 1; }
-        100% { transform: translate(-50%, -40%) scale(2); opacity: 0; }
+        0% { transform: translateX(-50%) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) scale(1.5); opacity: 1; }
+        100% { transform: translateX(-50%) scale(2); opacity: 0; }
       }
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;
@@ -577,7 +560,7 @@ app.get("/", (req, res) => {
           </div>
         </div>
 
-        <div style="margin-top:14px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="margin-top:14px; display:flex; align-items:flex-end; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
               Generate
@@ -1749,20 +1732,14 @@ app.get("/", (req, res) => {
         // Reset min-height after clearing
         cards.style.minHeight = "";
 
-        // Show dolphin inline after "Generating..." with entrance and exit splashes
-        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="splash-in">💦</span><span class="dolphin-loop">🐬</span><span class="splash-out">💦</span></div>';
+        // Show dolphin inline after "Generating..." - no entrance splash, just takes off
+        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="dolphin-loop">🐬</span><span class="splash-out">💦</span></div>';
         dolphinLoader.style.display = "inline-block";
         statusPill.textContent = "Generating...";
         const loaderStartTime = Date.now();
         const loaderWrapper = dolphinLoader.querySelector(".loader-wrapper");
-        const splashInEl = loaderWrapper ? loaderWrapper.querySelector(".splash-in") : null;
         const dolphinSpanEl = loaderWrapper ? loaderWrapper.querySelector(".dolphin-loop") : null;
         const splashOutEl = loaderWrapper ? loaderWrapper.querySelector(".splash-out") : null;
-        
-        // Trigger entrance splash immediately (dolphin jumping out of water)
-        if (splashInEl) {
-          splashInEl.classList.add('splash-active');
-        }
 
         const payload = formToPayload();
 
@@ -1845,14 +1822,16 @@ app.get("/", (req, res) => {
             dolphinSpanEl.style.animationPlayState = 'paused';
           }
 
-          // Exit sequence: fade out dolphin while exit splash pops (dolphin diving back)
-          if (dolphinSpanEl && splashOutEl) {
-            dolphinSpanEl.classList.add('dolphin-fading');
+          // Exit sequence: hide dolphin immediately, show splash at base (dolphin diving under)
+          if (dolphinSpanEl) {
+            dolphinSpanEl.style.display = 'none';
+          }
+          if (splashOutEl) {
             splashOutEl.classList.add('splash-active');
           }
           
-          // Wait for exit animations to complete (0.5s splash + 0.35s fadeout)
-          await new Promise(r => setTimeout(r, 550));
+          // Wait for splash animation to complete (0.5s)
+          await new Promise(r => setTimeout(r, 500));
           
           // Clear loader and status
           dolphinLoader.innerHTML = "";

@@ -587,7 +587,7 @@ app.get("/", (req, res) => {
             </button>
             <span id="statusPill" style="font-size:13px; color:#555;"></span>
           </div>
-          <span id="dolphinLoader" style="display:none; vertical-align:middle;"></span>
+          <span id="dolphinLoader" style="display:none; vertical-align:middle; margin-right:30px;"></span>
         </div>
       </form>
     </div>

@@ -354,8 +354,8 @@ app.get("/", (req, res) => {
       <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
     </div>
 
-    <div style="max-width:920px;">
-      <form id="genForm" style="padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
+    <div style="max-width:1100px; display:flex; align-items:flex-start; gap:24px;">
+      <form id="genForm" style="flex:0 0 auto; max-width:920px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
         <div class="form-row">
           <div class="form-col">
             <h3 style="margin:0 0 10px 0;">Distance</h3>
@@ -521,6 +521,11 @@ app.get("/", (req, res) => {
         </div>
       </form>
 
+      <div id="loaderDock" style="flex:0 0 80px; display:flex; align-items:center; justify-content:center; min-height:100px;"></div>
+    </div>
+
+    <div style="max-width:920px;">
+
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
@@ -546,6 +551,7 @@ app.get("/", (req, res) => {
       const form = document.getElementById("genForm");
       const errorBox = document.getElementById("errorBox");
       const statusPill = document.getElementById("statusPill");
+      const loaderDock = document.getElementById("loaderDock");
 
       const cards = document.getElementById("cards");
       const footerBox = document.getElementById("footerBox");
@@ -1648,7 +1654,9 @@ app.get("/", (req, res) => {
         e.preventDefault();
         clearUI();
 
-        statusPill.innerHTML = '<span style="display:inline-flex; align-items:center; gap:10px;">Generating... <span class="dolphin-loop" style="font-size:40px;">🐬</span></span>';
+        // Show dolphin in the dock to the RIGHT of form
+        loaderDock.innerHTML = '<span class="dolphin-loop" style="font-size:48px;">🐬</span>';
+        statusPill.textContent = "Generating...";
         const loaderStartTime = Date.now();
 
         const payload = formToPayload();
@@ -1656,6 +1664,7 @@ app.get("/", (req, res) => {
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
           if (!payload.customPoolLength) {
+            loaderDock.innerHTML = "";
             statusPill.innerHTML = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -1682,6 +1691,7 @@ app.get("/", (req, res) => {
           }
 
           if (!res.ok) {
+            loaderDock.innerHTML = "";
             statusPill.innerHTML = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -1689,6 +1699,7 @@ app.get("/", (req, res) => {
           }
 
           if (!data || data.ok !== true) {
+            loaderDock.innerHTML = "";
             statusPill.innerHTML = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -1699,16 +1710,19 @@ app.get("/", (req, res) => {
           const workoutName = String(data.workoutName || "").trim();
 
           if (!workoutText) {
+            loaderDock.innerHTML = "";
             statusPill.innerHTML = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
 
-          // Ensure loader shows for at least 1 second
+          // Ensure dolphin loops for at least 1.5 seconds (one full loop cycle)
           const elapsed = Date.now() - loaderStartTime;
-          const minDelay = Math.max(0, 1000 - elapsed);
-
+          const minDelay = Math.max(0, 1500 - elapsed);
           await new Promise(r => setTimeout(r, minDelay));
+
+          // Clear dolphin and status
+          loaderDock.innerHTML = "";
           statusPill.innerHTML = "";
 
           // Display workout name floating on the right
@@ -1721,9 +1735,9 @@ app.get("/", (req, res) => {
             nameDisplay.style.display = "none";
           }
 
-          // Hide cards initially for fade-in effect
+          // STEP 1: Render cards but keep them invisible
           cards.style.opacity = "0";
-          cards.style.transform = "translateY(12px)";
+          cards.style.transform = "translateY(20px)";
           cards.style.transition = "none";
 
           const ok = renderAll(payload, workoutText);
@@ -1732,20 +1746,21 @@ app.get("/", (req, res) => {
             raw.style.display = "block";
           }
 
-          // Trigger fade-in animation
-          requestAnimationFrame(() => {
+          // Force a reflow to reset any previous animation state
+          void cards.offsetWidth;
+
+          // STEP 2: Scroll to workout area first (before fade)
+          const scrollTarget = nameDisplay && nameDisplay.style.display !== "none" ? nameDisplay : cards;
+          if (scrollTarget) {
+            scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+
+          // STEP 3: After scroll starts, fade in the workout cards
+          setTimeout(() => {
             cards.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
             cards.style.opacity = "1";
             cards.style.transform = "translateY(0)";
-          });
-
-          // Smooth scroll to workout name/cards after they appear
-          setTimeout(() => {
-            const scrollTarget = nameDisplay && nameDisplay.style.display !== "none" ? nameDisplay : cards;
-            if (scrollTarget) {
-              scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-          }, 550);
+          }, 400);
 
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);
@@ -1753,6 +1768,7 @@ app.get("/", (req, res) => {
           copyBtn.disabled = false;
           copyBtn.dataset.copyText = workoutText;
         } catch (err) {
+          loaderDock.innerHTML = "";
           statusPill.innerHTML = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }

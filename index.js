@@ -593,10 +593,10 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 4px 8px rgba(0,0,0,0.3);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:14px; color:#111; background:#ffff00; padding:4px 12px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
-        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 4px 8px rgba(0,0,0,0.3);"></span></div>
+        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:14px; color:#111; background:#ffff00; padding:4px 12px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="footerBox" style="display:none; margin-top:8px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
@@ -1170,13 +1170,13 @@ app.get("/", (req, res) => {
           totalDistStr = String(s.requested) + (s.units || "m");
         }
 
-        // Show yellow Total box
+        // Show yellow Total box (prepared for fade-in, triggered by main animation)
         if (totalDistStr) {
           totalText.textContent = "Total " + totalDistStr;
+          totalBox.style.opacity = "0";
+          totalBox.style.transform = "translateY(16px)";
+          totalBox.style.transition = "none";
           totalBox.style.display = "block";
-          totalBox.classList.remove("workout-fade-in");
-          void totalBox.offsetWidth;
-          totalBox.classList.add("workout-fade-in");
         } else {
           totalBox.style.display = "none";
         }
@@ -1219,10 +1219,10 @@ app.get("/", (req, res) => {
         }
         
         footerBox.innerHTML = f.join("");
+        footerBox.style.opacity = "0";
+        footerBox.style.transform = "translateY(16px)";
+        footerBox.style.transition = "none";
         footerBox.style.display = "block";
-        footerBox.classList.remove("workout-fade-in");
-        void footerBox.offsetWidth;
-        footerBox.classList.add("workout-fade-in");
       }
       
       // Emoji intensity strip - 5 faces showing workout difficulty
@@ -1918,6 +1918,20 @@ app.get("/", (req, res) => {
           cards.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
           cards.style.opacity = "1";
           cards.style.transform = "translateY(0)";
+          
+          // Fade in Total and Summary at the same time
+          if (totalBox.style.display !== "none") {
+            void totalBox.offsetWidth;
+            totalBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+            totalBox.style.opacity = "1";
+            totalBox.style.transform = "translateY(0)";
+          }
+          if (footerBox.style.display !== "none") {
+            void footerBox.offsetWidth;
+            footerBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+            footerBox.style.opacity = "1";
+            footerBox.style.transform = "translateY(0)";
+          }
 
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);

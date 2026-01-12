@@ -23,11 +23,12 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-12):**
-1. Refined dolphin animation timing - cycle-aware delay ensures dolphin always completes its loop before teardown
-2. Fixed edge case where exact 3s multiples caused mid-loop cutoff
-3. Implemented cross-fade: dolphin fades out (0.35s) while splash pops (0.55s) via CSS-only classes
-4. Added 30px margin-top to workout title for proper scroll clearance
-5. Simplified scroll using native scrollIntoView with block:start
+1. Repositioned dolphin loader inline after "Generating..." text (was floating in corner)
+2. Redesigned animation with 13 smooth keyframes (was 5 jerky stops) and linear easing
+3. Added entrance splash when dolphin appears (jumping out of water)
+4. Added exit splash when dolphin finishes loops (diving back down)
+5. Full animation sequence: splash-in -> smooth loops (2.5s each) -> splash-out -> scroll -> fade-in
+6. Reduced loader size to 28px font, 44px wrapper for inline display
 
 **Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization

@@ -65,10 +65,29 @@ Design philosophy:
 - Mobile-first (people use it poolside on phones)
 - Beautiful, intuitive, friendly, viewable
 
-Platform targets (in order):
-1. Web app (current)
-2. Android
-3. iOS
+Platform targets (updated 2026-01-12):
+1. **Android (PRIMARY)** - Play Store release is the main goal
+2. iOS - App Store release (after Android)
+3. Web app - Used for development preview and easy sharing during development
+
+Cross-platform strategy (decided 2026-01-12):
+- **React Native with Expo** - Recommended path to Play Store
+- Same codebase for Android and iOS
+- Identical look and feel to current web design
+- Expo Go app allows friends to test without Play Store
+- Play Store Internal Testing for controlled beta
+
+IP Protection strategy:
+- Workout generation algorithm should eventually run server-side (API)
+- App calls API for generation, so algorithm never ships in plaintext
+- Source code stays private in Team workspace
+- Consider obfuscation for any client-side logic
+
+Development approach:
+- Current: Web app in Replit for rapid iteration and testing
+- Next: Extract workout engine into reusable module
+- Then: Build React Native (Expo) app consuming the module
+- Finally: Deploy to Play Store, then App Store
 
 Future integrations:
 - Watch sync (Apple Watch, Wear OS, Samsung)

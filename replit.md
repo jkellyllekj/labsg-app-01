@@ -2,9 +2,15 @@
 
 ## Overview
 
-A minimal Node.js + Express application that generates swimming workouts. The app takes user inputs (pool size, target distance) and generates coach-plausible workout structures. Built as a clean rebuild (not a refactor) of a previous prototype.
+A swim workout generator app targeting **Android Play Store** (primary), iOS App Store, and web. Currently built as a Node.js + Express web app for rapid development and easy testing, with plans to migrate to React Native (Expo) for mobile app stores.
 
-The application runs as a single-file Express server serving both the API and a simple HTML frontend. All generation is now local/deterministic (no OpenAI calls for basic generation).
+The application runs as a single-file Express server serving both the API and a simple HTML frontend. All generation is local/deterministic (no OpenAI calls for basic generation).
+
+**Strategic Direction (2026-01-12):**
+- PRIMARY: Android Play Store release
+- Cross-platform: React Native with Expo (same codebase for Android/iOS)
+- Web app: Development preview and sharing during development
+- IP Protection: Workout algorithm to run server-side eventually
 
 ## Current Status (2026-01-09)
 

@@ -4,7 +4,7 @@
 
 Project: Swim Workout Generator  
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
-Last updated: 2026-01-09  
+Last updated: 2026-01-12  
 Status: **Authoritative**
 
 ---
@@ -250,24 +250,30 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-12: Animation/Layout Bug Fixes COMPLETE**
+**STATUS 2026-01-12: Dolphin Animation Redesign COMPLETE**
 
-Core functionality works. Animation/layout bugs fixed and ready for user testing.
+Core functionality works. Animation fully redesigned based on user feedback.
 
-### COMPLETED BUGS (2026-01-12):
-1. **Dolphin position FIXED** - Now inside form box with position:absolute, right:16px, top:50%
-2. **Box width consistency FIXED** - Title, form, and result boxes all share max-width:520px
-3. **Regenerate consistency FIXED** - Uses async/await with minHeight preservation and forced reflow
-4. **Workout title fade-in FIXED** - Title now fades in alongside cards
-5. **Fade-out old workout FIXED** - 0.3s fade-out-down animation before clearing when regenerating
+### COMPLETED THIS SESSION (2026-01-12):
+1. **Dolphin position FIXED** - Now inline after "Generating..." text (was floating in corner)
+2. **Smooth motion FIXED** - 13 keyframe stops with linear easing (was 5 jerky stops)
+3. **Entrance splash ADDED** - Dolphin appears with splash (jumping out of water)
+4. **Exit splash ADDED** - Dolphin finishes with splash (diving back down)
+5. **Animation timing FIXED** - 2.5s per loop cycle, waits for cycle completion before teardown
 
 ### Animation Sequence (now working):
-1. Click Generate → dolphin appears (inside form box, right side)
-2. Dolphin loops ~1.5 seconds
-3. Smooth scroll down to workout area
-4. If regenerating: old workout fades out (0.3s)
-5. New workout (including title) fades in (0.5s)
-6. Works IDENTICALLY on first and all subsequent clicks
+1. Click Generate → "Generating..." text appears → entrance splash → dolphin starts looping
+2. Dolphin does smooth loopy loops (2.5s per cycle)
+3. Wait for loop cycle to complete naturally
+4. Exit splash plays → dolphin fades out
+5. Smooth scroll down to workout area
+6. Workout title and cards fade in (0.7s)
+
+### PREVIOUS FIXES (2026-01-12, earlier):
+1. Box width consistency - Title, form, and result boxes all share max-width:520px
+2. Regenerate consistency - Uses async/await with minHeight preservation and forced reflow
+3. Workout title fade-in - Title now fades in alongside cards
+4. Fade-out old workout - 0.7s fade-out-down animation before clearing when regenerating
 
 ### Completed Previously (2026-01-09):
 - DONE: Reroll variety - multiple seed derivations (seedA/B/C/D) for independent randomization
@@ -289,6 +295,32 @@ Core functionality works. Animation/layout bugs fixed and ready for user testing
 - Remove Viewport Lab link before production
 - Temperature option for more/less creative workouts
 - User accounts and saved workouts (v2)
+
+### Outstanding Initiatives (Big Picture):
+These are ideas and directions discussed but not yet built. Preserved here so nothing is lost.
+
+**Production Readiness:**
+- Remove Viewport Lab link before launch
+- Final mobile testing across devices
+- Performance optimization if needed
+
+**Monetization / Business:**
+- Three-tier pricing implementation (Free/Mid/Premium) - design documented in Vision section
+- App Store submission (iOS, Android)
+- Advertising strategy for free tier
+- Payment integration (Stripe or similar)
+
+**Platform Expansion:**
+- Android app
+- iOS app
+- Watch sync (Apple Watch, Wear OS)
+- Print-friendly output
+
+**Feature Ideas (Future):**
+- Saved workouts / user accounts
+- Season planning
+- Multi-sport / triathlon expansion
+- Workout evaluation and adaptive training
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS090__ -->
 
@@ -412,6 +444,20 @@ Note: "Sprint" is a SET TYPE (like "1x100 Sprint"), not a zone. Zones describe i
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.
 
+### 2026-01-12 — Dolphin animation redesign
+Dolphin loader completely redesigned based on user feedback:
+- Position: Inline after "Generating..." text (was floating in corner)
+- Motion: 13 keyframe stops with linear easing (was 5 jerky stops)
+- Story: Entrance splash → smooth loops (2.5s each) → exit splash → scroll → fade in
+- Size: 28px font, 44px wrapper (inline with status text)
+
+### 2026-01-12 — Pause In Action protocol formalized
+WORKING-METHOD-REPLIT.md now includes enhanced Pause In Action protocol that requires:
+1. Updating PROJECT_STATE.md (especially Vision, Decisions, Outstanding Initiatives)
+2. Producing a Handover Message
+3. Producing a Next Agent Prompt
+Ideas must never be lost between sessions.
+
 ### 2026-01-09 — Build set reroll variety
 Build set generation now has 4 pattern variations and 5 description options (build, descend, negative split, build to fast, smooth to strong) so rerolling produces different results.
 
@@ -500,11 +546,12 @@ Multi-part sets (pyramids, complex structures) were removed but need to return ~
 
 **UI/Visual Polish (FIXED 2026-01-09, UPDATED 2026-01-12):**
 1. DONE: Body padding reduced from 20px to 10px
-2. DONE: Dolphin animation - 48px size, loopy loop (360 degree arc), positioned in dedicated dock to RIGHT of form box
-3. DONE: 0.5s fade-in for workout results (force reflow ensures animation restarts on every generation)
-4. DONE: Correct animation sequence: dolphin loops (1.5s min) -> scroll to workout -> fade in cards (400ms after scroll)
-5. DONE: Parallax via background-attachment:fixed
-6. DONE: Same behavior on first and subsequent Generate clicks (no page jumping)
+2. DONE: Dolphin animation redesigned - 28px size, inline after "Generating...", 13-keyframe smooth loop
+3. DONE: Entrance and exit splash effects (dolphin jumps out, loops, splashes back down)
+4. DONE: 0.7s fade-in for workout results (force reflow ensures animation restarts on every generation)
+5. DONE: Correct animation sequence: splash-in -> dolphin loops (2.5s cycle) -> splash-out -> scroll -> fade in cards
+6. DONE: Parallax via background-attachment:fixed
+7. DONE: Same behavior on first and subsequent Generate clicks (no page jumping)
 
 **Workout Name Variety:**
 - Needs more name templates (future improvement)

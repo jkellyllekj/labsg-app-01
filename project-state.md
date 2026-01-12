@@ -231,16 +231,30 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-09: v1 Feature Complete**
+**STATUS 2026-01-12: Animation/Layout Bug Fixes In Progress**
 
-All core functionality and polish is done. App is ready for user testing.
+Core functionality works but animation/layout issues need fixing before user testing.
 
-### Completed This Session (2026-01-09):
+### OPEN BUGS (2026-01-12) - Must Fix:
+1. **Dolphin position broken** - Currently outside form box and invisible. Must be INSIDE the form box, positioned on the right side using CSS absolute positioning (form needs position:relative)
+2. **Form box width mismatch** - Form box is wider than title box. All boxes (title, form, workout cards) must have consistent max-width (~520px)
+3. **Regenerate glitches** - First Generate works perfectly, subsequent clicks cause page jumping. Must work identically every time
+4. **Workout title doesn't fade in** - Title should fade in along with workout cards
+5. **Old workout disappears instantly** - When regenerating, old workout should FADE OUT first (0.3-0.5s), then new workout FADES IN
+
+### Required Animation Sequence:
+1. Click Generate → dolphin appears (inside form box, right side)
+2. Dolphin loops ~1.5 seconds
+3. Smooth scroll down to workout area
+4. If regenerating: old workout fades out (0.3-0.5s)
+5. New workout (including title) fades in (0.5s)
+6. Must work IDENTICALLY on first and all subsequent clicks
+
+### Completed Previously (2026-01-09):
 - DONE: Reroll variety - multiple seed derivations (seedA/B/C/D) for independent randomization
 - DONE: Dice button reliability - finally block resets button state
 - DONE: Multi-part sets ~20% - triggers for main sets 400m+, exact distance validation
 - DONE: Drill display improvement - shows "drill choice (X, Y)" for 6+ rep sets
-- DONE: UI polish - reduced padding, enhanced dolphin, smooth scroll to workout title
 
 ### Previously Completed:
 - DONE: Core workout generation with coach-quality structure

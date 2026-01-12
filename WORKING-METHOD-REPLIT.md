@@ -132,3 +132,31 @@ Replace the whole app structure.
 Migrate frameworks.
 
 If something big is needed, Agent proposes a plan and waits.
+
+Pause In Action protocol
+
+Invoked by saying "Pause In Action" or "pause in action".
+
+When invoked, Agent must immediately:
+
+1. Stop problem-solving.
+
+2. Lock repo truth. Ensure all changes are saved and committed.
+
+3. Prepare clean handoff. Write a summary of current state.
+
+4. Produce a Handover Message. This is mandatory. Without it, the pause is invalid.
+
+The Handover Message must include:
+
+What was done this session. List the changes made.
+
+Current state. What is working, what is not.
+
+Next steps. What should be tackled in the next session.
+
+Any blockers or decisions needed.
+
+Files touched. List the key files that were modified.
+
+The purpose is to allow the user to start a fresh session (or hand off to another agent) without losing context. The handover message becomes the starting point for the next session.

@@ -30,11 +30,17 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-12, latest):**
+1. Stronger drop shadows on cards (0 8px 24px rgba(0,0,0,0.35)) for more visual depth
+2. Bolder interval/distance text (font-weight:600)
+3. Dice button replaced with small dolphin that does quick 360 spin (0.2s) on click
+4. Removed left accent bar - full card is now the zone color (no borders)
+5. CardGym pastel colors and sprint generation from previous session retained
+
+**Previous Session (2026-01-12, earlier):**
 1. CardGym pastel color scheme: Easy=#b9f0fd (blue), Moderate=#cfffc0 (green), Strong=#fcf3d5 (yellow), Hard=#ffc374 (orange), Full Gas=#fe0000 (red)
 2. Text color logic: white ONLY on fullgas (red) zones, black everywhere else including orange
-3. Drop shadows on all workout cards (0 4px 12px rgba(0,0,0,0.25)) matching original CardGym
-4. Sprint/max effort options added to allround descriptors - fullgas sets now generate
-5. Removed goal feature entirely (input field and localStorage functions)
+3. Sprint/max effort options added to allround descriptors - fullgas sets now generate
+4. Removed goal feature entirely (input field and localStorage functions)
 
 **Previous Session (2026-01-12, earlier):**
 1. Title shortened to "Swim Gen" for mobile

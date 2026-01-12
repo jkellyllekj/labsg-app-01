@@ -139,24 +139,38 @@ Invoked by saying "Pause In Action" or "pause in action".
 
 When invoked, Agent must immediately:
 
-1. Stop problem-solving.
+1. Stop problem-solving. Halt current work.
 
 2. Lock repo truth. Ensure all changes are saved and committed.
 
-3. Prepare clean handoff. Write a summary of current state.
+3. Update PROJECT_STATE.md. This is critical. The following sections must reflect the current reality:
+
+   - Next single step section. Update with what was completed this session and what remains.
+   
+   - Decisions section. Add any new decisions made during this session.
+   
+   - Vision section. Add any new ideas, initiatives, or future directions discussed (pricing tiers, App Store plans, advertising, new features, etc). Ideas must never be lost.
+   
+   - Observed failures section. Add any new bugs discovered or fixed.
 
 4. Produce a Handover Message. This is mandatory. Without it, the pause is invalid.
 
 The Handover Message must include:
 
-What was done this session. List the changes made.
+- What was done this session. List the changes made.
 
-Current state. What is working, what is not.
+- Current state. What is working, what is not.
 
-Next steps. What should be tackled in the next session.
+- Outstanding initiatives. Big picture items still to do (App Store, pricing, advertising, features discussed but not built, etc).
 
-Any blockers or decisions needed.
+- Next steps. What should be tackled in the next session.
 
-Files touched. List the key files that were modified.
+- Any blockers or decisions needed.
 
-The purpose is to allow the user to start a fresh session (or hand off to another agent) without losing context. The handover message becomes the starting point for the next session.
+- Files touched. List the key files that were modified.
+
+5. Produce a Next Agent Prompt. A ready-to-use message that the next agent (or fresh session) can use to pick up exactly where we left off. This prompt should reference the updated PROJECT_STATE.md and summarize the immediate context.
+
+The purpose is to preserve all ideas and context so nothing is lost between sessions. PROJECT_STATE.md is the living document that accumulates everything. The handover message and next agent prompt ensure continuity.
+
+Note: WORKING-METHOD-REPLIT.md (this file) is stable and rarely changes. PROJECT_STATE.md is continuously updated and is the source of truth for current progress, ideas, and goals.

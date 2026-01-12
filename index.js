@@ -388,9 +388,11 @@ app.get("/", (req, res) => {
       }
       .reroll-dolphin {
         display: inline-block;
+        font-size: 18px;
+        filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
       }
       .reroll-dolphin.spinning {
-        animation: reroll-spin 0.2s ease-in-out;
+        animation: reroll-spin 1s ease-in-out;
       }
       .form-row {
         display: flex;
@@ -586,15 +588,16 @@ app.get("/", (req, res) => {
       </form>
     </div>
 
-    <div style="max-width:520px;">
+    <div style="max-width:500px; box-sizing:border-box;">
 
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:12px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 3px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:30px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 4px 8px rgba(0,0,0,0.3);"></span></div>
         <div id="cards" style="display:none;"></div>
 
-        <div id="footerBox" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:16px; color:#111; background:#ffeb3b; padding:8px 16px; border-radius:10px; border:3px solid #333; box-shadow:0 4px 8px rgba(0,0,0,0.3);"></span></div>
+        <div id="footerBox" style="display:none; margin-top:8px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
       </div>
@@ -616,6 +619,8 @@ app.get("/", (req, res) => {
       const dolphinLoader = document.getElementById("dolphinLoader");
 
       const cards = document.getElementById("cards");
+      const totalBox = document.getElementById("totalBox");
+      const totalText = document.getElementById("totalText");
       const footerBox = document.getElementById("footerBox");
       const raw = document.getElementById("raw");
 
@@ -783,8 +788,12 @@ app.get("/", (req, res) => {
         cards.style.display = "none";
         cards.innerHTML = "";
 
+        totalBox.style.display = "none";
+        totalBox.classList.remove("workout-fade-in");
+        
         footerBox.style.display = "none";
         footerBox.innerHTML = "";
+        footerBox.classList.remove("workout-fade-in");
 
         raw.style.display = "none";
         raw.textContent = "";
@@ -1152,16 +1161,30 @@ app.get("/", (req, res) => {
         const s = window.__swgSummary || { units: "", requested: null, poolText: "", paceSec: null };
         const info = extractFooterInfo(footerLines);
 
+        // Extract total distance for the yellow Total box
+        let totalDistStr = "";
+        if (info.totalDistanceLine) {
+          const match = info.totalDistanceLine.match(/Total distance:\\s*(\\d+)/);
+          if (match) totalDistStr = match[1] + (s.units || "m");
+        } else if (Number.isFinite(s.requested)) {
+          totalDistStr = String(s.requested) + (s.units || "m");
+        }
+
+        // Show yellow Total box
+        if (totalDistStr) {
+          totalText.textContent = "Total " + totalDistStr;
+          totalBox.style.display = "block";
+          totalBox.classList.remove("workout-fade-in");
+          void totalBox.offsetWidth;
+          totalBox.classList.add("workout-fade-in");
+        } else {
+          totalBox.style.display = "none";
+        }
+
+        // Build summary chips (without Total since it's in yellow box now)
         const chips = [];
-
         if (s.poolText) chips.push("Pool: " + s.poolText);
-
         if (info.requestedLine) chips.push(info.requestedLine);
-        else if (Number.isFinite(s.requested)) chips.push("Requested: " + String(s.requested) + String(s.units || ""));
-
-        if (info.totalDistanceLine) chips.push(info.totalDistanceLine.replace("Total distance:", "Total:").trim());
-        else if (Number.isFinite(s.requested)) chips.push("Total: " + String(s.requested) + String(s.units || ""));
-
         if (info.totalLengthsLine) chips.push(info.totalLengthsLine);
         if (info.endsLine) chips.push(info.endsLine);
         if (info.estTotalTimeLine) chips.push(info.estTotalTimeLine);
@@ -1182,7 +1205,7 @@ app.get("/", (req, res) => {
         }
 
         const f = [];
-        f.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">Total</div>");
+        f.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">Summary</div>");
         f.push("<div style=\\"display:flex; flex-wrap:wrap; gap:10px;\\">");
 
         for (const c of deduped) {
@@ -1199,6 +1222,9 @@ app.get("/", (req, res) => {
         
         footerBox.innerHTML = f.join("");
         footerBox.style.display = "block";
+        footerBox.classList.remove("workout-fade-in");
+        void footerBox.offsetWidth;
+        footerBox.classList.add("workout-fade-in");
       }
       
       // Emoji intensity strip - 5 faces showing workout difficulty
@@ -1368,7 +1394,7 @@ app.get("/", (req, res) => {
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
-        html.push('<div style="display:flex; flex-direction:column; gap:12px;">');
+        html.push('<div style="display:flex; flex-direction:column; gap:6px;">');
 
         let idx = 0;
 
@@ -1392,7 +1418,7 @@ app.get("/", (req, res) => {
           
           let boxStyle;
           let textColor = '#111';
-          const dropShadow = "0 8px 24px rgba(0,0,0,0.35)";
+          const dropShadow = "0 6px 16px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25)";
           
           if (gradientStyle) {
             // Gradient cards: full box color + drop shadow (no left bar)
@@ -1415,7 +1441,7 @@ app.get("/", (req, res) => {
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
-              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:12px; transition:transform 0.2s ease;" title="Reroll this set">' +
+              '" style="padding:2px 6px; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease;" title="Reroll this set">' +
               '<span class="reroll-dolphin">🐬</span>' +
             "</button>"
           );
@@ -1539,7 +1565,7 @@ app.get("/", (req, res) => {
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
                 let newStyle;
                 let newTextColor = '#111';
-                const dropShadow = "0 8px 24px rgba(0,0,0,0.35)";
+                const dropShadow = "0 6px 16px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25)";
                 
                 if (newGradientStyle) {
                   newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";

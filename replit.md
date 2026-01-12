@@ -23,27 +23,26 @@ The application runs as a single-file Express server serving both the API and a 
 - Reroll individual sets via dice button with variety
 - Zone-based colored cards with bolder CardGym-style colors
 - Gradient backgrounds for progressive sets (build, descend)
-- White text on dark backgrounds (orange/red) for readability
+- White text on fullgas (red) zones only for readability
 - 16-drill name library, snazzy workout names, emoji intensity strip
 - Jumping dolphin loader with exit splash animation
 - Smooth scroll to workout title after 350ms delay
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-12, latest):**
-1. Title shortened to "Swim Gen" for mobile (fits on one line)
-2. Bolder CardGym-style zone colors: Easy=#87CEEB (blue), Moderate=#90EE90 (green), Strong=#FFE500 (yellow), Hard=#FF8C00 (orange), Full Gas=#FF0000 (red)
-3. White text on dark backgrounds (hard/fullgas zones) for readability
-4. Gradient cards detect dark zones and apply white text accordingly
-5. Removed goal input field from workout cards (cleaner interface)
-6. Removed goal localStorage functions (getWorkoutId, loadGoalsMap, saveGoalsMap)
-7. Splash rotation adjusted to -132deg for upward-pointing effect
+1. CardGym pastel color scheme: Easy=#b9f0fd (blue), Moderate=#cfffc0 (green), Strong=#fcf3d5 (yellow), Hard=#ffc374 (orange), Full Gas=#fe0000 (red)
+2. Text color logic: white ONLY on fullgas (red) zones, black everywhere else including orange
+3. Drop shadows on all workout cards (0 4px 12px rgba(0,0,0,0.25)) matching original CardGym
+4. Sprint/max effort options added to allround descriptors - fullgas sets now generate
+5. Removed goal feature entirely (input field and localStorage functions)
 
 **Previous Session (2026-01-12, earlier):**
-1. Dolphin position fixed - anchored to right side of button row
-2. Button row restructured with flexbox layout
-3. Dolphin size increased 20%, animation arc goes higher (-56px peak)
-4. Animation timing: 3s per cycle with landing pause before splash
-5. Title cut-off fixed with scroll-margin-top:20px
+1. Title shortened to "Swim Gen" for mobile
+2. Splash rotation adjusted to -132deg
+3. Dolphin position fixed - anchored to right side of button row
+4. Dolphin size increased 20%, animation arc goes higher (-56px peak)
+5. Animation timing: 3s per cycle with landing pause before splash
+6. Title cut-off fixed with scroll-margin-top:20px
 
 **Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization

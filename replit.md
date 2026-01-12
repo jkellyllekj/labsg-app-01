@@ -22,15 +22,20 @@ The application runs as a single-file Express server serving both the API and a 
 - Smooth scroll to workout title after 350ms delay
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
-**Session Just Completed (2026-01-12):**
+**Session Just Completed (2026-01-12, later):**
+1. Dolphin position fixed - now anchored to right side of button row (was inline with text which caused issues when "Generating..." wrapped on different screens)
+2. Button row restructured with flexbox: buttons/status left, dolphin right (justify-content:space-between)
+3. Dolphin size increased 20% (28px to 34px font, 44px to 52px wrapper)
+4. Animation arc goes higher (-56px peak instead of -38px) for more dramatic loop
+5. Animation timing: 3s per cycle (was 2.5s), pauses at landing point before splash
+6. Title cut-off fixed: added scroll-margin-top:20px for proper clearance
+7. Animation pauses immediately at cycle end, preventing restart before splash plays
+
+**Previous Session (2026-01-12, earlier):**
 1. Repositioned dolphin loader inline after "Generating..." text (was floating in corner)
 2. Redesigned animation with 13 smooth keyframes (was 5 jerky stops) and linear easing
 3. Added entrance splash when dolphin appears (jumping out of water)
 4. Added exit splash when dolphin finishes loops (diving back down)
-5. Full animation sequence: splash-in -> smooth loops (2.5s each) -> splash-out -> scroll -> fade-in
-6. Reduced loader size to 28px font, 44px wrapper for inline display
-7. Formalized Pause In Action protocol in WORKING-METHOD-REPLIT.md
-8. Added Outstanding Initiatives section to PROJECT_STATE.md for big-picture idea preservation
 
 **Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization

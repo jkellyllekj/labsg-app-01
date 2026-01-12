@@ -250,23 +250,25 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-12: Dolphin Animation Redesign COMPLETE**
+**STATUS 2026-01-12: Dolphin Animation Redesign COMPLETE (v2)**
 
 Core functionality works. Animation fully redesigned based on user feedback.
 
-### COMPLETED THIS SESSION (2026-01-12):
-1. **Dolphin position FIXED** - Now inline after "Generating..." text (was floating in corner)
-2. **Smooth motion FIXED** - 13 keyframe stops with linear easing (was 5 jerky stops)
-3. **Entrance splash ADDED** - Dolphin appears with splash (jumping out of water)
-4. **Exit splash ADDED** - Dolphin finishes with splash (diving back down)
-5. **Animation timing FIXED** - 2.5s per loop cycle, waits for cycle completion before teardown
+### COMPLETED THIS SESSION (2026-01-12, later):
+1. **Dolphin position FIXED** - Now anchored to right side of button row (was inline with "Generating..." text which caused issues when text wrapped on different screen sizes)
+2. **Dolphin size INCREASED** - 20% bigger (28px to 34px font, 44px to 52px wrapper)
+3. **Animation arc HIGHER** - Goes up to -56px (was -38px) for more dramatic loop
+4. **Animation timing** - 3s per cycle (was 2.5s), pauses at landing point before splash
+5. **No restart before splash** - Animation pauses immediately at cycle end, preventing dolphin from starting new arc before splash plays
+6. **Title cut-off FIXED** - Added scroll-margin-top:20px for proper clearance when scrolling to workout
+7. **Button row layout** - Flexbox with justify-content:space-between, buttons/status on left, dolphin on right
 
 ### Animation Sequence (now working):
-1. Click Generate → "Generating..." text appears → entrance splash → dolphin starts looping
-2. Dolphin does smooth loopy loops (2.5s per cycle)
-3. Wait for loop cycle to complete naturally
-4. Exit splash plays → dolphin fades out
-5. Smooth scroll down to workout area
+1. Click Generate → "Generating..." text appears (left side), dolphin appears (right side) with entrance splash
+2. Dolphin does smooth loopy loop (3s per cycle), goes higher (-56px)
+3. Wait for loop cycle to complete at landing point (100% keyframe)
+4. Animation pauses → exit splash plays → dolphin fades out
+5. Smooth scroll down to workout area (with scroll-margin clearance)
 6. Workout title and cards fade in (0.7s)
 
 ### PREVIOUS FIXES (2026-01-12, earlier):
@@ -444,12 +446,13 @@ Note: "Sprint" is a SET TYPE (like "1x100 Sprint"), not a zone. Zones describe i
 ### 2026-01-09 — WORKFLOW: Always test by generating a workout
 Before completing any UI/styling changes, ALWAYS generate a workout and visually verify the result. Do not rely on just API tests - check the actual rendered output.
 
-### 2026-01-12 — Dolphin animation redesign
+### 2026-01-12 — Dolphin animation redesign (UPDATED)
 Dolphin loader completely redesigned based on user feedback:
-- Position: Inline after "Generating..." text (was floating in corner)
-- Motion: 13 keyframe stops with linear easing (was 5 jerky stops)
-- Story: Entrance splash → smooth loops (2.5s each) → exit splash → scroll → fade in
-- Size: 28px font, 44px wrapper (inline with status text)
+- Position: Anchored to right side of button row via flexbox (independent of "Generating..." text position)
+- Motion: 12 keyframe stops, goes higher (-56px peak), linear easing
+- Story: Entrance splash → smooth loop (3s) → pause at landing → exit splash → scroll → fade in
+- Size: 34px font, 52px wrapper (20% bigger than original)
+- Key fix: Animation pauses at cycle end so dolphin doesn't start new arc before splash
 
 ### 2026-01-12 — Pause In Action protocol formalized
 WORKING-METHOD-REPLIT.md now includes enhanced Pause In Action protocol that requires:

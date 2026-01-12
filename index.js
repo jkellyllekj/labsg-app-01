@@ -1392,7 +1392,7 @@ app.get("/", (req, res) => {
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
-        html.push('<div style="display:flex; flex-direction:column; gap:6px;">');
+        html.push('<div style="display:flex; flex-direction:column; gap:10px;">');
 
         let idx = 0;
 

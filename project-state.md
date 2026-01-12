@@ -465,12 +465,13 @@ Multi-part sets (pyramids, complex structures) were removed but need to return ~
 **Drill Display (FIXED 2026-01-09):**
 - DONE: Shows "drill choice (Catch-up, Fist drill)" for longer drill sets (6+ reps)
 
-**UI/Visual Polish (FIXED 2026-01-09):**
+**UI/Visual Polish (FIXED 2026-01-09, UPDATED 2026-01-12):**
 1. DONE: Body padding reduced from 20px to 10px
-2. DONE: Dolphin animation enhanced - 40px size, loopy loop (360 degree arc), positioned RIGHT of "Generating..."
-3. DONE: 0.5s fade-in for workout results (smooth slide up)
-4. DONE: Smooth scroll to workout title after results appear (550ms delay, syncs with fade)
+2. DONE: Dolphin animation - 48px size, loopy loop (360 degree arc), positioned in dedicated dock to RIGHT of form box
+3. DONE: 0.5s fade-in for workout results (force reflow ensures animation restarts on every generation)
+4. DONE: Correct animation sequence: dolphin loops (1.5s min) -> scroll to workout -> fade in cards (400ms after scroll)
 5. DONE: Parallax via background-attachment:fixed
+6. DONE: Same behavior on first and subsequent Generate clicks (no page jumping)
 
 **Workout Name Variety:**
 - Needs more name templates (future improvement)

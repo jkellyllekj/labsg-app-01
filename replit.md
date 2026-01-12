@@ -37,6 +37,14 @@ The application runs as a single-file Express server serving both the API and a 
 5. CardGym pastel colors and sprint generation from previous session retained
 
 **Previous Session (2026-01-12, earlier):**
+1. Card shadows strengthened with dual-depth: 0 6px 16px + 0 2px 4px
+2. Card gaps tightened to 6px, side margins reduced by 10px
+3. Dolphin reroll button: 50% bigger (18px), transparent bg, drop shadow, 1s spin
+4. Yellow Total box at bottom-right matching CardGym style
+5. Summary box (formerly footer) with fade-in animation
+6. Title, Total, and Summary all fade in together with workout cards
+
+**Previous Session (2026-01-12, earlier):**
 1. CardGym pastel color scheme: Easy=#b9f0fd (blue), Moderate=#cfffc0 (green), Strong=#fcf3d5 (yellow), Hard=#ffc374 (orange), Full Gas=#fe0000 (red)
 2. Text color logic: white ONLY on fullgas (red) zones, black everywhere else including orange
 3. Sprint/max effort options added to allround descriptors - fullgas sets now generate

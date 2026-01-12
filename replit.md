@@ -29,6 +29,8 @@ The application runs as a single-file Express server serving both the API and a 
 4. Added exit splash when dolphin finishes loops (diving back down)
 5. Full animation sequence: splash-in -> smooth loops (2.5s each) -> splash-out -> scroll -> fade-in
 6. Reduced loader size to 28px font, 44px wrapper for inline display
+7. Formalized Pause In Action protocol in WORKING-METHOD-REPLIT.md
+8. Added Outstanding Initiatives section to PROJECT_STATE.md for big-picture idea preservation
 
 **Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization

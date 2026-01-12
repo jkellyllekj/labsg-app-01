@@ -382,6 +382,16 @@ app.get("/", (req, res) => {
       .workout-fade-out {
         animation: fade-out-down 0.7s ease-in forwards;
       }
+      @keyframes reroll-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .reroll-dolphin {
+        display: inline-block;
+      }
+      .reroll-dolphin.spinning {
+        animation: reroll-spin 0.2s ease-in-out;
+      }
       .form-row {
         display: flex;
         flex-direction: column;
@@ -1050,31 +1060,26 @@ app.get("/", (req, res) => {
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
         if (effort === "easy") {
-          const bg = getVar('--zone-easy-bg', '#dcfce7');
-          const bar = getVar('--zone-easy-bar', '#22c55e');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          const bg = getVar('--zone-easy-bg', '#b9f0fd');
+          return "background:" + bg + ";";
         }
         if (effort === "moderate") {
-          const bg = getVar('--zone-moderate-bg', '#dbeafe');
-          const bar = getVar('--zone-moderate-bar', '#3b82f6');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          const bg = getVar('--zone-moderate-bg', '#cfffc0');
+          return "background:" + bg + ";";
         }
         if (effort === "strong") {
-          const bg = getVar('--zone-strong-bg', '#fef3c7');
-          const bar = getVar('--zone-strong-bar', '#f6c87a');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
+          const bg = getVar('--zone-strong-bg', '#fcf3d5');
+          return "background:" + bg + ";";
         }
         if (effort === "hard") {
           const bg = getVar('--zone-hard-bg', '#ffc374');
-          const bar = getVar('--zone-hard-bar', '#cc9a4a');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          return "background:" + bg + ";";
         }
         if (effort === "fullgas") {
           const bg = getVar('--zone-fullgas-bg', '#fe0000');
-          const bar = getVar('--zone-fullgas-bar', '#cc0000');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40; color:#fff;";
+          return "background:" + bg + "; color:#fff;";
         }
-        return "background:#fff; border:1px solid #e7e7e7;";
+        return "background:#fff;";
       }
 
       // Keep old functions for compatibility but mark deprecated
@@ -1387,11 +1392,11 @@ app.get("/", (req, res) => {
           
           let boxStyle;
           let textColor = '#111';
-          const dropShadow = "0 4px 12px rgba(0,0,0,0.25)";
+          const dropShadow = "0 8px 24px rgba(0,0,0,0.35)";
           
           if (gradientStyle) {
-            // Gradient cards: inset bar + drop shadow
-            boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + gradientStyle.borderColor + ", " + dropShadow + ";";
+            // Gradient cards: full box color + drop shadow (no left bar)
+            boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";
             textColor = gradientStyle.textColor || '#111';
           } else {
             // Solid color cards with drop shadow
@@ -1410,8 +1415,8 @@ app.get("/", (req, res) => {
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
-              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:14px;" title="Reroll this set">' +
-              '🎲' +
+              '" style="padding:4px 8px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer; font-size:12px; transition:transform 0.2s ease;" title="Reroll this set">' +
+              '<span class="reroll-dolphin">🐬</span>' +
             "</button>"
           );
           html.push("</div>");
@@ -1421,7 +1426,7 @@ app.get("/", (req, res) => {
 
           // Column 1: Set body (with rest stripped out for cleaner display)
           const bodyClean = stripRestFromBody(body);
-          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; color:' + textColor + '; min-width:0;">' + safeHtml(bodyClean) + "</div>");
+          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; font-weight:600; color:' + textColor + '; min-width:0;">' + safeHtml(bodyClean) + "</div>");
 
           // Column 2: Rest - use contrasting color for dark backgrounds
           const restColor = textColor === '#fff' ? '#ffcccc' : '#c41e3a';
@@ -1475,7 +1480,10 @@ app.get("/", (req, res) => {
             btn.dataset.rerollCount = String(rerollCount);
 
             btn.disabled = true;
-            btn.textContent = "Rolling";
+            const dolphinSpan = btn.querySelector('.reroll-dolphin');
+            if (dolphinSpan) {
+              dolphinSpan.classList.add('spinning');
+            }
 
             try {
               const res = await fetch("/reroll-set", {
@@ -1531,10 +1539,10 @@ app.get("/", (req, res) => {
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
                 let newStyle;
                 let newTextColor = '#111';
-                const dropShadow = "0 4px 12px rgba(0,0,0,0.25)";
+                const dropShadow = "0 8px 24px rgba(0,0,0,0.35)";
                 
                 if (newGradientStyle) {
-                  newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + newGradientStyle.borderColor + ", " + dropShadow + ";";
+                  newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";
                   newTextColor = newGradientStyle.textColor || '#111';
                 } else {
                   newStyle = colorStyleForEffort(newEffort) + " box-shadow:" + dropShadow + ";";
@@ -1587,7 +1595,8 @@ app.get("/", (req, res) => {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
             } finally {
               btn.disabled = false;
-              btn.textContent = "🎲";
+              const ds = btn.querySelector('.reroll-dolphin');
+              if (ds) ds.classList.remove('spinning');
             }
           });
         }

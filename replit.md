@@ -12,7 +12,7 @@ The application runs as a single-file Express server serving both the API and a 
 - Web app: Development preview and sharing during development
 - IP Protection: Workout algorithm to run server-side eventually
 
-## Current Status (2026-01-09)
+## Current Status (2026-01-12)
 
 **Phase:** v1 Coach Plausibility - Feature Complete, Polish Phase
 
@@ -21,27 +21,29 @@ The application runs as a single-file Express server serving both the API and a 
 - Pool types: 25m, 50m, 25yd, Custom (any length)
 - Distance: 500-10,000m via slider (snaps to 100)
 - Reroll individual sets via dice button with variety
-- Zone-based colored cards (Easy/Moderate/Strong/Hard/Full Gas)
+- Zone-based colored cards with bolder CardGym-style colors
 - Gradient backgrounds for progressive sets (build, descend)
+- White text on dark backgrounds (orange/red) for readability
 - 16-drill name library, snazzy workout names, emoji intensity strip
-- Jumping dolphin loader (min 1 sec), 0.3s fade-in animation
+- Jumping dolphin loader with exit splash animation
 - Smooth scroll to workout title after 350ms delay
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
-**Session Just Completed (2026-01-12, later):**
-1. Dolphin position fixed - now anchored to right side of button row (was inline with text which caused issues when "Generating..." wrapped on different screens)
-2. Button row restructured with flexbox: buttons/status left, dolphin right (justify-content:space-between)
-3. Dolphin size increased 20% (28px to 34px font, 44px to 52px wrapper)
-4. Animation arc goes higher (-56px peak instead of -38px) for more dramatic loop
-5. Animation timing: 3s per cycle (was 2.5s), pauses at landing point before splash
-6. Title cut-off fixed: added scroll-margin-top:20px for proper clearance
-7. Animation pauses immediately at cycle end, preventing restart before splash plays
+**Session Just Completed (2026-01-12, latest):**
+1. Title shortened to "Swim Gen" for mobile (fits on one line)
+2. Bolder CardGym-style zone colors: Easy=#87CEEB (blue), Moderate=#90EE90 (green), Strong=#FFE500 (yellow), Hard=#FF8C00 (orange), Full Gas=#FF0000 (red)
+3. White text on dark backgrounds (hard/fullgas zones) for readability
+4. Gradient cards detect dark zones and apply white text accordingly
+5. Removed goal input field from workout cards (cleaner interface)
+6. Removed goal localStorage functions (getWorkoutId, loadGoalsMap, saveGoalsMap)
+7. Splash rotation adjusted to -132deg for upward-pointing effect
 
 **Previous Session (2026-01-12, earlier):**
-1. Repositioned dolphin loader inline after "Generating..." text (was floating in corner)
-2. Redesigned animation with 13 smooth keyframes (was 5 jerky stops) and linear easing
-3. Added entrance splash when dolphin appears (jumping out of water)
-4. Added exit splash when dolphin finishes loops (diving back down)
+1. Dolphin position fixed - anchored to right side of button row
+2. Button row restructured with flexbox layout
+3. Dolphin size increased 20%, animation arc goes higher (-56px peak)
+4. Animation timing: 3s per cycle with landing pause before splash
+5. Title cut-off fixed with scroll-margin-top:20px
 
 **Previous Session (2026-01-09):**
 1. Fixed reroll variety - multiple seed derivations for independent randomization
@@ -80,7 +82,8 @@ Additional project-specific preferences:
 - Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
 - Chips-based UI for workout display with reroll functionality
 - Workout cards: zone-based colored backgrounds with left accent bar, floating directly on pool background (no white container)
-  - Zone colors: Easy (green), Moderate (blue), Strong (yellow), Hard (orange), Full Gas (red)
+  - Zone colors (CardGym-style bolder): Easy (#87CEEB blue), Moderate (#90EE90 green), Strong (#FFE500 yellow), Hard (#FF8C00 orange), Full Gas (#FF0000 red)
+  - White text on dark backgrounds (Hard/Full Gas) for readability
   - Vertical gradients (top-to-bottom) for multi-zone sets: build, descend, pyramid, reducer
 - Snazzy workout name generator: context-aware names based on distance, focus, and equipment
 - Named drill library: 16 specific drill names (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, etc.)

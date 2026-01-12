@@ -298,17 +298,18 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        /* Zone colors: GREEN=Easy, BLUE=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
-        --zone-easy-bg: #dcfce7;
-        --zone-easy-bar: #22c55e;
-        --zone-moderate-bg: #dbeafe;
-        --zone-moderate-bar: #3b82f6;
-        --zone-strong-bg: #fef3c7;
-        --zone-strong-bar: #f6c87a;
-        --zone-hard-bg: #fed7aa;
-        --zone-hard-bar: #ea580c;
-        --zone-fullgas-bg: #f6c1c1;
-        --zone-fullgas-bar: #d10f24;
+        /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
+        /* Bolder CardGym-style colors */
+        --zone-easy-bg: #87CEEB;
+        --zone-easy-bar: #4A9BC7;
+        --zone-moderate-bg: #90EE90;
+        --zone-moderate-bar: #4CAF50;
+        --zone-strong-bg: #FFE500;
+        --zone-strong-bar: #D4AF00;
+        --zone-hard-bg: #FF8C00;
+        --zone-hard-bar: #CC6600;
+        --zone-fullgas-bg: #FF0000;
+        --zone-fullgas-bar: #CC0000;
       }
       /* Dolphin animation - single loop that goes higher and lands at end */
       @keyframes dolphin-loop {
@@ -700,30 +701,6 @@ app.get("/", (req, res) => {
         return h >>> 0;
       }
 
-      function getWorkoutId(payload, workoutText) {
-        const base = JSON.stringify({ payload: payload, workoutText: workoutText });
-        const h = fnv1a(base);
-        return "w" + String(h);
-      }
-
-      function loadGoalsMap() {
-        try {
-          const rawStr = localStorage.getItem("swg_v1_goals");
-          if (!rawStr) return {};
-          const obj = JSON.parse(rawStr);
-          return (obj && typeof obj === "object") ? obj : {};
-        } catch {
-          return {};
-        }
-      }
-
-      function saveGoalsMap(map) {
-        try {
-          localStorage.setItem("swg_v1_goals", JSON.stringify(map));
-        } catch {
-        }
-      }
-
       function loadLastWorkoutFingerprint() {
         try {
           return localStorage.getItem("swg_v1_last_fp") || "";
@@ -1002,13 +979,13 @@ app.get("/", (req, res) => {
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
         
-        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
+        // Zone names: easy (blue), moderate (green), strong (yellow), hard (orange), fullgas (red)
         const zones = {
-          easy: { bg: getVar('--zone-easy-bg', '#dcfce7'), bar: getVar('--zone-easy-bar', '#22c55e') },
-          moderate: { bg: getVar('--zone-moderate-bg', '#dbeafe'), bar: getVar('--zone-moderate-bar', '#3b82f6') },
-          strong: { bg: getVar('--zone-strong-bg', '#fef3c7'), bar: getVar('--zone-strong-bar', '#f6c87a') },
-          hard: { bg: getVar('--zone-hard-bg', '#fed7aa'), bar: getVar('--zone-hard-bar', '#ea580c') },
-          fullgas: { bg: getVar('--zone-fullgas-bg', '#f6c1c1'), bar: getVar('--zone-fullgas-bar', '#d10f24') }
+          easy: { bg: getVar('--zone-easy-bg', '#87CEEB'), bar: getVar('--zone-easy-bar', '#4A9BC7') },
+          moderate: { bg: getVar('--zone-moderate-bg', '#90EE90'), bar: getVar('--zone-moderate-bar', '#4CAF50') },
+          strong: { bg: getVar('--zone-strong-bg', '#FFE500'), bar: getVar('--zone-strong-bar', '#D4AF00') },
+          hard: { bg: getVar('--zone-hard-bg', '#FF8C00'), bar: getVar('--zone-hard-bar', '#CC6600') },
+          fullgas: { bg: getVar('--zone-fullgas-bg', '#FF0000'), bar: getVar('--zone-fullgas-bar', '#CC0000') }
         };
         return zones[zone] || zones.moderate;
       }
@@ -1017,6 +994,10 @@ app.get("/", (req, res) => {
         if (!zoneSpan || zoneSpan.length < 2) return null;
         
         const colors = zoneSpan.map(z => getZoneColors(z));
+        
+        // Determine text color based on darkest zone (end zone for build, any dark zone for stripes)
+        const hasDarkZone = zoneSpan.includes('hard') || zoneSpan.includes('fullgas');
+        const textColor = hasDarkZone ? '#fff' : '#111';
         
         // Check if this is an alternating/striped pattern (more than 2 zones with repetition)
         const isStriped = zoneSpan.length >= 3;
@@ -1042,7 +1023,8 @@ app.get("/", (req, res) => {
           return {
             background: bgGradient,
             barGradient: barGradient,
-            borderColor: colors[0].bar
+            borderColor: colors[0].bar,
+            textColor: textColor
           };
         }
         
@@ -1056,7 +1038,8 @@ app.get("/", (req, res) => {
         return {
           background: bgGradient,
           barGradient: barGradient,
-          borderColor: colors[0].bar
+          borderColor: colors[0].bar,
+          textColor: textColor
         };
       }
 
@@ -1082,14 +1065,14 @@ app.get("/", (req, res) => {
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
         }
         if (effort === "hard") {
-          const bg = getVar('--zone-hard-bg', '#fed7aa');
-          const bar = getVar('--zone-hard-bar', '#ea580c');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          const bg = getVar('--zone-hard-bg', '#FF8C00');
+          const bar = getVar('--zone-hard-bar', '#CC6600');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40; color:#fff;";
         }
         if (effort === "fullgas") {
-          const bg = getVar('--zone-fullgas-bg', '#f6c1c1');
-          const bar = getVar('--zone-fullgas-bar', '#d10f24');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
+          const bg = getVar('--zone-fullgas-bg', '#FF0000');
+          const bar = getVar('--zone-fullgas-bar', '#CC0000');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40; color:#fff;";
         }
         return "background:#fff; border:1px solid #e7e7e7;";
       }
@@ -1377,10 +1360,6 @@ app.get("/", (req, res) => {
           }
         }
 
-        const workoutId = getWorkoutId(payload, workoutText);
-        const goalsMap = loadGoalsMap();
-        const goalsForWorkout = goalsMap[workoutId] || {};
-
         const paceSec = parsePaceToSecondsPer100(payload.thresholdPace || "");
 
         const html = [];
@@ -1402,26 +1381,29 @@ app.get("/", (req, res) => {
           // Get unit for display
           const unitShort = unitShortFromPayload(payload);
 
-          const goalKey = String(idx);
-          const existingGoal = typeof goalsForWorkout[goalKey] === "string" ? goalsForWorkout[goalKey] : "";
-
           const effortLevel = getEffortLevel(label, body);
           const zoneSpan = getZoneSpan(label, body);
           const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan) : null;
           
           let boxStyle;
+          let textColor = '#111';
           if (gradientStyle) {
             // Use box-shadow for border effect instead of actual borders to preserve rounded corners
             boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + gradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
+            textColor = gradientStyle.textColor || '#111';
           } else {
             boxStyle = colorStyleForEffort(effortLevel);
+            // Check if solid color needs white text
+            if (effortLevel === 'hard' || effortLevel === 'fullgas') {
+              textColor = '#fff';
+            }
           }
 
           const extraShadow = gradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
           html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;' + extraShadow + '">');
 
           // Header row: label + reroll button
-          html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px;">');
+          html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px; color:' + textColor + ';">');
           html.push('<span>' + safeHtml(label) + '</span>');
           html.push(
             '<button type="button" data-reroll-set="' +
@@ -1437,36 +1419,27 @@ app.get("/", (req, res) => {
 
           // Column 1: Set body (with rest stripped out for cleaner display)
           const bodyClean = stripRestFromBody(body);
-          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; color:#111; min-width:0;">' + safeHtml(bodyClean) + "</div>");
+          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; color:' + textColor + '; min-width:0;">' + safeHtml(bodyClean) + "</div>");
 
-          // Column 2: Rest (in red)
+          // Column 2: Rest - use contrasting color for dark backgrounds
+          const restColor = textColor === '#fff' ? '#ffcccc' : '#c41e3a';
           if (restDisplay) {
-            html.push('<div style="color:#c41e3a; font-weight:600; font-size:14px; white-space:nowrap;">' + safeHtml(restDisplay) + "</div>");
+            html.push('<div style="color:' + restColor + '; font-weight:600; font-size:14px; white-space:nowrap;">' + safeHtml(restDisplay) + "</div>");
           } else {
             html.push('<div></div>');
           }
 
           // Column 3: Distance (and optional time)
+          const subTextColor = textColor === '#fff' ? '#eee' : '#666';
           html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
           if (Number.isFinite(setDist)) {
-            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap;">' + String(setDist) + unitShort + "</div>");
+            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap; color:' + textColor + ';">' + String(setDist) + unitShort + "</div>");
           }
           if (Number.isFinite(estSec)) {
-            html.push('<div style="font-size:12px; color:#666; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
+            html.push('<div style="font-size:12px; color:' + subTextColor + '; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
           }
           html.push("</div>");
 
-          html.push("</div>");
-
-          html.push('<div style="margin-top:10px;">');
-          html.push('<label style="display:block; font-size:12px; color:#555; margin-bottom:4px;">Goal (optional)</label>');
-          html.push(
-            '<input data-goal-input="' +
-              safeHtml(goalKey) +
-              '" value="' +
-              safeHtml(existingGoal) +
-              '" placeholder="Short goal for this set" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid rgba(0,0,0,0.15); border-radius:10px; background:rgba(255,255,255,0.7);" />'
-          );
           html.push("</div>");
 
           html.push("</div>");
@@ -1476,19 +1449,6 @@ app.get("/", (req, res) => {
 
         cards.innerHTML = html.join("");
         cards.style.display = "block";
-
-        const inputs = cards.querySelectorAll("input[data-goal-input]");
-        for (const inp of inputs) {
-          inp.addEventListener("input", () => {
-            const key = inp.getAttribute("data-goal-input");
-            const next = inp.value;
-
-            const m = loadGoalsMap();
-            if (!m[workoutId]) m[workoutId] = {};
-            m[workoutId][key] = next;
-            saveGoalsMap(m);
-          });
-        }
 
         const rerollButtons = cards.querySelectorAll("button[data-reroll-set]");
         for (const btn of rerollButtons) {
@@ -1559,17 +1519,6 @@ app.get("/", (req, res) => {
               const nextRest = extractRestDisplay(nextBody);
               bodyEl.textContent = nextBodyClean;
               bodyEl.setAttribute("data-original-body", nextBody);
-              
-              // Update rest column (sibling element)
-              const restEl = bodyEl.nextElementSibling;
-              if (restEl) {
-                if (nextRest) {
-                  restEl.textContent = nextRest;
-                  restEl.style.display = "";
-                } else {
-                  restEl.textContent = "";
-                }
-              }
 
               // Update card color based on new effort level
               const cardContainer = bodyEl.closest('[style*="border-radius:12px"]');
@@ -1579,13 +1528,56 @@ app.get("/", (req, res) => {
                 const newZoneSpan = getZoneSpan(label, nextBody);
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
                 let newStyle;
+                let newTextColor = '#111';
                 if (newGradientStyle) {
                   newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + newGradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
+                  newTextColor = newGradientStyle.textColor || '#111';
                 } else {
                   newStyle = colorStyleForEffort(newEffort);
+                  if (newEffort === 'hard' || newEffort === 'fullgas') {
+                    newTextColor = '#fff';
+                  }
                 }
                 const extraShadow = newGradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
                 cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;" + extraShadow;
+                
+                // Update text colors for body and other elements
+                bodyEl.style.color = newTextColor;
+                const labelEl = cardContainer.querySelector('div[style*="font-weight:700"]');
+                if (labelEl) labelEl.style.color = newTextColor;
+                
+                // Update rest color
+                const restEl = bodyEl.nextElementSibling;
+                const restColor = newTextColor === '#fff' ? '#ffcccc' : '#c41e3a';
+                if (restEl) {
+                  restEl.style.color = restColor;
+                  if (nextRest) {
+                    restEl.textContent = nextRest;
+                    restEl.style.display = "";
+                  } else {
+                    restEl.textContent = "";
+                  }
+                }
+                
+                // Update distance color
+                const distanceContainer = restEl ? restEl.nextElementSibling : null;
+                if (distanceContainer) {
+                  const distEl = distanceContainer.querySelector('div:first-child');
+                  const estEl = distanceContainer.querySelector('div:last-child');
+                  if (distEl) distEl.style.color = newTextColor;
+                  if (estEl && estEl !== distEl) estEl.style.color = newTextColor === '#fff' ? '#eee' : '#666';
+                }
+              } else {
+                // Fallback: just update rest column
+                const restEl = bodyEl.nextElementSibling;
+                if (restEl) {
+                  if (nextRest) {
+                    restEl.textContent = nextRest;
+                    restEl.style.display = "";
+                  } else {
+                    restEl.textContent = "";
+                  }
+                }
               }
             } catch (e) {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);

@@ -281,6 +281,7 @@ Core functionality works. Animation fully redesigned based on user feedback.
 5. **No restart before splash** - Animation pauses immediately at cycle end, preventing dolphin from starting new arc before splash plays
 6. **Title cut-off FIXED** - Added scroll-margin-top:20px for proper clearance when scrolling to workout
 7. **Button row layout** - Flexbox with justify-content:space-between, buttons/status on left, dolphin on right
+8. **Dolphin right buffer ADDED** - Added 30px margin-right to dolphinLoader for proper spacing from right edge
 
 ### Animation Sequence (now working):
 1. Click Generate → "Generating..." text appears (left side), dolphin appears (right side) with entrance splash

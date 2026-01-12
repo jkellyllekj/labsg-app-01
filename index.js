@@ -280,7 +280,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace", stroke + " controlled fast", stroke + " tempo"],
     endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace", stroke + " aerobic", stroke + " consistent"],
     technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", stroke + " smooth technique", stroke + " efficient"],
-    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast", stroke + " controlled"]
+    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast", stroke + " controlled", stroke + " sprint", stroke + " max effort"]
   };
   const descs = mainDescs[focus] || mainDescs.allround;
   const mainDesc = descs[seedA % descs.length];
@@ -299,17 +299,17 @@ app.get("/", (req, res) => {
     <style>
       :root {
         /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
-        /* Bolder CardGym-style colors */
-        --zone-easy-bg: #87CEEB;
-        --zone-easy-bar: #4A9BC7;
-        --zone-moderate-bg: #90EE90;
-        --zone-moderate-bar: #4CAF50;
-        --zone-strong-bg: #FFE500;
-        --zone-strong-bar: #D4AF00;
-        --zone-hard-bg: #FF8C00;
-        --zone-hard-bar: #CC6600;
-        --zone-fullgas-bg: #FF0000;
-        --zone-fullgas-bar: #CC0000;
+        /* CardGym pastel colors */
+        --zone-easy-bg: #b9f0fd;
+        --zone-easy-bar: #7ac8db;
+        --zone-moderate-bg: #cfffc0;
+        --zone-moderate-bar: #8fcc80;
+        --zone-strong-bg: #fcf3d5;
+        --zone-strong-bar: #d4c9a0;
+        --zone-hard-bg: #ffc374;
+        --zone-hard-bar: #cc9a4a;
+        --zone-fullgas-bg: #fe0000;
+        --zone-fullgas-bar: #cc0000;
       }
       /* Dolphin animation - single loop that goes higher and lands at end */
       @keyframes dolphin-loop {
@@ -981,11 +981,11 @@ app.get("/", (req, res) => {
         
         // Zone names: easy (blue), moderate (green), strong (yellow), hard (orange), fullgas (red)
         const zones = {
-          easy: { bg: getVar('--zone-easy-bg', '#87CEEB'), bar: getVar('--zone-easy-bar', '#4A9BC7') },
-          moderate: { bg: getVar('--zone-moderate-bg', '#90EE90'), bar: getVar('--zone-moderate-bar', '#4CAF50') },
-          strong: { bg: getVar('--zone-strong-bg', '#FFE500'), bar: getVar('--zone-strong-bar', '#D4AF00') },
-          hard: { bg: getVar('--zone-hard-bg', '#FF8C00'), bar: getVar('--zone-hard-bar', '#CC6600') },
-          fullgas: { bg: getVar('--zone-fullgas-bg', '#FF0000'), bar: getVar('--zone-fullgas-bar', '#CC0000') }
+          easy: { bg: getVar('--zone-easy-bg', '#b9f0fd'), bar: getVar('--zone-easy-bar', '#7ac8db') },
+          moderate: { bg: getVar('--zone-moderate-bg', '#cfffc0'), bar: getVar('--zone-moderate-bar', '#8fcc80') },
+          strong: { bg: getVar('--zone-strong-bg', '#fcf3d5'), bar: getVar('--zone-strong-bar', '#d4c9a0') },
+          hard: { bg: getVar('--zone-hard-bg', '#ffc374'), bar: getVar('--zone-hard-bar', '#cc9a4a') },
+          fullgas: { bg: getVar('--zone-fullgas-bg', '#fe0000'), bar: getVar('--zone-fullgas-bar', '#cc0000') }
         };
         return zones[zone] || zones.moderate;
       }
@@ -995,9 +995,9 @@ app.get("/", (req, res) => {
         
         const colors = zoneSpan.map(z => getZoneColors(z));
         
-        // Determine text color based on darkest zone (end zone for build, any dark zone for stripes)
-        const hasDarkZone = zoneSpan.includes('hard') || zoneSpan.includes('fullgas');
-        const textColor = hasDarkZone ? '#fff' : '#111';
+        // Determine text color - white only on full red (fullgas), black everywhere else
+        const hasFullgas = zoneSpan.includes('fullgas');
+        const textColor = hasFullgas ? '#fff' : '#111';
         
         // Check if this is an alternating/striped pattern (more than 2 zones with repetition)
         const isStriped = zoneSpan.length >= 3;
@@ -1065,13 +1065,13 @@ app.get("/", (req, res) => {
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "; border-right:1px solid " + bar + "; border-bottom:1px solid " + bar + ";";
         }
         if (effort === "hard") {
-          const bg = getVar('--zone-hard-bg', '#FF8C00');
-          const bar = getVar('--zone-hard-bar', '#CC6600');
-          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40; color:#fff;";
+          const bg = getVar('--zone-hard-bg', '#ffc374');
+          const bar = getVar('--zone-hard-bar', '#cc9a4a');
+          return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40;";
         }
         if (effort === "fullgas") {
-          const bg = getVar('--zone-fullgas-bg', '#FF0000');
-          const bar = getVar('--zone-fullgas-bar', '#CC0000');
+          const bg = getVar('--zone-fullgas-bg', '#fe0000');
+          const bar = getVar('--zone-fullgas-bar', '#cc0000');
           return "background:" + bg + "; border-left:4px solid " + bar + "; border-top:1px solid " + bar + "40; border-right:1px solid " + bar + "40; border-bottom:1px solid " + bar + "40; color:#fff;";
         }
         return "background:#fff; border:1px solid #e7e7e7;";
@@ -1387,20 +1387,22 @@ app.get("/", (req, res) => {
           
           let boxStyle;
           let textColor = '#111';
+          const dropShadow = "0 4px 12px rgba(0,0,0,0.25)";
+          
           if (gradientStyle) {
-            // Use box-shadow for border effect instead of actual borders to preserve rounded corners
-            boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + gradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
+            // Gradient cards: inset bar + drop shadow
+            boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + gradientStyle.borderColor + ", " + dropShadow + ";";
             textColor = gradientStyle.textColor || '#111';
           } else {
-            boxStyle = colorStyleForEffort(effortLevel);
-            // Check if solid color needs white text
-            if (effortLevel === 'hard' || effortLevel === 'fullgas') {
+            // Solid color cards with drop shadow
+            boxStyle = colorStyleForEffort(effortLevel) + " box-shadow:" + dropShadow + ";";
+            // White text only on full red (fullgas)
+            if (effortLevel === 'fullgas') {
               textColor = '#fff';
             }
           }
-
-          const extraShadow = gradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
-          html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;' + extraShadow + '">');
+          
+          html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;">');
 
           // Header row: label + reroll button
           html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px; color:' + textColor + ';">');
@@ -1529,17 +1531,19 @@ app.get("/", (req, res) => {
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
                 let newStyle;
                 let newTextColor = '#111';
+                const dropShadow = "0 4px 12px rgba(0,0,0,0.25)";
+                
                 if (newGradientStyle) {
-                  newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + newGradientStyle.borderColor + ", 0 8px 24px rgba(0,50,70,0.18);";
+                  newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:inset 4px 0 0 " + newGradientStyle.borderColor + ", " + dropShadow + ";";
                   newTextColor = newGradientStyle.textColor || '#111';
                 } else {
-                  newStyle = colorStyleForEffort(newEffort);
-                  if (newEffort === 'hard' || newEffort === 'fullgas') {
+                  newStyle = colorStyleForEffort(newEffort) + " box-shadow:" + dropShadow + ";";
+                  // White text only on full red (fullgas)
+                  if (newEffort === 'fullgas') {
                     newTextColor = '#fff';
                   }
                 }
-                const extraShadow = newGradientStyle ? "" : " box-shadow:0 8px 24px rgba(0,50,70,0.18);";
-                cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;" + extraShadow;
+                cardContainer.style.cssText = newStyle + " border-radius:12px; padding:12px;";
                 
                 // Update text colors for body and other elements
                 bodyEl.style.color = newTextColor;
@@ -3272,7 +3276,7 @@ app.post("/generate-workout", (req, res) => {
       threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace"],
       endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace"],
       technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes"],
-      allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast"]
+      allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast", stroke + " sprint", stroke + " max effort"]
     };
     const descs = mainDescs[focus] || mainDescs.allround;
     const mainDesc = descs[seed % descs.length];

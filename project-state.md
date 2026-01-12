@@ -231,24 +231,24 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-12: Animation/Layout Bug Fixes In Progress**
+**STATUS 2026-01-12: Animation/Layout Bug Fixes COMPLETE**
 
-Core functionality works but animation/layout issues need fixing before user testing.
+Core functionality works. Animation/layout bugs fixed and ready for user testing.
 
-### OPEN BUGS (2026-01-12) - Must Fix:
-1. **Dolphin position broken** - Currently outside form box and invisible. Must be INSIDE the form box, positioned on the right side using CSS absolute positioning (form needs position:relative)
-2. **Form box width mismatch** - Form box is wider than title box. All boxes (title, form, workout cards) must have consistent max-width (~520px)
-3. **Regenerate glitches** - First Generate works perfectly, subsequent clicks cause page jumping. Must work identically every time
-4. **Workout title doesn't fade in** - Title should fade in along with workout cards
-5. **Old workout disappears instantly** - When regenerating, old workout should FADE OUT first (0.3-0.5s), then new workout FADES IN
+### COMPLETED BUGS (2026-01-12):
+1. **Dolphin position FIXED** - Now inside form box with position:absolute, right:16px, top:50%
+2. **Box width consistency FIXED** - Title, form, and result boxes all share max-width:520px
+3. **Regenerate consistency FIXED** - Uses async/await with minHeight preservation and forced reflow
+4. **Workout title fade-in FIXED** - Title now fades in alongside cards
+5. **Fade-out old workout FIXED** - 0.3s fade-out-down animation before clearing when regenerating
 
-### Required Animation Sequence:
+### Animation Sequence (now working):
 1. Click Generate → dolphin appears (inside form box, right side)
 2. Dolphin loops ~1.5 seconds
 3. Smooth scroll down to workout area
-4. If regenerating: old workout fades out (0.3-0.5s)
+4. If regenerating: old workout fades out (0.3s)
 5. New workout (including title) fades in (0.5s)
-6. Must work IDENTICALLY on first and all subsequent clicks
+6. Works IDENTICALLY on first and all subsequent clicks
 
 ### Completed Previously (2026-01-09):
 - DONE: Reroll variety - multiple seed derivations (seedA/B/C/D) for independent randomization

@@ -1,0 +1,121 @@
+Message to the agent (project state update + the exact code they asked for)
+
+Context / current status
+
+Page-load random background works.
+
+Background cycle button is wired, but clicking it does not advance to a different image.
+
+Symptom: click 1 shows the plain body gradient (looks like solid green). Click 2 returns the original background.
+
+Do not change code yet. First confirm what is truly running by reading the exact blocks below.
+
+Requested paste 1: background button click handler (wiring)
+
+      function wireBackgroundCycleButton() {
+        const btn = document.getElementById("bgCycleBtn");
+        if (!btn) return;
+        btn.addEventListener("click", cycleBackgroundManually);
+      }
+
+      initBackgroundLayers();
+      wireBackgroundCycleButton();
+
+
+index
+
+Requested paste 2: background “apply” logic (the functions that set the background)
+
+      // Background cycling with two-layer crossfade
+      const backgroundImages = [
+        "/backgrounds/Page-002 (Large)_result.webp",
+        "/backgrounds/Page-004 (Large)_result.webp",
+        "/backgrounds/Page-006 (Large)_result.webp",
+        "/backgrounds/Page-008 (Large)_result.webp",
+        "/backgrounds/Page-010 (Large)_result.webp",
+        "/backgrounds/Page-012 (Large)_result.webp",
+        "/backgrounds/Page-014 (Large)_result.webp",
+        "/backgrounds/Page-016 (Large)_result.webp",
+        "/backgrounds/Page-018 (Large)_result.webp",
+        "/backgrounds/Page-020 (Large)_result.webp",
+        "/backgrounds/Page-022 (Large)_result.webp",
+        "/backgrounds/Page-022(1) (Large)_result.webp",
+        "/backgrounds/Page-024 (Large)_result.webp"
+      ];
+
+      // Determine initial background index from bgA layer or body
+      let bgIndex = (function() {
+        const bgA = document.getElementById("bgA");
+        const style = (bgA && bgA.style.backgroundImage) || document.body.style.backgroundImage || "";
+        for (let i = 0; i < backgroundImages.length; i++) {
+          if (style.includes(backgroundImages[i])) return i;
+        }
+        return 0;
+      })();
+
+      let activeBgLayer = "A";
+
+      function setLayerImage(layerEl, url) {
+        layerEl.style.backgroundImage = 'url("' + url + '")';
+      }
+
+      function preloadImage(url) {
+        return new Promise(function(resolve, reject) {
+          const img = new Image();
+          img.onload = function() { resolve(true); };
+          img.onerror = function() { reject(new Error("bg preload failed")); };
+          img.src = url;
+        });
+      }
+
+      function initBackgroundLayers() {
+        const bgA = document.getElementById("bgA");
+        const bgB = document.getElementById("bgB");
+        if (!bgA || !bgB) return;
+
+        const url = backgroundImages[bgIndex];
+        setLayerImage(bgA, url);
+        bgA.classList.add("isActive");
+        bgB.classList.remove("isActive");
+        activeBgLayer = "A";
+      }
+
+      async function cycleBackgroundManually() {
+        const btn = document.getElementById("bgCycleBtn");
+        const bgA = document.getElementById("bgA");
+        const bgB = document.getElementById("bgB");
+        if (!btn || !bgA || !bgB) return;
+
+        btn.disabled = true;
+
+        const nextIndex = (bgIndex + 1) % backgroundImages.length;
+        const nextUrl = backgroundImages[nextIndex];
+
+        try {
+          await preloadImage(nextUrl);
+        } catch (e) {
+          btn.disabled = false;
+          return;
+        }
+
+        const fromLayer = activeBgLayer === "A" ? bgA : bgB;
+        const toLayer = activeBgLayer === "A" ? bgB : bgA;
+
+        setLayerImage(toLayer, nextUrl);
+
+        toLayer.classList.add("isActive");
+        fromLayer.classList.remove("isActive");
+
+        window.setTimeout(function() {
+          bgIndex = nextIndex;
+          activeBgLayer = activeBgLayer === "A" ? "B" : "A";
+          btn.disabled = false;
+        }, 300);
+      }
+
+
+index
+
+Next single step for the agent
+
+With the above confirmed as the real running code, the next step is to instrument (console.log) inside cycleBackgroundManually() to print bgIndex, nextIndex, activeBgLayer, fromLayer.id, toLayer.id, plus the computed opacity/classList on both layers immediately after toggling.

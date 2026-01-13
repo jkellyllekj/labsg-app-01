@@ -927,9 +927,17 @@ app.get("/", (req, res) => {
         const nextIndex = (bgIndex + 1) % backgroundImages.length;
         const nextUrl = backgroundImages[nextIndex];
 
+        console.log("[BG CYCLE] BEFORE:", {
+          bgIndex: bgIndex,
+          nextIndex: nextIndex,
+          activeBgLayer: activeBgLayer,
+          nextUrl: nextUrl
+        });
+
         try {
           await preloadImage(nextUrl);
         } catch (e) {
+          console.log("[BG CYCLE] preload FAILED:", e);
           btn.disabled = false;
           return;
         }
@@ -937,15 +945,30 @@ app.get("/", (req, res) => {
         const fromLayer = activeBgLayer === "A" ? bgA : bgB;
         const toLayer = activeBgLayer === "A" ? bgB : bgA;
 
+        console.log("[BG CYCLE] LAYERS:", {
+          fromLayerId: fromLayer.id,
+          toLayerId: toLayer.id
+        });
+
         setLayerImage(toLayer, nextUrl);
 
         toLayer.classList.add("isActive");
         fromLayer.classList.remove("isActive");
 
+        console.log("[BG CYCLE] AFTER TOGGLE:", {
+          bgA_classList: bgA.className,
+          bgB_classList: bgB.className,
+          bgA_opacity: getComputedStyle(bgA).opacity,
+          bgB_opacity: getComputedStyle(bgB).opacity,
+          bgA_bgImage: bgA.style.backgroundImage.slice(0, 60),
+          bgB_bgImage: bgB.style.backgroundImage.slice(0, 60)
+        });
+
         window.setTimeout(function() {
           bgIndex = nextIndex;
           activeBgLayer = activeBgLayer === "A" ? "B" : "A";
           btn.disabled = false;
+          console.log("[BG CYCLE] COMMITTED:", { bgIndex: bgIndex, activeBgLayer: activeBgLayer });
         }, 300);
       }
 

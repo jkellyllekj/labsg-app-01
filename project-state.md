@@ -281,10 +281,10 @@ Core functionality works. CardGym-style visual polish applied and continuing.
 - Distance text: bolder + royal blue (#0055aa), fix black text after reroll ✓
 - Dolphin reroll spin: ensure full 1.25s animation completes every click ✓
 - Reroll effort variety: expanded description arrays to span all 5 effort levels ✓
+- Gradient variety: subtle gradient variants for all effort zones (4 per zone) ✓
 
-**Future Items (identified this session):**
-- Gradient variety: more orange/red gradients for hard sets, striations for progressive builds
-- Generate variety: reduce repetition of similar workouts
+**Future Items:**
+- Generate variety: reduce repetition of similar workouts (different set order, proportions)
 
 ### COMPLETED EARLIER (2026-01-13):
 1. **Dolphin reroll button** - Increased to 28px (25% bigger), sharper shadow (0.5 opacity), 1.25s spin animation for complete smooth 360

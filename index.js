@@ -1091,30 +1091,58 @@ app.get("/", (req, res) => {
         };
       }
 
-      function colorStyleForEffort(effort) {
+      function colorStyleForEffort(effort, variantSeed) {
         // Zone-based colors using CSS variables for live color picker
-        // Zone names: easy (green), moderate (blue), strong (yellow), hard (orange), fullgas (red)
+        // Zone names: easy (blue), moderate (green), strong (yellow), hard (orange), fullgas (red)
+        // variantSeed adds subtle gradient variety to prevent flat/boring cards
         const root = document.documentElement;
         const getVar = (name, fallback) => getComputedStyle(root).getPropertyValue(name).trim() || fallback;
+        const variant = (variantSeed || 0) % 4; // 4 gradient variants per zone
         
         if (effort === "easy") {
           const bg = getVar('--zone-easy-bg', '#b9f0fd');
+          const bgLight = '#d4f7ff';
+          // Variants: solid, subtle top-down, subtle left-right, subtle diagonal
+          if (variant === 1) return "background:linear-gradient(to bottom, " + bgLight + ", " + bg + ");";
+          if (variant === 2) return "background:linear-gradient(135deg, " + bgLight + " 0%, " + bg + " 100%);";
           return "background:" + bg + ";";
         }
         if (effort === "moderate") {
           const bg = getVar('--zone-moderate-bg', '#cfffc0');
+          const bgLight = '#e0ffe0';
+          if (variant === 1) return "background:linear-gradient(to bottom, " + bgLight + ", " + bg + ");";
+          if (variant === 2) return "background:linear-gradient(135deg, " + bgLight + " 0%, " + bg + " 100%);";
           return "background:" + bg + ";";
         }
         if (effort === "strong") {
           const bg = getVar('--zone-strong-bg', '#fcf3d5');
+          const bgLight = '#fffaea';
+          const bgDark = '#f5e6b8';
+          if (variant === 1) return "background:linear-gradient(to bottom, " + bgLight + ", " + bg + ");";
+          if (variant === 2) return "background:linear-gradient(to bottom, " + bg + ", " + bgDark + ");";
+          if (variant === 3) return "background:linear-gradient(135deg, " + bgLight + " 0%, " + bgDark + " 100%);";
           return "background:" + bg + ";";
         }
         if (effort === "hard") {
           const bg = getVar('--zone-hard-bg', '#ffc374');
+          const bgLight = '#ffd9a8';
+          const bgDark = '#ff9933';
+          // More dramatic gradients for hard sets - makes them pop
+          if (variant === 0) return "background:linear-gradient(to bottom, " + bgLight + ", " + bg + ");";
+          if (variant === 1) return "background:linear-gradient(to bottom, " + bg + ", " + bgDark + ");";
+          if (variant === 2) return "background:linear-gradient(135deg, " + bgLight + " 0%, " + bgDark + " 100%);";
+          if (variant === 3) return "background:linear-gradient(180deg, " + bgLight + " 0%, " + bg + " 50%, " + bgDark + " 100%);";
           return "background:" + bg + ";";
         }
         if (effort === "fullgas") {
           const bg = getVar('--zone-fullgas-bg', '#fe0000');
+          const bgLight = '#ff4444';
+          const bgDark = '#cc0000';
+          // Dramatic gradients for max intensity - really stands out
+          if (variant === 0) return "background:linear-gradient(to bottom, " + bgLight + ", " + bg + "); color:#fff;";
+          if (variant === 1) return "background:linear-gradient(to bottom, " + bg + ", " + bgDark + "); color:#fff;";
+          if (variant === 2) return "background:linear-gradient(135deg, " + bgLight + " 0%, " + bgDark + " 100%); color:#fff;";
+          if (variant === 3) return "background:linear-gradient(180deg, " + bgLight + " 0%, " + bg + " 40%, " + bgDark + " 100%); color:#fff;";
           return "background:" + bg + "; color:#fff;";
         }
         return "background:#fff;";
@@ -1457,8 +1485,8 @@ app.get("/", (req, res) => {
             boxStyle = "background:" + gradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";
             textColor = gradientStyle.textColor || '#111';
           } else {
-            // Solid color cards with drop shadow
-            boxStyle = colorStyleForEffort(effortLevel) + " box-shadow:" + dropShadow + ";";
+            // Solid color cards with drop shadow - use idx as variant seed for gradient variety
+            boxStyle = colorStyleForEffort(effortLevel, idx) + " box-shadow:" + dropShadow + ";";
             // White text only on full red (fullgas)
             if (effortLevel === 'fullgas') {
               textColor = '#fff';
@@ -1604,7 +1632,8 @@ app.get("/", (req, res) => {
                   newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";
                   newTextColor = newGradientStyle.textColor || '#111';
                 } else {
-                  newStyle = colorStyleForEffort(newEffort) + " box-shadow:" + dropShadow + ";";
+                  // Use rerollCount as variant seed for gradient variety on reroll
+                  newStyle = colorStyleForEffort(newEffort, rerollCount) + " box-shadow:" + dropShadow + ";";
                   // White text only on full red (fullgas)
                   if (newEffort === 'fullgas') {
                     newTextColor = '#fff';

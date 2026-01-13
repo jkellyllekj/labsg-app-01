@@ -130,11 +130,16 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const drill = drills[seedA % drills.length];
   const drill2 = drills[(seedA + 7) % drills.length];
 
-  // Build descriptions - expanded
+  // Build descriptions - expanded with varied effort levels
   const buildDescs = [
+    // Strong (yellow) - building effort
     "build", "descend 1-3", "descend 1-4", "descend 1-5", "negative split", 
     "smooth to strong", "build to fast", "odds easy evens strong",
-    "every 3rd fast", "last 2 fast"
+    "every 3rd fast", "last 2 fast",
+    // Hard (orange) - more intense builds
+    "descend to hard", "build to threshold", "odds steady evens fast",
+    // Fullgas touches
+    "last one sprint", "build to max", "descend with final sprint"
   ];
   const buildDesc = buildDescs[seedA % buildDescs.length];
 
@@ -176,12 +181,19 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist, "easy"));
   }
 
-  // KICK: Kick set with variety
+  // KICK: Kick set with variety across effort levels
   if (k.includes("kick")) {
     const finNote = hasFins ? " with fins" : "";
     const kickDescs = [
-      "kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote,
-      "kick strong" + finNote, "streamline kick" + finNote, "kick on side" + finNote
+      // Moderate (green/blue)
+      "kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote,
+      "kick relaxed" + finNote, "flutter kick" + finNote,
+      // Strong (yellow)
+      "kick " + buildDesc + finNote, "kick build" + finNote, "kick descend" + finNote,
+      // Hard (orange)
+      "kick strong" + finNote, "kick fast" + finNote, "kick hard" + finNote,
+      // Fullgas (red)
+      "kick sprint" + finNote, "kick max effort" + finNote
     ];
     const kickDesc = kickDescs[seedA % kickDescs.length];
     const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0), true);
@@ -189,12 +201,19 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist, "moderate"));
   }
 
-  // PULL: Pull set with variety
+  // PULL: Pull set with variety across effort levels
   if (k.includes("pull")) {
     const padNote = hasPaddles ? " with paddles" : "";
     const pullDescs = [
-      "pull " + buildDesc + padNote, "pull steady" + padNote, "pull strong" + padNote,
-      "pull smooth" + padNote, "pull focus DPS" + padNote, "pull hold pace" + padNote
+      // Moderate (green/blue)
+      "pull steady" + padNote, "pull smooth" + padNote, "pull focus DPS" + padNote,
+      "pull relaxed" + padNote, "pull technique" + padNote,
+      // Strong (yellow)
+      "pull " + buildDesc + padNote, "pull build" + padNote, "pull descend" + padNote,
+      // Hard (orange)
+      "pull strong" + padNote, "pull hard" + padNote, "pull hold pace" + padNote,
+      // Fullgas (red)
+      "pull fast" + padNote, "pull sprint" + padNote
     ];
     const pullDesc = pullDescs[seedA % pullDescs.length];
     const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0), true);
@@ -274,13 +293,23 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     }
   }
 
-  // Simple single-line main set (default)
+  // Simple single-line main set (default) - with varied effort levels
   const mainDescs = {
     sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"],
     threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace", stroke + " controlled fast", stroke + " tempo"],
     endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace", stroke + " aerobic", stroke + " consistent"],
     technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", stroke + " smooth technique", stroke + " efficient"],
-    allround: [stroke + " " + buildDesc, stroke + " hard", stroke + " strong", stroke + " descend 1-4", stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast", stroke + " controlled", stroke + " sprint", stroke + " max effort"]
+    allround: [
+      // Strong (yellow) - building/moderate-hard effort
+      stroke + " " + buildDesc, stroke + " descend 1-4", stroke + " build to strong",
+      stroke + " negative split", stroke + " odds steady evens strong",
+      // Hard (orange) - sustained effort
+      stroke + " hard", stroke + " strong", stroke + " controlled fast", stroke + " threshold",
+      stroke + " fast hold", stroke + " push",
+      // Fullgas (red) - max effort touches
+      stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast",
+      stroke + " sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"
+    ]
   };
   const descs = mainDescs[focus] || mainDescs.allround;
   const mainDesc = descs[seedA % descs.length];

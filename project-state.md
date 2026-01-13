@@ -262,6 +262,7 @@ UI defects:
 - Dice click can error when the set distance cannot be parsed, or when reroll returns invalid output
 - ~~Distance turns black after reroll~~ FIXED 2026-01-13: Now stays royal blue after reroll
 - ~~Dolphin spin stops after 1-2 clicks~~ FIXED 2026-01-13: Animation now waits 1.25s to complete before removing spinning class
+- ~~Reroll effort level only changes once~~ FIXED 2026-01-13: Expanded all description arrays (kick, pull, main, build) to span moderate→fullgas effort levels
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
 
@@ -276,13 +277,13 @@ UI defects:
 Core functionality works. CardGym-style visual polish applied and continuing.
 
 ### IN PROGRESS THIS SESSION (2026-01-13):
-**Quick Fixes:**
-- Distance text: bolder + royal blue (#0055aa), fix black text after reroll
-- Dolphin reroll spin: ensure full 1.25s animation completes every click
+**Quick Fixes (DONE):**
+- Distance text: bolder + royal blue (#0055aa), fix black text after reroll ✓
+- Dolphin reroll spin: ensure full 1.25s animation completes every click ✓
+- Reroll effort variety: expanded description arrays to span all 5 effort levels ✓
 
 **Future Items (identified this session):**
 - Gradient variety: more orange/red gradients for hard sets, striations for progressive builds
-- Reroll variety: prevent cycling between same 1-2 options, endless combinations
 - Generate variety: reduce repetition of similar workouts
 
 ### COMPLETED EARLIER (2026-01-13):

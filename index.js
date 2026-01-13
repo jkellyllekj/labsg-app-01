@@ -58,8 +58,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const seedC = ((seed * 104729) >>> 0);
   const seedD = ((seed * 224737) >>> 0);
   
-  // Reroll count for cycling through effort levels (0 = initial generation)
-  const rerollNum = Number(rerollCount) || 0;
+  // Reroll count for cycling through effort levels
+  // If rerollCount is provided (>0), use it to deliberately cycle effort levels
+  // If not provided or 0, use seeded random for natural initial variety
+  const hasRerollCount = typeof rerollCount === 'number' && rerollCount > 0;
+  const rerollNum = hasRerollCount ? rerollCount : seedA;
 
   const makeLine = (reps, dist, text, restSec) => {
     let suffix = "";
@@ -2683,7 +2686,7 @@ app.post("/reroll-set", (req, res) => {
         unitsShort,
         opts,
         seed,
-        rerollCount: rerollCount + i  // Pass rerollCount for effort level cycling
+        rerollCount: rerollCount  // Pass stable rerollCount for effort level cycling (i only varies seed)
       });
 
       if (!next) continue;

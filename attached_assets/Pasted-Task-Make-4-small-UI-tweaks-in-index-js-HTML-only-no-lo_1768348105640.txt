@@ -1,0 +1,86 @@
+Task: Make 4 small UI tweaks in index.js, HTML only, no logic changes.
+
+File: index.js
+Edits are inside the block __START_ROUTE_HOME_UI_HTML_R110__.
+
+Change 1, replace the title plus distance block and move distance onto slider line
+
+Find this exact block:
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+  <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Sets</h3>
+  <div style="text-align:right;">
+    <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
+  </div>
+</div>
+
+<input
+  id="distanceSlider"
+  type="range"
+  min="500"
+  max="10000"
+  step="100"
+  value="1500"
+  class="distance-slider"
+/>
+<input type="hidden" name="distance" id="distanceHidden" value="1500" />
+
+
+Replace it with this:
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+  <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Gen</h3>
+</div>
+
+<div style="display:flex; align-items:center; gap:12px;">
+  <input
+    id="distanceSlider"
+    type="range"
+    min="500"
+    max="10000"
+    step="100"
+    value="1500"
+    class="distance-slider"
+    style="flex:1;"
+  />
+  <div style="white-space:nowrap;">
+    <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
+  </div>
+</div>
+
+<input type="hidden" name="distance" id="distanceHidden" value="1500" />
+
+Change 2, update pool buttons row, remove Custom text, and place dolphin on the right
+
+Find this:
+
+<div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
+  <button type="button" data-pool="25m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+  <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+  <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+  <button type="button" data-pool="custom" id="customPoolBtn" style="padding:6px 14px; border-radius:8px; cursor:pointer;">Custom</button>
+</div>
+
+
+Replace with this:
+
+<div id="poolButtons" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button type="button" data-pool="25m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+    <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+    <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+    <button type="button" data-pool="custom" id="customPoolBtn" style="padding:6px 10px; border-radius:8px; cursor:pointer;" aria-label="Custom pool length">…</button>
+  </div>
+  <span id="dolphinLoader" style="display:inline-block; min-width:34px; text-align:right;"></span>
+</div>
+
+Change 3, remove the old dolphin span near the Generate button row
+
+Find this line:
+
+<span id="dolphinLoader" style="display:none; vertical-align:middle; margin-right:30px;"></span>
+
+
+Delete it.
+
+Do not change any JS logic. Do not change any CSS outside these inline styles.

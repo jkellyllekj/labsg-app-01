@@ -546,33 +546,40 @@ app.get("/", (req, res) => {
       <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
         <div class="form-row">
           <div class="form-col">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-              <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Sets</h3>
-              <div style="text-align:right;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+              <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Gen</h3>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+              <input
+                id="distanceSlider"
+                type="range"
+                min="500"
+                max="10000"
+                step="100"
+                value="1500"
+                class="distance-slider"
+                style="flex:1;"
+              />
+              <div style="white-space:nowrap;">
                 <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
               </div>
             </div>
 
-            <input
-              id="distanceSlider"
-              type="range"
-              min="500"
-              max="10000"
-              step="100"
-              value="1500"
-              class="distance-slider"
-            />
             <input type="hidden" name="distance" id="distanceHidden" value="1500" />
           </div>
 
           <div class="form-col">
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
-            <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
-              <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
-              <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
-              <button type="button" data-pool="custom" id="customPoolBtn" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">Custom</button>
+            <div id="poolButtons" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+                <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+                <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+                <button type="button" data-pool="custom" id="customPoolBtn" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 10px; border-radius:8px; cursor:pointer;" aria-label="Custom pool length">...</button>
+              </div>
+              <span id="dolphinLoader" style="display:inline-block; min-width:34px; text-align:right;"></span>
             </div>
 
             <div style="margin-top:12px;">
@@ -710,7 +717,6 @@ app.get("/", (req, res) => {
             </button>
             <span id="statusPill" style="font-size:13px; color:#555;"></span>
           </div>
-          <span id="dolphinLoader" style="display:none; vertical-align:middle; margin-right:30px;"></span>
         </div>
       </form>
     </div>

@@ -893,7 +893,7 @@ app.get("/", (req, res) => {
       let activeBgLayer = "A";
 
       function setLayerImage(layerEl, url) {
-        layerEl.style.backgroundImage = "url(" + url + ")";
+        layerEl.style.backgroundImage = 'url("' + url + '")';
       }
 
       function preloadImage(url) {
@@ -911,7 +911,7 @@ app.get("/", (req, res) => {
         if (!bgA || !bgB) return;
 
         const url = backgroundImages[bgIndex];
-        bgA.style.backgroundImage = "url(" + url + ")";
+        setLayerImage(bgA, url);
 
         bgA.classList.add("isActive");
         bgB.classList.remove("isActive");
@@ -941,7 +941,7 @@ app.get("/", (req, res) => {
         // bgB is always on top (z-index 2), so use it as the overlay layer
         // Set next image on bgB, fade it in over bgA, then copy to bgA and reset
         bgB.classList.remove("isActive");
-        bgB.style.backgroundImage = "url(" + nextUrl + ")";
+        setLayerImage(bgB, nextUrl);
 
         void bgB.offsetHeight;
 
@@ -950,7 +950,7 @@ app.get("/", (req, res) => {
 
         window.setTimeout(function() {
           // Copy the image to bgA (the base layer)
-          bgA.style.backgroundImage = "url(" + nextUrl + ")";
+          setLayerImage(bgA, nextUrl);
           bgA.classList.add("isActive");
 
           // Hide bgB again for next cycle
@@ -970,7 +970,7 @@ app.get("/", (req, res) => {
         if (!bgA || !bgB) return;
 
         const url = backgroundImages[bgIndex];
-        bgA.style.backgroundImage = "url(" + url + ")";
+        setLayerImage(bgA, url);
         bgA.classList.add("isActive");
         bgB.classList.remove("isActive");
         activeBgLayer = "A";
@@ -986,7 +986,7 @@ app.get("/", (req, res) => {
         cycleBackgroundManually();
       });
 
-      initBackgroundLayersOnce();
+      document.addEventListener("DOMContentLoaded", initBackgroundLayersOnce);
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 
@@ -2451,7 +2451,7 @@ app.get("/", (req, res) => {
 </head>
 <body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 <div id="bgWrap">
-  <div id="bgA" class="bgLayer isActive" style="background-image: url('${randomBg}');"></div>
+  <div id="bgA" class="bgLayer"></div>
   <div id="bgB" class="bgLayer"></div>
 </div>
 ${HOME_HTML}

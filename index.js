@@ -451,21 +451,21 @@ app.get("/", (req, res) => {
         animation: fade-out-down 0.7s ease-in forwards;
       }
       @keyframes reroll-spin {
-        0% { transform: rotate(0deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
-        25% { transform: rotate(-90deg); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
-        50% { transform: rotate(-180deg); filter: drop-shadow(0 0 10px rgba(0,180,255,0.8)) drop-shadow(0 0 16px rgba(0,180,255,0.5)); }
-        75% { transform: rotate(-270deg); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
-        100% { transform: rotate(-360deg); filter: none; }
+        0% { transform: rotate(0deg); }
+        25% { transform: rotate(-90deg); }
+        50% { transform: rotate(-180deg); }
+        75% { transform: rotate(-270deg); }
+        100% { transform: rotate(-360deg); }
       }
       .reroll-dolphin {
         display: inline-block;
         font-size: 28px;
-        filter: none;
-        transition: filter 0.15s ease;
+        filter: none !important;
         opacity: 1 !important;
       }
       .reroll-dolphin.spinning {
         animation: reroll-spin 1.25s ease-in-out;
+        filter: none !important;
         opacity: 1 !important;
       }
       button[data-reroll-set] {

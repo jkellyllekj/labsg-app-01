@@ -1,0 +1,144 @@
+TASK
+Fix background cycling so it crossfades (blends) from current image to next with NO flash of fallback blue/blank. Preload next image before switching. Do NOT couple to Generate.
+
+HARD RULES
+- index.js only.
+- Do NOT run testing. I will test.
+- Do NOT locate the title pill by its text (it changes). Use structure/ids/classes.
+- Minimal change. No refactor. No new files.
+
+PROBLEM
+Current approach fades the only background layer to opacity 0, revealing the base background colour between images.
+
+FIX
+Use two stacked background layers (A and B) and crossfade between them. Always keep one visible. Preload the next image before switching.
+
+1) Add background wrapper + two layers (HTML)
+Insert this once into the app shell markup (where the overall page/container is created), behind the UI:
+
+<div id="bgWrap">
+  <div id="bgA" class="bgLayer"></div>
+  <div id="bgB" class="bgLayer"></div>
+</div>
+
+2) Add CSS (where CSS is defined in index.js)
+Add:
+
+#bgWrap {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.bgLayer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  will-change: opacity;
+}
+
+.bgLayer.isActive {
+  opacity: 1;
+}
+
+IMPORTANT:
+- If you currently set backgroundImage on document.body (or elsewhere) during cycling, stop doing that for cycling. Use these layers instead.
+
+3) Background state + helpers (JS)
+Near the existing background code:
+
+const backgroundImages = [ ... ];
+const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+
+Add:
+
+let bgIndex = backgroundImages.indexOf(randomBg);
+if (bgIndex < 0) bgIndex = 0;
+
+let activeBgLayer = "A";
+
+function setLayerImage(layerEl, url) {
+  layerEl.style.backgroundImage = `url(${url})`;
+}
+
+function preloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => reject(new Error("bg preload failed"));
+    img.src = url;
+  });
+}
+
+function initBackgroundLayers() {
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+  if (!bgA || !bgB) return;
+
+  const url = backgroundImages[bgIndex];
+  setLayerImage(bgA, url);
+  bgA.classList.add("isActive");
+  bgB.classList.remove("isActive");
+  activeBgLayer = "A";
+}
+
+Call initBackgroundLayers() exactly once after the UI shell is rendered (after bgA/bgB exist). Do NOT call it from Generate.
+
+4) Replace manual cycle logic to preload and crossfade (JS)
+Replace the existing click handler body with this:
+
+async function cycleBackgroundManually() {
+  const btn = document.getElementById("bgCycleBtn");
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+  if (!btn || !bgA || !bgB) return;
+
+  btn.disabled = true;
+
+  const nextIndex = (bgIndex + 1) % backgroundImages.length;
+  const nextUrl = backgroundImages[nextIndex];
+
+  try {
+    await preloadImage(nextUrl);
+  } catch (e) {
+    btn.disabled = false;
+    return;
+  }
+
+  const fromLayer = activeBgLayer === "A" ? bgA : bgB;
+  const toLayer = activeBgLayer === "A" ? bgB : bgA;
+
+  setLayerImage(toLayer, nextUrl);
+
+  // Crossfade: show new, hide old. Old remains visible until new is shown.
+  toLayer.classList.add("isActive");
+  fromLayer.classList.remove("isActive");
+
+  window.setTimeout(() => {
+    bgIndex = nextIndex;
+    activeBgLayer = activeBgLayer === "A" ? "B" : "A";
+    btn.disabled = false;
+  }, 300);
+}
+
+WIRING:
+Keep your existing wireBackgroundCycleButton(), but ensure it only adds:
+btn.addEventListener("click", cycleBackgroundManually);
+
+DO NOT add any background logic inside Generate.
+
+5) Title row button location (no text lookup)
+The bgCycleBtn must remain immediately left of the title pill in the title row container, but do not search by title text.
+
+DELIVERABLES
+- Implement the two-layer background crossfade with preload.
+- Ensure the icon still works and is still located next to the title pill.
+- Do NOT test. Do NOT add test output. Stop after code change.
+
+COMMIT
+Commit + push with a short message: "Crossfade background cycle with preload"

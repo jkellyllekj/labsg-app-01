@@ -511,6 +511,25 @@ app.get("/", (req, res) => {
         stroke-linecap: round;
         stroke-linejoin: round;
       }
+      #bgWrap {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+      }
+      .bgLayer {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0;
+        transition: opacity 260ms ease;
+        will-change: opacity;
+      }
+      .bgLayer.isActive {
+        opacity: 1;
+      }
       .distance-slider {
         width: 100%;
         max-width: 100%;
@@ -844,7 +863,7 @@ app.get("/", (req, res) => {
         return String(fnv1a(String(text || "")));
       }
 
-      // Background cycling
+      // Background cycling with two-layer crossfade
       const backgroundImages = [
         "/backgrounds/Page-002 (Large)_result.webp",
         "/backgrounds/Page-004 (Large)_result.webp",
@@ -861,39 +880,74 @@ app.get("/", (req, res) => {
         "/backgrounds/Page-024 (Large)_result.webp"
       ];
 
-      // Determine initial background index from current body background
+      // Determine initial background index from bgA layer or body
       let bgIndex = (function() {
-        const style = document.body.style.backgroundImage || "";
+        const bgA = document.getElementById("bgA");
+        const style = (bgA && bgA.style.backgroundImage) || document.body.style.backgroundImage || "";
         for (let i = 0; i < backgroundImages.length; i++) {
           if (style.includes(backgroundImages[i])) return i;
         }
         return 0;
       })();
 
-      function applyBackgroundByIndex(index) {
-        const url = backgroundImages[index];
-        document.body.style.backgroundImage = "url('" + url + "'), linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%)";
+      let activeBgLayer = "A";
+
+      function setLayerImage(layerEl, url) {
+        layerEl.style.backgroundImage = "url(" + url + ")";
       }
 
-      function cycleBackgroundManually() {
+      function preloadImage(url) {
+        return new Promise(function(resolve, reject) {
+          const img = new Image();
+          img.onload = function() { resolve(true); };
+          img.onerror = function() { reject(new Error("bg preload failed")); };
+          img.src = url;
+        });
+      }
+
+      function initBackgroundLayers() {
+        const bgA = document.getElementById("bgA");
+        const bgB = document.getElementById("bgB");
+        if (!bgA || !bgB) return;
+
+        const url = backgroundImages[bgIndex];
+        setLayerImage(bgA, url);
+        bgA.classList.add("isActive");
+        bgB.classList.remove("isActive");
+        activeBgLayer = "A";
+      }
+
+      async function cycleBackgroundManually() {
         const btn = document.getElementById("bgCycleBtn");
-        if (!btn) return;
+        const bgA = document.getElementById("bgA");
+        const bgB = document.getElementById("bgB");
+        if (!btn || !bgA || !bgB) return;
 
         btn.disabled = true;
 
-        document.body.style.transition = "opacity 220ms ease";
-        document.body.style.opacity = "0";
+        const nextIndex = (bgIndex + 1) % backgroundImages.length;
+        const nextUrl = backgroundImages[nextIndex];
 
-        setTimeout(function() {
-          bgIndex = (bgIndex + 1) % backgroundImages.length;
-          applyBackgroundByIndex(bgIndex);
+        try {
+          await preloadImage(nextUrl);
+        } catch (e) {
+          btn.disabled = false;
+          return;
+        }
 
-          document.body.style.opacity = "1";
+        const fromLayer = activeBgLayer === "A" ? bgA : bgB;
+        const toLayer = activeBgLayer === "A" ? bgB : bgA;
 
-          setTimeout(function() {
-            btn.disabled = false;
-          }, 260);
-        }, 220);
+        setLayerImage(toLayer, nextUrl);
+
+        toLayer.classList.add("isActive");
+        fromLayer.classList.remove("isActive");
+
+        window.setTimeout(function() {
+          bgIndex = nextIndex;
+          activeBgLayer = activeBgLayer === "A" ? "B" : "A";
+          btn.disabled = false;
+        }, 300);
       }
 
       function wireBackgroundCycleButton() {
@@ -902,6 +956,7 @@ app.get("/", (req, res) => {
         btn.addEventListener("click", cycleBackgroundManually);
       }
 
+      initBackgroundLayers();
       wireBackgroundCycleButton();
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
@@ -2365,7 +2420,11 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Gen</title>
 </head>
-<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('${randomBg}') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<div id="bgWrap">
+  <div id="bgA" class="bgLayer" style="background-image: url('${randomBg}');"></div>
+  <div id="bgB" class="bgLayer"></div>
+</div>
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

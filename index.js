@@ -44,7 +44,7 @@ function shuffleWithSeed(arr, seed) {
 }
 
 // ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
-function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
+function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) {
   const base = poolLen;
   const target = snapToPoolMultipleShared(targetDistance, base);
   if (target <= 0) return null;
@@ -57,6 +57,9 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const seedB = ((seed * 7919) >>> 0);
   const seedC = ((seed * 104729) >>> 0);
   const seedD = ((seed * 224737) >>> 0);
+  
+  // Reroll count for cycling through effort levels (0 = initial generation)
+  const rerollNum = Number(rerollCount) || 0;
 
   const makeLine = (reps, dist, text, restSec) => {
     let suffix = "";
@@ -187,43 +190,47 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // KICK: Kick set with variety across effort levels
+  // Use rerollNum to CYCLE through effort levels deliberately
   if (k.includes("kick")) {
     const finNote = hasFins ? " with fins" : "";
-    const kickDescs = [
-      // Moderate (green/blue)
-      "kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote,
-      "kick relaxed" + finNote, "flutter kick" + finNote,
-      // Strong (yellow)
-      "kick " + buildDesc + finNote, "kick build" + finNote, "kick descend" + finNote,
-      // Hard (orange)
-      "kick strong" + finNote, "kick fast" + finNote, "kick hard" + finNote,
-      // Fullgas (red)
-      "kick sprint" + finNote, "kick max effort" + finNote
-    ];
-    const kickDesc = kickDescs[seedA % kickDescs.length];
+    // Organized by effort level for deliberate cycling
+    const kickByEffort = {
+      moderate: ["kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote, "kick relaxed" + finNote, "flutter kick" + finNote],
+      strong: ["kick build" + finNote, "kick descend" + finNote, "kick descend 1-4" + finNote],
+      hard: ["kick strong" + finNote, "kick fast" + finNote, "kick hard" + finNote],
+      fullgas: ["kick sprint" + finNote, "kick max effort" + finNote]
+    };
+    const effortLevels = ["moderate", "strong", "hard", "fullgas"];
+    // Cycle through effort levels based on rerollNum
+    const effortIdx = rerollNum % effortLevels.length;
+    const effort = effortLevels[effortIdx];
+    const descs = kickByEffort[effort];
+    const kickDesc = descs[seedA % descs.length];
     const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, "kick" + finNote, 0);
-    return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist, "moderate"));
+    return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist, effort));
   }
 
   // PULL: Pull set with variety across effort levels
+  // Use rerollNum to CYCLE through effort levels deliberately
   if (k.includes("pull")) {
     const padNote = hasPaddles ? " with paddles" : "";
-    const pullDescs = [
-      // Moderate (green/blue)
-      "pull steady" + padNote, "pull smooth" + padNote, "pull focus DPS" + padNote,
-      "pull relaxed" + padNote, "pull technique" + padNote,
-      // Strong (yellow)
-      "pull " + buildDesc + padNote, "pull build" + padNote, "pull descend" + padNote,
-      // Hard (orange)
-      "pull strong" + padNote, "pull hard" + padNote, "pull hold pace" + padNote,
-      // Fullgas (red)
-      "pull fast" + padNote, "pull sprint" + padNote
-    ];
-    const pullDesc = pullDescs[seedA % pullDescs.length];
+    // Organized by effort level for deliberate cycling
+    const pullByEffort = {
+      moderate: ["pull steady" + padNote, "pull smooth" + padNote, "pull focus DPS" + padNote, "pull relaxed" + padNote, "pull technique" + padNote],
+      strong: ["pull build" + padNote, "pull descend" + padNote, "pull descend 1-4" + padNote],
+      hard: ["pull strong" + padNote, "pull hard" + padNote, "pull hold pace" + padNote],
+      fullgas: ["pull fast" + padNote, "pull sprint" + padNote]
+    };
+    const effortLevels = ["moderate", "strong", "hard", "fullgas"];
+    // Cycle through effort levels based on rerollNum
+    const effortIdx = rerollNum % effortLevels.length;
+    const effort = effortLevels[effortIdx];
+    const descs = pullByEffort[effort];
+    const pullDesc = descs[seedA % descs.length];
     const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, "pull" + padNote, 0);
-    return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist, "moderate"));
+    return makeLine(fit.reps, fit.dist, pullDesc, restFor(fit.dist, effort));
   }
 
   // COOL-DOWN: Easy swim with variety
@@ -299,6 +306,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // Simple single-line main set (default) - with varied effort levels
+  // Use rerollNum to CYCLE through effort levels for allround focus
   // Descriptions designed to trigger proper effort gradients in parseEffortTimeline
   const mainDescs = {
     sprint: [
@@ -317,25 +325,35 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
       stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", 
       stroke + " smooth technique", stroke + " efficient"
     ],
-    allround: [
-      // Progressive gradients (green→yellow→orange or similar)
-      stroke + " build to strong effort", stroke + " descend to hard", stroke + " build to fast",
-      stroke + " negative split to fast", stroke + " descend with final sprint",
-      // Alternating patterns (stripes)
-      stroke + " odds easy evens fast", stroke + " odds steady evens fast",
-      // Hard solid (orange)
-      stroke + " hard", stroke + " strong hold", stroke + " threshold", stroke + " fast hold",
-      // Fullgas solid (red) 
-      stroke + " sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"
-    ]
+    allround: null // Handled specially with effort cycling below
   };
-  const descs = mainDescs[focus] || mainDescs.allround;
-  const mainDesc = descs[seedA % descs.length];
+  
+  // For allround focus: cycle through effort levels deliberately
+  const allroundByEffort = {
+    strong: [stroke + " build", stroke + " descend 1-4", stroke + " negative split", stroke + " build to strong"],
+    hard: [stroke + " hard", stroke + " strong hold", stroke + " threshold", stroke + " fast hold", stroke + " descend to hard"],
+    fullgas: [stroke + " sprint", stroke + " max effort", stroke + " race pace", stroke + " all out", stroke + " build to sprint"]
+  };
+  
+  let mainDesc;
+  let effortForRest = "hard";
+  if (focus === "allround" || !mainDescs[focus]) {
+    // Cycle through 3 effort levels for main sets: strong → hard → fullgas
+    const mainEfforts = ["strong", "hard", "fullgas"];
+    const effortIdx = rerollNum % mainEfforts.length;
+    const effort = mainEfforts[effortIdx];
+    const descs = allroundByEffort[effort];
+    mainDesc = descs[seedA % descs.length];
+    effortForRest = effort;
+  } else {
+    const descs = mainDescs[focus];
+    mainDesc = descs[seedA % descs.length];
+  }
 
   // Shuffle distance preferences for variety
   const fit = findBestFit([d100, d50, d200, d75].filter(x => x > 0), true);
   if (!fit) return makeLine(1, target, stroke + " swim", 0);
-  return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist, "hard"));
+  return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist, effortForRest));
 }
 /* __END_SHARED_FUNCTIONS_R030__ */
 
@@ -2654,7 +2672,7 @@ app.post("/reroll-set", (req, res) => {
     const rerollCount = Number(body.rerollCount) || 1;
     
     // Generate a replacement body with the same label and distance
-    // Use rerollCount directly to ensure each click gives different pattern
+    // Use rerollCount to cycle through effort levels, plus seed for variety within each level
     for (let i = 0; i < 10; i++) {
       // Combine rerollCount with iteration to guarantee different seed each attempt
       const seed = ((rerollCount * 7919) + (i * 9973) + Date.now()) >>> 0;
@@ -2664,7 +2682,8 @@ app.post("/reroll-set", (req, res) => {
         poolLen,
         unitsShort,
         opts,
-        seed
+        seed,
+        rerollCount: rerollCount + i  // Pass rerollCount for effort level cycling
       });
 
       if (!next) continue;

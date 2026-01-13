@@ -287,7 +287,7 @@ Known facts:
 - Manual background button currently toggles background off then back on, but does not advance to a different image.
 
 Next single step:
-- Collect the exact code blocks for background click wiring, background application, and background state variables before making changes.
+- Code blocks collected (2026-01-13). Awaiting diagnosis and minimal patch from user.
 
 Nice to have before ship:
 - More workout name variety

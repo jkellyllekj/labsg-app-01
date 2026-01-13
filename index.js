@@ -1804,7 +1804,7 @@ app.get("/", (req, res) => {
               if (cardContainer) {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
-                const newVariantSeed = rerollCount * 13 + nextBody.length;
+                const newVariantSeed = rerollCount * 1000 + nextBody.length;
                 const newZoneSpan = getZoneSpan(label, nextBody, newVariantSeed);
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan, label, nextBody, newVariantSeed) : null;
                 let newStyle;

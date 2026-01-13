@@ -893,7 +893,7 @@ app.get("/", (req, res) => {
       let activeBgLayer = "A";
 
       function setLayerImage(layerEl, url) {
-        layerEl.style.backgroundImage = "url(" + url + ")";
+        layerEl.style.backgroundImage = 'url("' + url + '")';
       }
 
       function preloadImage(url) {

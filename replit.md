@@ -30,6 +30,12 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Fixed reroll effort cycling: Effort levels now deliberately cycle on each reroll (moderate→strong→hard→fullgas for kick/pull, strong→hard→fullgas for main)
+2. Initial generation preserved: When rerollCount is 0 or undefined, uses seedA for natural random variety
+3. Stable cycling: rerollCount stays fixed through retry loop (only seed varies to avoid duplicates)
+4. Implementation: `hasRerollCount` check determines if deliberate cycling or random seeding is used
+
+**Previous Session (2026-01-13):**
 1. Fixed reroll color stuck bug: Changed seed calculation from `rerollCount * 1000` to `Date.now() XOR rerollCount XOR bodyLength` for true randomness
 2. Root cause: The old multiplier 1000 was divisible by 4, so `% 4` variant selection always produced same result
 3. Dolphin animation now pops instead of fades: scale pulse (1.0→1.2→1.0) with cyan glow during spin

@@ -540,20 +540,18 @@ app.get("/", (req, res) => {
         }
       }
     </style>
-    <div style="display:inline-block; padding:12px 18px; margin-bottom:16px; background:rgba(255,255,255,0.9); border-radius:12px; box-shadow:0 2px 12px rgba(0,50,70,0.15); max-width:520px; box-sizing:border-box;">
-      <h1 style="margin:0 0 4px 0; font-size:28px; font-weight:700; color:#111;">Swim Gen</h1>
-      <div style="margin:0; color:#555; font-size:14px;">Create coach-quality swim workouts in seconds <a href="/viewport-lab" style="margin-left:12px; font-size:11px; color:#666; text-decoration:underline;">[Viewport Lab]</a></div>
-    </div>
+    <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
       <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
         <div class="form-row">
           <div class="form-col">
-            <h3 style="margin:0 0 10px 0;">Distance</h3>
-
-            <label style="display:block; margin-bottom:6px;">
-              <strong id="distanceLabel">1500</strong> <span style="color:#555;">(m or yd)</span>
-            </label>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+              <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Sets</h3>
+              <div style="text-align:right;">
+                <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
+              </div>
+            </div>
 
             <input
               id="distanceSlider"
@@ -568,51 +566,13 @@ app.get("/", (req, res) => {
           </div>
 
           <div class="form-col">
-            <h3 style="margin:0 0 10px 0;">Pool length</h3>
-
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
             <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
               <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
               <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
               <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
-              <button type="button" data-pool="custom" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">Custom</button>
-            </div>
-
-            <div style="margin-top:12px;">
-              <label>
-                Custom pool length:
-                <input
-                  name="customPoolLength"
-                  id="customPoolLength"
-                  type="number"
-                  min="10"
-                  max="400"
-                  placeholder="e.g. 30"
-                  disabled
-                  style="width: 90px;"
-                />
-              </label>
-              <select name="poolLengthUnit" id="poolLengthUnit" disabled>
-                <option value="meters">meters</option>
-                <option value="yards">yards</option>
-              </select>
-            </div>
-
-            <div style="margin-top:12px;">
-              <label style="display:block; font-weight:600; margin-bottom:4px;">
-                Threshold pace (per 100, optional) Example 1:20
-              </label>
-              <input
-                name="thresholdPace"
-                id="thresholdPace"
-                type="text"
-                placeholder="e.g. 1:30"
-                style="width: 120px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
-              />
-              <div style="margin-top:6px; font-size:12px; color:#666;">
-                If set, the app estimates times per set and total. It assumes freestyle threshold pace.
-              </div>
+              <button type="button" data-pool="custom" id="customPoolBtn" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">Custom</button>
             </div>
 
             <div style="margin-top:12px;">
@@ -622,6 +582,45 @@ app.get("/", (req, res) => {
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
+              <div style="margin-bottom:14px;">
+                <label style="display:block; font-weight:600; margin-bottom:4px;">
+                  Custom pool length
+                </label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <input
+                    name="customPoolLength"
+                    id="customPoolLength"
+                    type="number"
+                    min="10"
+                    max="400"
+                    placeholder="e.g. 30"
+                    disabled
+                    style="width: 90px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
+                  />
+                  <select name="poolLengthUnit" id="poolLengthUnit" disabled style="padding:6px 8px; border-radius:10px; border:1px solid #ccc;">
+                    <option value="meters">meters</option>
+                    <option value="yards">yards</option>
+                  </select>
+                </div>
+                <div style="margin-top:4px; font-size:11px; color:#888;">Select Custom pool button to enable</div>
+              </div>
+
+              <div style="margin-bottom:14px;">
+                <label style="display:block; font-weight:600; margin-bottom:4px;">
+                  Threshold pace (per 100, optional)
+                </label>
+                <input
+                  name="thresholdPace"
+                  id="thresholdPace"
+                  type="text"
+                  placeholder="e.g. 1:30"
+                  style="width: 120px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
+                />
+                <div style="margin-top:4px; font-size:11px; color:#888;">
+                  Estimates times per set and total
+                </div>
+              </div>
+
               <div class="advanced-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
                   <div style="font-weight:700; margin-bottom:8px; color:#222;">Strokes</div>
@@ -706,7 +705,7 @@ app.get("/", (req, res) => {
             <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
               Generate
             </button>
-            <button id="copyBtn" type="button" style="padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
+            <button id="copyBtn" type="button" style="display:none; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
               Copy
             </button>
             <span id="statusPill" style="font-size:13px; color:#555;"></span>
@@ -2094,7 +2093,10 @@ app.get("/", (req, res) => {
         customLen.disabled = !isCustom;
         customUnit.disabled = !isCustom;
 
-        if (!isCustom) {
+        if (isCustom) {
+          advancedWrap.style.display = "block";
+          toggleAdvanced.textContent = "▼ Advanced options";
+        } else {
           customLen.value = "";
           customUnit.value = "meters";
         }

@@ -1747,7 +1747,6 @@ app.get("/", (req, res) => {
             // Increment reroll counter for this card
             const rerollCount = Number(btn.dataset.rerollCount || 0) + 1;
             btn.dataset.rerollCount = String(rerollCount);
-            console.log('[Reroll] setIndex=' + setIndex + ', rerollCount=' + rerollCount + ', originalBody=' + originalBody.substring(0, 40));
 
             btn.disabled = true;
             const dolphinSpan = btn.querySelector('.reroll-dolphin');
@@ -1789,7 +1788,6 @@ app.get("/", (req, res) => {
               }
 
               const nextBody = String(data.setBody || "").trim();
-              console.log('[Reroll] Response received, nextBody=' + nextBody.substring(0, 50));
               if (!nextBody) {
                 renderError("Reroll failed", ["Empty set returned."]);
                 return;
@@ -2648,7 +2646,6 @@ app.post("/reroll-set", (req, res) => {
 
     // Use rerollCount to generate deterministically different seeds each click
     const rerollCount = Number(body.rerollCount) || 1;
-    console.log('[Server Reroll] label=' + label + ', targetDistance=' + targetDistance + ', rerollCount=' + rerollCount);
     
     // Generate a replacement body with the same label and distance
     // Use rerollCount directly to ensure each click gives different pattern

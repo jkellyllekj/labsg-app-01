@@ -2,131 +2,9 @@
 
 ## Overview
 
-A swim workout generator app targeting **Android Play Store** (primary), iOS App Store, and web. Currently built as a Node.js + Express web app for rapid development and easy testing, with plans to migrate to React Native (Expo) for mobile app stores.
+The Swim Workout Generator is a web application designed to create structured swim workouts. It is currently built as a Node.js + Express web app, serving both the API and a simple HTML frontend. The primary target is the Android Play Store, with plans for cross-platform expansion to iOS and web using React Native (Expo). The application focuses on generating coach-quality workouts with a deterministic algorithm.
 
-The application runs as a single-file Express server serving both the API and a simple HTML frontend. All generation is local/deterministic (no OpenAI calls for basic generation).
-
-**Strategic Direction (2026-01-12):**
-- PRIMARY: Android Play Store release
-- Cross-platform: React Native with Expo (same codebase for Android/iOS)
-- Web app: Development preview and sharing during development
-- IP Protection: Workout algorithm to run server-side eventually
-
-## Current Status (2026-01-12)
-
-**Phase:** v1 Coach Plausibility - Feature Complete, Polish Phase
-
-**What Works:**
-- Full workout generation with coach-quality structure
-- Pool types: 25m, 50m, 25yd, Custom (any length)
-- Distance: 500-10,000m via slider (snaps to 100)
-- Reroll individual sets via dice button with variety
-- Zone-based colored cards with bolder CardGym-style colors
-- Gradient backgrounds for progressive sets (build, descend)
-- White text on fullgas (red) zones only for readability
-- 16-drill name library, snazzy workout names, emoji intensity strip
-- Jumping dolphin loader with exit splash animation
-- Smooth scroll to workout title after 350ms delay
-- ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
-
-**Session Just Completed (2026-01-13, latest):**
-1. Manual background cycling icon added next to workout title pill (no Generate coupling)
-2. Button appears left of the yellow pill when workout is displayed
-3. Clicking cycles through 13 background images with 220ms fade transition
-4. Background only randomizes on page load - Generate does NOT change it
-5. Button disabled during transition to prevent rapid clicking
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll card update: Changed card container selector from style-based to data-effort attribute selector
-2. Added setAttribute('data-effort', newEffort) so cards remain selectable after style changes
-3. Fixed dolphin haze completely: Removed all drop-shadow filters from CSS, set filter to none in finally block
-4. Card background now updates correctly on every dolphin click (not just first)
-5. TEST PASSED: Generate workout, pick one set, click dolphin 5 times - card changes on every click, dolphin ends crisp
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll counter persistence: Changed from btn.dataset to persistent Map (rerollCountMap) that survives innerHTML replacement
-2. Reroll now properly increments 1,2,3,4... on each click, cycling through effort levels
-3. Fixed dolphin haze: Explicit filter reset in finally block prevents glow residue after animation
-4. Map clears on new workout generation so counts start fresh
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll effort cycling: Effort levels now deliberately cycle on each reroll (moderate→strong→hard→fullgas for kick/pull, strong→hard→fullgas for main)
-2. Initial generation preserved: When rerollCount is 0 or undefined, uses seedA for natural random variety
-3. Stable cycling: rerollCount stays fixed through retry loop (only seed varies to avoid duplicates)
-4. Implementation: `hasRerollCount` check determines if deliberate cycling or random seeding is used
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll color stuck bug: Changed seed calculation from `rerollCount * 1000` to `Date.now() XOR rerollCount XOR bodyLength` for true randomness
-2. Root cause: The old multiplier 1000 was divisible by 4, so `% 4` variant selection always produced same result
-3. Dolphin animation now pops instead of fades: scale pulse (1.0→1.2→1.0) with cyan glow during spin
-4. Glow effect uses drop-shadow with rgba(0,180,255) for aqua/cyan highlight
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll COLOR updating: variantSeed multiplier increased from 13 to 1000 for bigger seed jumps between rerolls
-2. Card colors now properly match text content on each reroll (sprint text = red card, strong text = orange card, etc.)
-3. Console-log verified: getEffortLevel, colorStyleForEffort, and gradientStyleForZones all work correctly on reroll
-
-**Previous Session (2026-01-13):**
-1. Fixed reroll variety bug: avoidText was sending stripped body (no rest) but server returns full body with rest - now uses data-original-body attribute for proper matching
-2. Reroll now properly varies on every click: Main sets show max effort, build+strong, race pace, descend, strong hold variety
-3. Kick/pull reroll variety: relaxed, sprint, streamline, strong, fast
-
-**Previous Session (2026-01-13):**
-1. Probability-based gradient variety: warm-up/cool-down 80% solid, drills always solid, builds 50% gradient, main 50% gradient
-2. Fullgas (red) restricted to main sets only for coach plausibility
-3. Alternating patterns (odds/evens) now use smooth blended gradients instead of hard stripes
-4. LCG-based seeded random with independent nextRandom() calls per decision
-5. Reroll variety improved: seed combines rerollCount + body.length for varied results each click
-6. Kick/pull sets: 70% moderate, 20% strong, 10% hard variety
-
-**Previous Session (2026-01-13):**
-1. Dolphin reroll button: 28px size, sharper shadow (0.5 opacity), 1.25s full 360 spin
-2. Splash rotation adjusted to -144deg for centered appearance
-3. Title/Total boxes: small-caps font-variant with increased padding (6px 14px)
-4. Distance text on cards now displays in blue (#0066cc)
-5. Emoji intensity panel: gradient background (blue→green→yellow→orange→red) with 5 faces (😴 ☕ 👍 💪 🔥)
-6. Gap between generate panel and title reduced to 10px
-
-**Previous Session (2026-01-12, latest):**
-1. Stronger drop shadows on cards (0 8px 24px rgba(0,0,0,0.35)) for more visual depth
-2. Bolder interval/distance text (font-weight:600)
-3. Dice button replaced with small dolphin that does quick 360 spin (0.2s) on click
-4. Removed left accent bar - full card is now the zone color (no borders)
-5. CardGym pastel colors and sprint generation from previous session retained
-
-**Previous Session (2026-01-12, earlier):**
-1. Card shadows strengthened with dual-depth: 0 6px 16px + 0 2px 4px
-2. Card gaps tightened to 6px, side margins reduced by 10px
-3. Dolphin reroll button: 50% bigger (18px), transparent bg, drop shadow, 1s spin
-4. Yellow Total box at bottom-right matching CardGym style
-5. Summary box (formerly footer) with fade-in animation
-6. Title, Total, and Summary all fade in together with workout cards
-
-**Previous Session (2026-01-12, earlier):**
-1. CardGym pastel color scheme: Easy=#b9f0fd (blue), Moderate=#cfffc0 (green), Strong=#fcf3d5 (yellow), Hard=#ffc374 (orange), Full Gas=#fe0000 (red)
-2. Text color logic: white ONLY on fullgas (red) zones, black everywhere else including orange
-3. Sprint/max effort options added to allround descriptors - fullgas sets now generate
-4. Removed goal feature entirely (input field and localStorage functions)
-
-**Previous Session (2026-01-12, earlier):**
-1. Title shortened to "Swim Gen" for mobile
-2. Splash rotation adjusted to -132deg
-3. Dolphin position fixed - anchored to right side of button row
-4. Dolphin size increased 20%, animation arc goes higher (-56px peak)
-5. Animation timing: 3s per cycle with landing pause before splash
-6. Title cut-off fixed with scroll-margin-top:20px
-
-**Previous Session (2026-01-09):**
-1. Fixed reroll variety - multiple seed derivations for independent randomization
-2. Fixed dice button stuck state - finally block resets button
-3. Added multi-part sets (~20%) with exact distance validation
-4. Improved drill display for 6+ rep sets
-5. UI polish: reduced padding, enhanced dolphin, smooth scroll
-
-**Known Future Work:**
-- More workout name variety (templates)
-- Remove Viewport Lab link before production
-- Consider temperature option for more/less creative workouts
+The long-term vision includes migrating to React Native with Expo for mobile app stores, while the web app serves as a development preview. Future plans involve moving the workout algorithm to a server-side component for IP protection.
 
 ## User Preferences
 
@@ -142,94 +20,47 @@ Additional project-specific preferences:
 ## System Architecture
 
 ### Application Structure
-- **Single-file architecture**: The entire application lives in `index.js` - Express server, routes, and inline HTML
-- **Block-tagged code**: Code uses comment blocks (e.g., `__START_IMPORTS_R010__`) for structured editing - replace whole blocks only
-- **Shared functions section** (lines ~27-285): Common utilities used by both /generate-workout and /reroll-set routes
-- **No build step**: Plain Node.js with Express, no transpilation or bundling required
+The application uses a single-file architecture where `index.js` contains the Express server, routes, and inline HTML, CSS, and JavaScript. It utilizes block-tagged code for structured editing. There is no build step, relying on plain Node.js and Express.
 
 ### Frontend
-- Inline HTML served from the Express route
-- Pool selection via buttons (25m, 50m, 25yd, Custom) - 25m highlighted by default
-- Distance selection via slider (500-10000, snapping to 100) - defaults to 1500
-- Chips-based UI for workout display with reroll functionality
-- Workout cards: zone-based colored backgrounds with left accent bar, floating directly on pool background (no white container)
-  - Zone colors (CardGym-style bolder): Easy (#87CEEB blue), Moderate (#90EE90 green), Strong (#FFE500 yellow), Hard (#FF8C00 orange), Full Gas (#FF0000 red)
-  - White text on dark backgrounds (Hard/Full Gas) for readability
-  - Vertical gradients (top-to-bottom) for multi-zone sets: build, descend, pyramid, reducer
-- Snazzy workout name generator: context-aware names based on distance, focus, and equipment
-- Named drill library: 16 specific drill names (Catch-up, Fist drill, Fingertip drag, DPS, Shark fin, Zipper, Scull, Corkscrew, Single arm, Long dog, Tarzan, Head up, etc.)
-- Emoji intensity strip: 5 faces (😊 🙂 😐 😣 🔥) in footer showing workout difficulty
-- Jumping dolphin animation during workout generation (48px size, loopy loop in dedicated dock to RIGHT of form box, min 1.5s display)
-- Smooth 0.5s fade-in animation for workout results (force reflow ensures restart on every generation)
-- Animation sequence: dolphin loops -> dolphin clears -> scroll to workout -> fade in cards (400ms after scroll starts)
-- Premium form styling: user's sunny outdoor pool photo background (public/pool-lanes-compressed.jpg, 133KB), drop shadow, 16px rounded corners
-- Parallax background effect with background-attachment:fixed
-- Single-column form layout: Distance above Pool length
-- Card shadows: 0 6px 16px for pronounced lift effect
-- Dice emoji button for rerolling individual sets
-- Advanced options with grid layout: strokes on left, equipment on right
-- Static assets served from public/ folder
+The frontend features an inline HTML interface. Users can select pool type (25m, 50m, 25yd, Custom) and target distance via a slider (500-10000m, snapping to 100). Workouts are displayed as chips with zone-based colored backgrounds (CardGym-style: Easy blue, Moderate green, Strong yellow, Hard orange, Full Gas red). Readability is ensured with white text on dark backgrounds. Vertical gradients are used for multi-zone sets like builds and descends.
+
+Key UI elements include a snazzy workout name generator, a 16-drill name library, an emoji intensity strip, and a jumping dolphin animation during workout generation. The design incorporates a premium outdoor pool photo background with a parallax effect, drop shadows for depth, and 16px rounded corners. Individual sets can be rerolled using a dolphin button.
 
 ### Routes
-- `/` - Main workout generator page
-- `/viewport-lab` - Temporary responsive design testing page (shows app at multiple screen sizes) - REMOVE BEFORE PRODUCTION
-- `/generate-workout` - POST endpoint for workout generation
-- `/reroll-set` - POST endpoint for rerolling individual sets
-
-### Key Functions (in index.js)
-- `buildOneSetBodyShared(label, target, poolLength, opts)` - Generates set content for any label type
-- `shuffleWithSeed(arr, seed)` - Deterministic array shuffle for variety
-- `snapToPool(val, pool)` - Ensures distances are pool multiples
-- `makeLine(reps, dist, desc, rest)` - Formats "NxD description :rest" lines
-- `restFor(dist, effort)` - Returns appropriate rest time for distance/effort
+- `/`: Main workout generator page.
+- `/viewport-lab`: Temporary page for responsive design testing (to be removed before production).
+- `/generate-workout`: POST endpoint for workout generation.
+- `/reroll-set`: POST endpoint for rerolling individual sets.
 
 ### Backend
-- Express 5.x server on port 5000 (or PORT env variable)
-- JSON API endpoints for workout generation
-- All generation now local/deterministic (OpenAI SDK installed but not used for basic generation)
+The backend uses an Express 5.x server, running on port 5000 (or `PORT` environment variable). It provides JSON API endpoints for workout generation. The workout generation logic is entirely local and deterministic.
 
 ### Data Flow
-1. User selects pool type and target distance
-2. Frontend sends POST to /generate-workout
-3. Backend allocates distances to workout sections (warm-up, drill, kick, pull, main, cool-down)
-4. Each section built via buildOneSetBodyShared with deterministic variety
-5. Response parsed and displayed as workout chips with effort-based colors
+The user selects workout parameters, which are sent to the `/generate-workout` endpoint. The backend allocates distances to workout sections (warm-up, drill, kick, pull, main, cool-down) and generates each set deterministically. The frontend then displays the workout as colored chips.
 
 ### Key Design Decisions
-- **Clean rebuild over refactor**: Started fresh rather than modifying legacy prototype
-- **Coach plausibility**: Workouts should feel human-written, not algorithmically generated
-- **Custom pool caution**: LLM arithmetic for custom pool lengths cannot be fully trusted - validation required
-- **Zone-based colors**: Five intensity levels: Easy (green), Moderate (blue), Strong (yellow), Hard (orange), Full Gas (red). "Sprint" is a set type, not a zone.
-- **Zone striation logic**: Cards show gradients/stripes based on actual set content
-- **Rest/interval display**: Rest only shows when threshold pace is entered (interval mode)
-- **Descend pattern variety**: Not always "descend 1-4" - includes 1-3, 1-5, odds/evens, every 3rd, negative split variants
-- **Freestyle default**: Warm-up and cool-down prefer freestyle when available
-- **No "easy" in drill/kick/pull**: Color tells the story; use "relaxed" instead
-- **Multi-part sets**: ~20% probability for main sets 400m+, always validate exact distance match
-- **Drill variety**: Shows "drill choice (Catch-up, Fist drill)" for 6+ rep drill sets
+- **Clean rebuild**: The project opted for a fresh start rather than refactoring a legacy prototype.
+- **Coach plausibility**: Workouts are designed to feel human-written.
+- **Custom pool caution**: LLM arithmetic for custom pool lengths is validated.
+- **Zone-based colors**: Five intensity levels are used for clear visual representation.
+- **Zone striation logic**: Cards display gradients/stripes based on set content.
+- **Rest/interval display**: Rest is shown only when a threshold pace is entered.
+- **Descend pattern variety**: Includes diverse descending patterns beyond simple 1-4.
+- **Freestyle default**: Warm-up and cool-down favor freestyle.
+- **No "easy" in drill/kick/pull**: Color indicates intensity; "relaxed" is used instead of "easy".
+- **Multi-part sets**: Approximately 20% probability for main sets 400m+ with distance validation.
+- **Drill variety**: Provides drill choices for 6+ rep sets.
 
 ## External Dependencies
 
 ### Runtime Dependencies
-- **Express 5.x**: Web server framework
-- **OpenAI SDK**: Installed but not actively used for basic generation
-- **@types/node**: TypeScript definitions
+- **Express 5.x**: Used as the web server framework.
+- **OpenAI SDK**: Installed but not currently utilized for basic workout generation.
 
 ### Environment Configuration
-- `OPENAI_API_KEY`: Replit Secret (exists but not used for current generation)
-- `PORT`: Optional, defaults to 5000
+- `OPENAI_API_KEY`: Replit Secret, present but not used by the current generation logic.
+- `PORT`: Optional, defaults to 5000.
 
 ### No Database
-Currently stateless - no persistent storage configured.
-
-## Files
-
-### Active
-- `index.js` - Single-file application (all routes, HTML, CSS, JS inline)
-- `project-state.md` - Detailed project state and decisions (authoritative)
-- `replit.md` - This file, quick reference for fresh agents
-- `public/pool-lanes-compressed.jpg` - Background image (133KB)
-
-### Reference Only
-- `WORKING-METHOD-REPLIT.md` - Working methodology documentation
-- `working-method.md` - Original ChatGPT method (historical)
+The application is currently stateless and does not use any persistent storage.

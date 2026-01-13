@@ -149,6 +149,15 @@ Non-goals:
   Filenames include spaces and parentheses, causing invalid CSS and fallback green background.  
   Fix: Quote the URL in `setLayerImage()` so manual cycling works correctly.
 
+- **UI condensation + tier scaffolding (2026-01-13)**  
+  - Removed top "Swim Gen" title card, subtitle, and Viewport Lab link  
+  - Added thin ad banner placeholder at top  
+  - Combined title ("Swim Sets") with Distance on same row  
+  - Removed "Pool length" heading, kept buttons only  
+  - Moved Custom pool length and Threshold pace into Advanced options  
+  - Custom button auto-expands Advanced when clicked  
+  - Copy button hidden (display:none) for free tier visual scaffolding
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

@@ -30,6 +30,12 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Fixed reroll counter persistence: Changed from btn.dataset to persistent Map (rerollCountMap) that survives innerHTML replacement
+2. Reroll now properly increments 1,2,3,4... on each click, cycling through effort levels
+3. Fixed dolphin haze: Explicit filter reset in finally block prevents glow residue after animation
+4. Map clears on new workout generation so counts start fresh
+
+**Previous Session (2026-01-13):**
 1. Fixed reroll effort cycling: Effort levels now deliberately cycle on each reroll (moderate→strong→hard→fullgas for kick/pull, strong→hard→fullgas for main)
 2. Initial generation preserved: When rerollCount is 0 or undefined, uses seedA for natural random variety
 3. Stable cycling: rerollCount stays fixed through retry loop (only seed varies to avoid duplicates)

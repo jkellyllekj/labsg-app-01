@@ -1,49 +1,70 @@
-Working Method, Replit Agent Edition
+# Working Method, Replit Agent Edition
 
-Last updated: 2026-01-12
+Last updated: 2026-01-13  
 Status: Authoritative
 
-Purpose
+## Purpose
 
-This document defines how we work inside Replit using Agent so we move fast without breaking the project.
+This document defines how we work inside Replit using the Agent so we move fast, avoid context decay, and do not waste time or money.
 
-Core truth
+This is a reusable working method intended to apply to any project, not just Swim Workout Generator.
 
-GitHub is the source of truth.
+## Core truth
 
-Replit is the workspace where Agent edits and runs code.
+GitHub is the source of truth for code history and rollback.
 
-Chat is for planning, review, and decisions.
+Replit is the workspace where the Agent edits and runs code.
 
-Documents
+Chat is for planning, reasoning, review, and decisions.
 
-We keep two docs only.
+The Agent is an execution tool, not the primary thinker.
 
-PROJECT_STATE.md
-This includes a short Decisions section inside it.
+## Documents
 
-WORKING_METHOD_REPLIT.md
-This file.
+We keep three documents only.
 
-Agent must keep PROJECT_STATE.md current.
+PROJECT_STATE.md  
+This is the authoritative, living record of the project. It contains vision, constraints, decisions, known limitations, and next steps.
 
-Session start rule
+WORKING-METHOD-REPLIT.md  
+This file. It defines how we collaborate with the Agent.
 
-At the start of every Agent session, Agent must do this in order.
+COACH_DESIGN_NOTES.md or other design notes  
+Optional, project specific, deep intent documents. These are not required reading for the Agent unless explicitly instructed.
 
-Read PROJECT_STATE.md and this Working Method.
+The Agent must keep PROJECT_STATE.md current when instructed.
 
-State the current phase and the next task in one paragraph.
+## Agent operating mode
 
-State what files it expects to touch.
+Default mode is EXECUTION ONLY.
 
-Only then start editing.
+The Agent does not own planning, architecture, or product decisions unless explicitly asked.
 
-If Agent skips this, stop and restart the session.
+The human plus ChatGPT do the thinking.  
+The Agent does the edits, runs the app, and reports results.
 
-Change size rule
+## Session start rule
 
-Agent must work in small changes.
+At the start of every Agent session, the Agent must do this in order.
+
+1. Read PROJECT_STATE.md and this Working Method.
+2. State the current phase and the next task in one short paragraph.
+3. State which files it expects to touch.
+4. Wait for confirmation or proceed only if explicitly told to execute.
+
+If the Agent skips this, stop and restart the session.
+
+## Planning rule
+
+Planning is done in chat, not by the Agent.
+
+The Agent must not generate its own plans unless explicitly asked to do so.
+
+If a task is already well defined, the Agent must skip planning and execute directly.
+
+## Change size rule
+
+Agent must work in small, bounded changes.
 
 One goal per change.
 
@@ -51,45 +72,32 @@ Touch as few files as possible.
 
 No refactors unless PROJECT_STATE.md explicitly allows it.
 
-Testing rule, non negotiable
+## Testing rule, non negotiable
 
-Agent must not claim something works unless it tested it.
+The Agent must not claim something works unless it was tested.
 
-For every change, Agent must do the relevant checks and report results.
+For every change, the Agent must perform the relevant checks and report results.
 
-Run the app, or run the dev server, or run the test command.
+This includes one of the following, depending on the task.
 
-If there are no tests, Agent must at least run the app and confirm the expected screen or output.
+- Restart the workflow and run the app.
+- Generate a sample output and visually verify it.
+- Run the relevant command or test if applicable.
 
-If the change cannot be tested in Replit, Agent must say why and what manual step is required.
+If something cannot be tested in Replit, the Agent must say why and describe the required manual step.
 
-For UI changes, Agent must generate a sample output (e.g., generate a workout) and visually verify the result looks correct before marking the change complete.
+## Definition of done
 
-Thorough testing checklist
+A change is done only when all of the following are true.
 
-Before completing any task, Agent must:
+- Code change is made.
+- App or tests have been run.
+- Errors are fixed or clearly listed.
+- PROJECT_STATE.md is updated if instructed.
 
-1. Restart the workflow if code was changed.
-2. Generate a sample output and verify it visually (screenshot or API test).
-3. Check console/workflow logs for errors.
-4. Update PROJECT_STATE.md with what changed.
-5. Only then mark the task complete.
+## Context decay control
 
-Definition of done for each change
-
-A change is done only when all are true.
-
-Code change is made.
-
-App or tests have been run.
-
-Any errors are fixed or clearly listed.
-
-PROJECT_STATE.md is updated with what changed.
-
-Context decay control
-
-When the session feels confused, repeating, or risky:
+When the session feels confused, repetitive, or risky.
 
 Stop.
 
@@ -99,78 +107,60 @@ Summarise what is currently true.
 
 Continue with one small change only.
 
-New project intake, first session only
+## New project intake, first session only
 
-When starting a new app, Agent must ask and record answers in PROJECT_STATE.md.
+When starting a new project, the Agent must ask and record answers in PROJECT_STATE.md.
 
-What platforms must be supported now. Android, iOS, web.
+- Target platforms now.
+- Platforms possibly needed later.
+- Prototype or long term product.
+- Login, payments, ads, notifications, offline, sync.
+- Data and storage needs.
+- Deployment target.
+- Team size.
 
-What platforms might be needed later.
+Only then may the Agent recommend a stack and record the decision.
 
-Is this a prototype or a long term product.
+## Safety rails
 
-Do we need login, payments, push notifications, offline, sync, background tasks.
+The Agent must never do the following without explicit permission.
 
-Data and storage needs. Local only, cloud, database.
+- Delete databases.
+- Delete large folders.
+- Replace the whole app structure.
+- Migrate frameworks.
 
-Deployment target. App store, web hosting, internal only.
+If something big is needed, the Agent proposes and waits.
 
-Team size. Solo or shared.
+## Pause In Action protocol
 
-Then Agent must recommend a stack and write the decision into PROJECT_STATE.md.
+Invoked by saying “Pause In Action” or “pause in action”.
 
-Safety rails
+When invoked, the Agent must immediately do the following.
 
-Agent must never do these without asking first.
+1. Stop problem solving and halt work.
+2. Ensure code is saved and in a stable state.
+3. Update PROJECT_STATE.md with current reality, including:
+   - Next steps
+   - Decisions made
+   - Vision updates
+   - Observed failures
+4. Produce a Handover Message that includes:
+   - What was done this session
+   - Current state
+   - Outstanding initiatives
+   - Next steps
+   - Blockers
+   - Files touched
+5. Produce a Next Agent Prompt that can be used to resume work exactly where it left off.
 
-Delete databases.
+PROJECT_STATE.md is the memory.  
+The handover and prompt preserve continuity between sessions.
 
-Delete large folders.
+## Stability note
 
-Replace the whole app structure.
+This document should change rarely.
 
-Migrate frameworks.
+PROJECT_STATE.md changes often.
 
-If something big is needed, Agent proposes a plan and waits.
-
-Pause In Action protocol
-
-Invoked by saying "Pause In Action" or "pause in action".
-
-When invoked, Agent must immediately:
-
-1. Stop problem-solving. Halt current work.
-
-2. Lock repo truth. Ensure all changes are saved and committed.
-
-3. Update PROJECT_STATE.md. This is critical. The following sections must reflect the current reality:
-
-   - Next single step section. Update with what was completed this session and what remains.
-   
-   - Decisions section. Add any new decisions made during this session.
-   
-   - Vision section. Add any new ideas, initiatives, or future directions discussed (pricing tiers, App Store plans, advertising, new features, etc). Ideas must never be lost.
-   
-   - Observed failures section. Add any new bugs discovered or fixed.
-
-4. Produce a Handover Message. This is mandatory. Without it, the pause is invalid.
-
-The Handover Message must include:
-
-- What was done this session. List the changes made.
-
-- Current state. What is working, what is not.
-
-- Outstanding initiatives. Big picture items still to do (App Store, pricing, advertising, features discussed but not built, etc).
-
-- Next steps. What should be tackled in the next session.
-
-- Any blockers or decisions needed.
-
-- Files touched. List the key files that were modified.
-
-5. Produce a Next Agent Prompt. A ready-to-use message that the next agent (or fresh session) can use to pick up exactly where we left off. This prompt should reference the updated PROJECT_STATE.md and summarize the immediate context.
-
-The purpose is to preserve all ideas and context so nothing is lost between sessions. PROJECT_STATE.md is the living document that accumulates everything. The handover message and next agent prompt ensure continuity.
-
-Note: WORKING-METHOD-REPLIT.md (this file) is stable and rarely changes. PROJECT_STATE.md is continuously updated and is the source of truth for current progress, ideas, and goals.
+If this document needs to change, it should be discussed and agreed deliberately.

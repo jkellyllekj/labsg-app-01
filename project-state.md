@@ -283,6 +283,14 @@ Core functionality works. CardGym-style visual polish applied and continuing.
 - Reroll effort variety: expanded description arrays to span all 5 effort levels ✓
 - Gradient variety: subtle gradient variants for all effort zones (4 per zone) ✓
 
+**CardGym-Style Effort Gradients (DONE):**
+- Created parseEffortTimeline() to analyze set body text for effort progression patterns
+- Detects: progression keywords (build, descend), alternating (odds/evens), steady (maintain, hold), finale (final sprint)
+- Generates smooth gradients for progressive sets (moderate→strong→hard→fullgas)
+- Generates striped gradients for alternating sets (moderate-hard-moderate-hard)
+- Updated buildOneSetBodyShared with clear effort progression keywords
+- Updated gradientStyleForZones to accept label/body for stripe detection
+
 **Future Items:**
 - Generate variety: reduce repetition of similar workouts (different set order, proportions)
 

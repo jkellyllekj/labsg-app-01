@@ -162,11 +162,16 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     return makeLine(fit.reps, fit.dist, warmDesc, 0);
   }
 
-  // BUILD: Build set with variety
+  // BUILD: Build set with variety - clear progression keywords for gradient
   if (k.includes("build")) {
+    const buildSetDescs = [
+      stroke + " build to strong", stroke + " descend 1-4", stroke + " build to fast",
+      stroke + " negative split", stroke + " descend to hard", stroke + " build with last one sprint"
+    ];
+    const buildSetDesc = buildSetDescs[seedA % buildSetDescs.length];
     const fit = findBestFit([d50, d100, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, stroke + " build", 0);
-    return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist, "moderate"));
+    return makeLine(fit.reps, fit.dist, buildSetDesc, restFor(fit.dist, "moderate"));
   }
 
   // DRILL: Named drill with nice display
@@ -294,20 +299,33 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // Simple single-line main set (default) - with varied effort levels
+  // Descriptions designed to trigger proper effort gradients in parseEffortTimeline
   const mainDescs = {
-    sprint: [stroke + " fast", stroke + " build to sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"],
-    threshold: [stroke + " best average", stroke + " strong hold", stroke + " threshold pace", stroke + " controlled fast", stroke + " tempo"],
-    endurance: [stroke + " steady", stroke + " smooth", stroke + " hold pace", stroke + " aerobic", stroke + " consistent"],
-    technique: [stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", stroke + " smooth technique", stroke + " efficient"],
+    sprint: [
+      stroke + " fast", stroke + " build to sprint", stroke + " max effort", 
+      stroke + " race pace", stroke + " all out", stroke + " descend with final sprint"
+    ],
+    threshold: [
+      stroke + " maintain strong pace", stroke + " threshold hold", stroke + " threshold pace", 
+      stroke + " controlled fast", stroke + " tempo hold"
+    ],
+    endurance: [
+      stroke + " steady", stroke + " smooth", stroke + " hold pace", 
+      stroke + " aerobic", stroke + " consistent"
+    ],
+    technique: [
+      stroke + " perfect form", stroke + " focus DPS", stroke + " count strokes", 
+      stroke + " smooth technique", stroke + " efficient"
+    ],
     allround: [
-      // Strong (yellow) - building/moderate-hard effort
-      stroke + " " + buildDesc, stroke + " descend 1-4", stroke + " build to strong",
-      stroke + " negative split", stroke + " odds steady evens strong",
-      // Hard (orange) - sustained effort
-      stroke + " hard", stroke + " strong", stroke + " controlled fast", stroke + " threshold",
-      stroke + " fast hold", stroke + " push",
-      // Fullgas (red) - max effort touches
-      stroke + " odds easy evens fast", stroke + " fast", stroke + " build to fast",
+      // Progressive gradients (green→yellow→orange or similar)
+      stroke + " build to strong effort", stroke + " descend to hard", stroke + " build to fast",
+      stroke + " negative split to fast", stroke + " descend with final sprint",
+      // Alternating patterns (stripes)
+      stroke + " odds easy evens fast", stroke + " odds steady evens fast",
+      // Hard solid (orange)
+      stroke + " hard", stroke + " strong hold", stroke + " threshold", stroke + " fast hold",
+      // Fullgas solid (red) 
       stroke + " sprint", stroke + " max effort", stroke + " race pace", stroke + " all out"
     ]
   };
@@ -920,7 +938,10 @@ app.get("/", (req, res) => {
         return "moderate";
       }
 
-      // Parse a single line to detect its zone
+      // Zone order for filling gaps (never skip levels)
+      const ZONE_ORDER = ["easy", "moderate", "strong", "hard", "fullgas"];
+      
+      // Parse a single line or clause to detect its zone
       function detectLineZone(line) {
         const t = String(line || "").toLowerCase();
         
@@ -937,19 +958,18 @@ app.get("/", (req, res) => {
         }
         
         // Strong (yellow) - building effort, moderate-hard
-        if (t.includes("build") || t.includes("descend") || t.includes("negative") || 
-            t.includes("push") || t.includes("moderate")) {
+        if (t.includes("push") || t.includes("moderate")) {
           return "strong";
         }
         
-        // Moderate (blue) - steady, technique
+        // Moderate (green) - steady, technique
         if (t.includes("steady") || t.includes("smooth") || t.includes("drill") || 
             t.includes("technique") || t.includes("focus") || t.includes("form") || 
             t.includes("choice") || t.includes("relaxed")) {
           return "moderate";
         }
         
-        // Easy (green)
+        // Easy (blue)
         if (t.includes("easy") || t.includes("recovery") || t.includes("loosen") || 
             t.includes("warm") || t.includes("cool")) {
           return "easy";
@@ -957,9 +977,6 @@ app.get("/", (req, res) => {
         
         return null; // Unknown
       }
-      
-      // Zone order for filling gaps (never skip levels)
-      const ZONE_ORDER = ["easy", "moderate", "strong", "hard", "fullgas"];
       
       // Fill gaps between two zones so we never skip levels
       function fillZoneGap(fromZone, toZone) {
@@ -975,52 +992,175 @@ app.get("/", (req, res) => {
         }
         return result;
       }
-
-      function getZoneSpan(label, body) {
+      
+      // Parse body text into effort segments with weights
+      // Returns { zones: [...], isStriped: bool, isProgressive: bool }
+      function parseEffortTimeline(label, body) {
         const labelOnly = String(label || "").toLowerCase();
+        const bodyText = String(body || "").toLowerCase();
         const lines = String(body || "").split("\\n").filter(l => l.trim());
         
-        // Warm-up: always easy→moderate (green→blue)
+        // Detect progression keywords - these create smooth gradients
+        const hasProgression = /build|descend|negative split|pyramid|disappearing/i.test(bodyText);
+        const hasFinalSprint = /final.*(sprint|fast|hard)|last.*(sprint|fast|hard)|with final|last \\d+ sprint/i.test(bodyText);
+        const hasAlternating = /odds.*(easy|fast)|evens.*(easy|fast)|alternate/i.test(bodyText);
+        const hasSteady = /maintain|hold|steady|same pace|consistent/i.test(bodyText) && !hasProgression;
+        
+        // Warm-up: easy→moderate (blue→green)
         if (labelOnly.includes("warm")) {
-          return ["easy", "moderate"];
+          return { zones: ["easy", "moderate"], isStriped: false, isProgressive: true };
         }
         
-        // Cool-down: always moderate→easy (blue→green) 
+        // Cool-down: moderate→easy (green→blue) or easy if relaxed
         if (labelOnly.includes("cool")) {
-          return ["moderate", "easy"];
+          return { zones: ["moderate", "easy"], isStriped: false, isProgressive: true };
         }
         
-        // Parse actual segments from body
-        const lineZones = [];
-        for (const line of lines) {
-          const zone = detectLineZone(line);
-          if (zone) lineZones.push(zone);
+        // Alternating pattern: odds easy evens fast -> stripes with actual zones
+        if (hasAlternating) {
+          // Parse exact zones from alternating pattern
+          let zone1 = "moderate";
+          let zone2 = "hard";
+          
+          // Detect first zone (odds X or evens X where X is first mentioned)
+          if (/odds\\s+easy/i.test(bodyText)) zone1 = "easy";
+          else if (/odds\\s+steady|odds\\s+relaxed/i.test(bodyText)) zone1 = "moderate";
+          else if (/odds\\s+strong|odds\\s+push/i.test(bodyText)) zone1 = "strong";
+          else if (/odds\\s+fast|odds\\s+hard/i.test(bodyText)) zone1 = "hard";
+          else if (/odds\\s+sprint/i.test(bodyText)) zone1 = "fullgas";
+          
+          // Detect second zone (evens X or vice versa)
+          if (/evens\\s+easy/i.test(bodyText)) zone2 = "easy";
+          else if (/evens\\s+steady|evens\\s+relaxed/i.test(bodyText)) zone2 = "moderate";
+          else if (/evens\\s+strong|evens\\s+push/i.test(bodyText)) zone2 = "strong";
+          else if (/evens\\s+fast|evens\\s+hard/i.test(bodyText)) zone2 = "hard";
+          else if (/evens\\s+sprint/i.test(bodyText)) zone2 = "fullgas";
+          
+          // Only stripe if zones are different
+          if (zone1 !== zone2) {
+            return { zones: [zone1, zone2, zone1, zone2], isStriped: true, isProgressive: false };
+          }
+          // Same zone = solid color
+          return { zones: [zone1], isStriped: false, isProgressive: false };
         }
         
-        // No zones detected - single solid color
-        if (lineZones.length === 0) return null;
-        
-        // Single zone - solid color
-        if (lineZones.length === 1) return null;
-        
-        // Check for alternating pattern (striped: easy-hard-easy-hard or similar)
-        const isAlternating = lineZones.length >= 3 && lineZones.every((z, i) => 
-          z === lineZones[i % 2 === 0 ? 0 : 1]
-        );
-        
-        if (isAlternating && lineZones[0] !== lineZones[1]) {
-          // Return alternating pattern for stripes
-          return lineZones.slice(0, Math.min(lineZones.length, 6));
+        // Steady/hold sets: only solid if explicit "maintain" or "same pace" - not just "hold" 
+        // Skip this if progression keywords are present (build then hold is still progressive)
+        const hasPureSteady = /maintain.*pace|same pace|consistent pace/i.test(bodyText) && !hasProgression;
+        if (hasPureSteady) {
+          // Detect the actual zone level
+          if (/strong|threshold/i.test(bodyText)) return { zones: ["hard"], isStriped: false, isProgressive: false };
+          if (/fast|hard/i.test(bodyText)) return { zones: ["hard"], isStriped: false, isProgressive: false };
+          if (/easy|relaxed/i.test(bodyText)) return { zones: ["moderate"], isStriped: false, isProgressive: false };
+          return { zones: ["strong"], isStriped: false, isProgressive: false };
         }
         
-        // Progressive pattern: fill gaps between first and last zone
-        const firstZone = lineZones[0];
-        const lastZone = lineZones[lineZones.length - 1];
+        // Progression sets: build, descend, etc
+        if (hasProgression) {
+          // Determine start and end zones based on context
+          let startZone = "moderate"; // Default start
+          let endZone = "hard"; // Default end
+          
+          // Check for explicit start zone mentions
+          if (/from easy|start easy|start relaxed/i.test(bodyText)) startZone = "easy";
+          else if (/from moderate|start steady|start smooth/i.test(bodyText)) startZone = "moderate";
+          
+          // Check for explicit end zone mentions  
+          if (hasFinalSprint || /to sprint|to max|to race pace|to full/i.test(bodyText)) {
+            endZone = "fullgas";
+          } else if (/to strong|strong effort/i.test(bodyText)) {
+            endZone = "hard";
+          } else if (/to fast|to hard|to threshold/i.test(bodyText)) {
+            endZone = "hard";
+          }
+          
+          // For main sets with build, start higher
+          if (labelOnly.includes("main") && startZone === "easy") {
+            startZone = "moderate";
+          }
+          
+          // Fill the progression
+          const progressionZones = fillZoneGap(startZone, endZone);
+          return { zones: progressionZones, isStriped: false, isProgressive: true };
+        }
         
-        if (firstZone === lastZone) return null; // No gradient needed
+        // Multi-line sets: parse each line's zone
+        if (lines.length >= 2) {
+          const lineZones = [];
+          for (const line of lines) {
+            const zone = detectLineZone(line);
+            if (zone) lineZones.push(zone);
+          }
+          
+          if (lineZones.length >= 2) {
+            // Check if it's alternating (A-B-A-B pattern)
+            const isAlternatingPattern = lineZones.length >= 3 && lineZones.every((z, i) => 
+              z === lineZones[i % 2 === 0 ? 0 : 1]
+            ) && lineZones[0] !== lineZones[1];
+            
+            if (isAlternatingPattern) {
+              return { zones: lineZones.slice(0, 6), isStriped: true, isProgressive: false };
+            }
+            
+            // Progressive: fill gaps between first and last
+            const firstZone = lineZones[0];
+            const lastZone = lineZones[lineZones.length - 1];
+            if (firstZone !== lastZone) {
+              return { zones: fillZoneGap(firstZone, lastZone), isStriped: false, isProgressive: true };
+            }
+          }
+        }
         
-        // Fill the gap so we never skip levels
-        return fillZoneGap(firstZone, lastZone);
+        // Single zone detection for solid colors
+        const singleZone = detectLineZone(bodyText);
+        if (singleZone) {
+          // Check for final sprint modifier - cap gradient at most one level above base
+          // unless explicitly fullgas set already
+          if (hasFinalSprint && singleZone !== "fullgas") {
+            // Determine reasonable end zone - one level up from base, max hard for non-main sets
+            const baseIdx = ZONE_ORDER.indexOf(singleZone);
+            let endIdx = Math.min(baseIdx + 1, ZONE_ORDER.length - 1);
+            // Only go to fullgas if base is already hard, or if label is main
+            if (baseIdx >= ZONE_ORDER.indexOf("hard") || labelOnly.includes("main")) {
+              endIdx = ZONE_ORDER.length - 1; // fullgas
+            }
+            const endZone = ZONE_ORDER[endIdx];
+            if (singleZone !== endZone) {
+              const progressionZones = fillZoneGap(singleZone, endZone);
+              return { zones: progressionZones, isStriped: false, isProgressive: true };
+            }
+          }
+          return { zones: [singleZone], isStriped: false, isProgressive: false };
+        }
+        
+        // Default by label type
+        if (labelOnly.includes("main")) {
+          return { zones: ["strong", "hard"], isStriped: false, isProgressive: true };
+        }
+        if (labelOnly.includes("build")) {
+          return { zones: ["moderate", "strong", "hard"], isStriped: false, isProgressive: true };
+        }
+        if (labelOnly.includes("drill") || labelOnly.includes("kick") || labelOnly.includes("pull")) {
+          return { zones: ["moderate"], isStriped: false, isProgressive: false };
+        }
+        
+        return { zones: ["moderate"], isStriped: false, isProgressive: false };
+      }
+
+      function getZoneSpan(label, body) {
+        const timeline = parseEffortTimeline(label, body);
+        
+        // Single zone = solid color, no gradient needed
+        if (timeline.zones.length <= 1) return null;
+        
+        // Return zones for gradient/stripe rendering
+        return timeline.zones;
+      }
+      
+      // Check if zones should be rendered as stripes vs gradient
+      function isZoneStriped(label, body) {
+        const timeline = parseEffortTimeline(label, body);
+        return timeline.isStriped;
       }
 
       function getZoneColors(zone) {
@@ -1038,19 +1178,20 @@ app.get("/", (req, res) => {
         return zones[zone] || zones.moderate;
       }
 
-      function gradientStyleForZones(zoneSpan) {
+      function gradientStyleForZones(zoneSpan, label, body) {
         if (!zoneSpan || zoneSpan.length < 2) return null;
         
         const colors = zoneSpan.map(z => getZoneColors(z));
         
-        // Determine text color - white only on full red (fullgas), black everywhere else
-        const hasFullgas = zoneSpan.includes('fullgas');
-        const textColor = hasFullgas ? '#fff' : '#111';
+        // Determine text color - white only if more than half is fullgas
+        const fullgasCount = zoneSpan.filter(z => z === 'fullgas').length;
+        const hardOrFullgasCount = zoneSpan.filter(z => z === 'fullgas' || z === 'hard').length;
+        const textColor = (fullgasCount > zoneSpan.length / 2) ? '#fff' : '#111';
         
-        // Check if this is an alternating/striped pattern (more than 2 zones with repetition)
-        const isStriped = zoneSpan.length >= 3;
+        // Check if this should be striped (alternating pattern) vs smooth gradient
+        const shouldStripe = isZoneStriped(label, body);
         
-        if (isStriped) {
+        if (shouldStripe) {
           // Create hard-edged stripes for alternating patterns
           const stripeHeight = 100 / zoneSpan.length;
           const bgStops = [];
@@ -1076,7 +1217,7 @@ app.get("/", (req, res) => {
           };
         }
         
-        // Smooth gradient for progressive builds (2 zones with fill)
+        // Smooth gradient for progressive builds
         const bgStops = colors.map((c, i) => c.bg + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
         const bgGradient = 'linear-gradient(to bottom, ' + bgStops + ')';
         
@@ -1474,7 +1615,7 @@ app.get("/", (req, res) => {
 
           const effortLevel = getEffortLevel(label, body);
           const zoneSpan = getZoneSpan(label, body);
-          const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan) : null;
+          const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan, label, body) : null;
           
           let boxStyle;
           let textColor = '#111';
@@ -1623,7 +1764,7 @@ app.get("/", (req, res) => {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
                 const newZoneSpan = getZoneSpan(label, nextBody);
-                const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan) : null;
+                const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan, label, nextBody) : null;
                 let newStyle;
                 let newTextColor = '#111';
                 const dropShadow = "0 6px 16px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25)";

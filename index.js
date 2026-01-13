@@ -995,25 +995,44 @@ app.get("/", (req, res) => {
       
       // Parse body text into effort segments with weights
       // Returns { zones: [...], isStriped: bool, isProgressive: bool }
-      function parseEffortTimeline(label, body) {
+      // Optional variantSeed adds randomness for gradient probability
+      function parseEffortTimeline(label, body, variantSeed) {
         const labelOnly = String(label || "").toLowerCase();
         const bodyText = String(body || "").toLowerCase();
         const lines = String(body || "").split("\\n").filter(l => l.trim());
+        
+        // LCG-based seeded random generator - advances with each call
+        let lcgState = variantSeed || (body ? body.length * 7 + 42 : 42);
+        function nextRandom() {
+          lcgState = (lcgState * 9301 + 49297) % 233280;
+          return lcgState / 233280;
+        }
         
         // Detect progression keywords - these create smooth gradients
         const hasProgression = /build|descend|negative split|pyramid|disappearing/i.test(bodyText);
         const hasFinalSprint = /final.*(sprint|fast|hard)|last.*(sprint|fast|hard)|with final|last \\d+ sprint/i.test(bodyText);
         const hasAlternating = /odds.*(easy|fast)|evens.*(easy|fast)|alternate/i.test(bodyText);
-        const hasSteady = /maintain|hold|steady|same pace|consistent/i.test(bodyText) && !hasProgression;
         
-        // Warm-up: easy→moderate (blue→green)
+        // Warm-up: 80% solid blue, 20% easy→moderate gradient
         if (labelOnly.includes("warm")) {
+          if (nextRandom() < 0.8) {
+            return { zones: ["easy"], isStriped: false, isProgressive: false };
+          }
           return { zones: ["easy", "moderate"], isStriped: false, isProgressive: true };
         }
         
-        // Cool-down: moderate→easy (green→blue) or easy if relaxed
+        // Cool-down: 80% solid blue, 20% moderate→easy gradient
         if (labelOnly.includes("cool")) {
+          if (nextRandom() < 0.8) {
+            return { zones: ["easy"], isStriped: false, isProgressive: false };
+          }
           return { zones: ["moderate", "easy"], isStriped: false, isProgressive: true };
+        }
+        
+        // Drill: Always solid green or yellow (technique focus, no gradients)
+        if (labelOnly.includes("drill")) {
+          const zone = nextRandom() < 0.7 ? "moderate" : "strong";
+          return { zones: [zone], isStriped: false, isProgressive: false };
         }
         
         // Alternating pattern: odds easy evens fast -> stripes with actual zones
@@ -1133,22 +1152,50 @@ app.get("/", (req, res) => {
           return { zones: [singleZone], isStriped: false, isProgressive: false };
         }
         
-        // Default by label type
-        if (labelOnly.includes("main")) {
-          return { zones: ["strong", "hard"], isStriped: false, isProgressive: true };
+        // Default by label type with probability-based variety
+        
+        // Kick/Pull: mostly moderate (70%), sometimes strong (20%), occasionally hard (10%)
+        if (labelOnly.includes("kick") || labelOnly.includes("pull")) {
+          const kickRoll = nextRandom();
+          if (kickRoll < 0.7) return { zones: ["moderate"], isStriped: false, isProgressive: false };
+          if (kickRoll < 0.9) return { zones: ["strong"], isStriped: false, isProgressive: false };
+          return { zones: ["hard"], isStriped: false, isProgressive: false };
         }
+        
+        // Build: 50% gradient (moderate→strong or moderate→hard), 50% solid
         if (labelOnly.includes("build")) {
-          return { zones: ["moderate", "strong", "hard"], isStriped: false, isProgressive: true };
+          const buildGradientRoll = nextRandom();
+          if (buildGradientRoll < 0.5) {
+            return { zones: ["moderate", "strong"], isStriped: false, isProgressive: true };
+          }
+          // Solid color - mostly moderate, sometimes strong
+          const buildZoneRoll = nextRandom();
+          const zone = buildZoneRoll < 0.75 ? "moderate" : "strong";
+          return { zones: [zone], isStriped: false, isProgressive: false };
         }
-        if (labelOnly.includes("drill") || labelOnly.includes("kick") || labelOnly.includes("pull")) {
+        
+        // Main: 50% gradient, 50% solid. Sometimes moderate, sometimes hard
+        // Fullgas ONLY allowed in main sets
+        if (labelOnly.includes("main")) {
+          const mainGradientRoll = nextRandom();
+          if (mainGradientRoll < 0.5) {
+            // Gradient - could go to hard or fullgas
+            const mainEndRoll = nextRandom();
+            const endZone = mainEndRoll < 0.3 ? "fullgas" : "hard";
+            return { zones: fillZoneGap("strong", endZone), isStriped: false, isProgressive: true };
+          }
+          // Solid - variety of effort levels
+          const mainSolidRoll = nextRandom();
+          if (mainSolidRoll < 0.5) return { zones: ["strong"], isStriped: false, isProgressive: false };
+          if (mainSolidRoll < 0.8) return { zones: ["hard"], isStriped: false, isProgressive: false };
           return { zones: ["moderate"], isStriped: false, isProgressive: false };
         }
         
         return { zones: ["moderate"], isStriped: false, isProgressive: false };
       }
 
-      function getZoneSpan(label, body) {
-        const timeline = parseEffortTimeline(label, body);
+      function getZoneSpan(label, body, variantSeed) {
+        const timeline = parseEffortTimeline(label, body, variantSeed);
         
         // Single zone = solid color, no gradient needed
         if (timeline.zones.length <= 1) return null;
@@ -1158,8 +1205,8 @@ app.get("/", (req, res) => {
       }
       
       // Check if zones should be rendered as stripes vs gradient
-      function isZoneStriped(label, body) {
-        const timeline = parseEffortTimeline(label, body);
+      function isZoneStriped(label, body, variantSeed) {
+        const timeline = parseEffortTimeline(label, body, variantSeed);
         return timeline.isStriped;
       }
 
@@ -1178,7 +1225,7 @@ app.get("/", (req, res) => {
         return zones[zone] || zones.moderate;
       }
 
-      function gradientStyleForZones(zoneSpan, label, body) {
+      function gradientStyleForZones(zoneSpan, label, body, variantSeed) {
         if (!zoneSpan || zoneSpan.length < 2) return null;
         
         const colors = zoneSpan.map(z => getZoneColors(z));
@@ -1189,25 +1236,16 @@ app.get("/", (req, res) => {
         const textColor = (fullgasCount > zoneSpan.length / 2) ? '#fff' : '#111';
         
         // Check if this should be striped (alternating pattern) vs smooth gradient
-        const shouldStripe = isZoneStriped(label, body);
+        const shouldStripe = isZoneStriped(label, body, variantSeed);
         
         if (shouldStripe) {
-          // Create hard-edged stripes for alternating patterns
-          const stripeHeight = 100 / zoneSpan.length;
-          const bgStops = [];
-          const barStops = [];
+          // Alternating patterns now use smooth blended gradients (not hard stripes)
+          // This creates a wave-like transition between effort levels
+          const bgStops = colors.map((c, i) => c.bg + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
+          const bgGradient = 'linear-gradient(to bottom, ' + bgStops + ')';
           
-          for (let i = 0; i < colors.length; i++) {
-            const start = Math.round(i * stripeHeight);
-            const end = Math.round((i + 1) * stripeHeight);
-            bgStops.push(colors[i].bg + ' ' + start + '%');
-            bgStops.push(colors[i].bg + ' ' + end + '%');
-            barStops.push(colors[i].bar + ' ' + start + '%');
-            barStops.push(colors[i].bar + ' ' + end + '%');
-          }
-          
-          const bgGradient = 'linear-gradient(to bottom, ' + bgStops.join(', ') + ')';
-          const barGradient = 'linear-gradient(to bottom, ' + barStops.join(', ') + ')';
+          const barStops = colors.map((c, i) => c.bar + ' ' + Math.round(i * 100 / (colors.length - 1)) + '%').join(', ');
+          const barGradient = 'linear-gradient(to bottom, ' + barStops + ')';
           
           return {
             background: bgGradient,
@@ -1614,8 +1652,9 @@ app.get("/", (req, res) => {
           const unitShort = unitShortFromPayload(payload);
 
           const effortLevel = getEffortLevel(label, body);
-          const zoneSpan = getZoneSpan(label, body);
-          const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan, label, body) : null;
+          const variantSeed = idx * 7 + body.length;
+          const zoneSpan = getZoneSpan(label, body, variantSeed);
+          const gradientStyle = zoneSpan ? gradientStyleForZones(zoneSpan, label, body, variantSeed) : null;
           
           let boxStyle;
           let textColor = '#111';
@@ -1763,8 +1802,9 @@ app.get("/", (req, res) => {
               if (cardContainer) {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
-                const newZoneSpan = getZoneSpan(label, nextBody);
-                const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan, label, nextBody) : null;
+                const newVariantSeed = rerollCount * 13 + nextBody.length;
+                const newZoneSpan = getZoneSpan(label, nextBody, newVariantSeed);
+                const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan, label, nextBody, newVariantSeed) : null;
                 let newStyle;
                 let newTextColor = '#111';
                 const dropShadow = "0 6px 16px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25)";

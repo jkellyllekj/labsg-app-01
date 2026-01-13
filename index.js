@@ -487,6 +487,30 @@ app.get("/", (req, res) => {
       .form-col {
         width: 100%;
       }
+      .bgCycleBtn {
+        width: 34px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.18);
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(4px);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .bgCycleBtn:hover { background: rgba(255,255,255,0.28); }
+      .bgCycleBtn:disabled { opacity: 0.5; cursor: default; }
+      .bgCycleIcon {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: rgba(0,0,0,0.75);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
       .distance-slider {
         width: 100%;
         max-width: 100%;
@@ -678,7 +702,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><div style="display:inline-flex; align-items:center; gap:6px;"><button id="bgCycleBtn" class="bgCycleBtn" type="button" aria-label="Change background" title="Change background"><svg viewBox="0 0 24 24" class="bgCycleIcon" aria-hidden="true"><path d="M6 13a6 6 0 0 0 10.2 4.2l1.3 1.3A8 8 0 0 1 4 13h2z"/><path d="M18 11a6 6 0 0 0-10.2-4.2L6.5 5.5A8 8 0 0 1 20 11h-2z"/><path d="M7 6v4H3M17 18v-4h4"/></svg></button><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
@@ -819,6 +843,66 @@ app.get("/", (req, res) => {
       function fingerprintWorkoutText(text) {
         return String(fnv1a(String(text || "")));
       }
+
+      // Background cycling
+      const backgroundImages = [
+        "/backgrounds/Page-002 (Large)_result.webp",
+        "/backgrounds/Page-004 (Large)_result.webp",
+        "/backgrounds/Page-006 (Large)_result.webp",
+        "/backgrounds/Page-008 (Large)_result.webp",
+        "/backgrounds/Page-010 (Large)_result.webp",
+        "/backgrounds/Page-012 (Large)_result.webp",
+        "/backgrounds/Page-014 (Large)_result.webp",
+        "/backgrounds/Page-016 (Large)_result.webp",
+        "/backgrounds/Page-018 (Large)_result.webp",
+        "/backgrounds/Page-020 (Large)_result.webp",
+        "/backgrounds/Page-022 (Large)_result.webp",
+        "/backgrounds/Page-022(1) (Large)_result.webp",
+        "/backgrounds/Page-024 (Large)_result.webp"
+      ];
+
+      // Determine initial background index from current body background
+      let bgIndex = (function() {
+        const style = document.body.style.backgroundImage || "";
+        for (let i = 0; i < backgroundImages.length; i++) {
+          if (style.includes(backgroundImages[i])) return i;
+        }
+        return 0;
+      })();
+
+      function applyBackgroundByIndex(index) {
+        const url = backgroundImages[index];
+        document.body.style.backgroundImage = "url('" + url + "'), linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%)";
+      }
+
+      function cycleBackgroundManually() {
+        const btn = document.getElementById("bgCycleBtn");
+        if (!btn) return;
+
+        btn.disabled = true;
+
+        document.body.style.transition = "opacity 220ms ease";
+        document.body.style.opacity = "0";
+
+        setTimeout(function() {
+          bgIndex = (bgIndex + 1) % backgroundImages.length;
+          applyBackgroundByIndex(bgIndex);
+
+          document.body.style.opacity = "1";
+
+          setTimeout(function() {
+            btn.disabled = false;
+          }, 260);
+        }, 220);
+      }
+
+      function wireBackgroundCycleButton() {
+        const btn = document.getElementById("bgCycleBtn");
+        if (!btn) return;
+        btn.addEventListener("click", cycleBackgroundManually);
+      }
+
+      wireBackgroundCycleButton();
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 

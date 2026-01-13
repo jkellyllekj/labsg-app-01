@@ -30,6 +30,13 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Manual background cycling icon added next to workout title pill (no Generate coupling)
+2. Button appears left of the yellow pill when workout is displayed
+3. Clicking cycles through 13 background images with 220ms fade transition
+4. Background only randomizes on page load - Generate does NOT change it
+5. Button disabled during transition to prevent rapid clicking
+
+**Previous Session (2026-01-13):**
 1. Fixed reroll card update: Changed card container selector from style-based to data-effort attribute selector
 2. Added setAttribute('data-effort', newEffort) so cards remain selectable after style changes
 3. Fixed dolphin haze completely: Removed all drop-shadow filters from CSS, set filter to none in finally block

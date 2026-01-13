@@ -2257,6 +2257,21 @@ app.get("/", (req, res) => {
   /* __END_ROUTE_HOME_UI_JS_CLOSE_R190__ */
 
   /* __START_ROUTE_HOME_UI_SEND_R195__ */
+  const backgroundImages = [
+    '/backgrounds/Page-002%20(Large).png',
+    '/backgrounds/Page-004%20(Large).png',
+    '/backgrounds/Page-006%20(Large).png',
+    '/backgrounds/Page-008%20(Large).png',
+    '/backgrounds/Page-010%20(Large).png',
+    '/backgrounds/Page-012%20(Large).png',
+    '/backgrounds/Page-014%20(Large).png',
+    '/backgrounds/Page-016%20(Large).png',
+    '/backgrounds/Page-018%20(Large).png',
+    '/backgrounds/Page-020%20(Large).png',
+    '/backgrounds/Page-022%20(Large).png',
+    '/backgrounds/Page-024%20(Large).png'
+  ];
+  const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
   const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -2264,7 +2279,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Gen</title>
 </head>
-<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('/pool-lanes-compressed.jpg') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: url('${randomBg}') center center / cover fixed no-repeat, linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 ${HOME_HTML}
 ${HOME_JS_OPEN}
 ${HOME_JS_DOM}

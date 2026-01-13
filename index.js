@@ -468,6 +468,17 @@ app.get("/", (req, res) => {
         animation: reroll-spin 1.25s ease-in-out;
         opacity: 1 !important;
       }
+      button[data-reroll-set] {
+        opacity: 1 !important;
+        filter: none !important;
+      }
+      button[data-reroll-set]:active,
+      button[data-reroll-set]:focus,
+      button[data-reroll-set]:focus-visible {
+        opacity: 1 !important;
+        filter: none !important;
+        outline: none;
+      }
       .form-row {
         display: flex;
         flex-direction: column;

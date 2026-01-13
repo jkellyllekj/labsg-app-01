@@ -260,6 +260,8 @@ Remaining minor issues:
 UI defects:
 - ~~Right side chips sometimes missing~~ FIXED 2026-01-09: Improved set distance parser to handle multi-line sets and more formats
 - Dice click can error when the set distance cannot be parsed, or when reroll returns invalid output
+- ~~Distance turns black after reroll~~ FIXED 2026-01-13: Now stays royal blue after reroll
+- ~~Dolphin spin stops after 1-2 clicks~~ FIXED 2026-01-13: Animation now waits 1.25s to complete before removing spinning class
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
 
@@ -269,11 +271,21 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-13: CardGym Visual Polish Session COMPLETE**
+**STATUS 2026-01-13: CardGym Visual Polish Session - Continuing**
 
-Core functionality works. CardGym-style visual polish applied.
+Core functionality works. CardGym-style visual polish applied and continuing.
 
-### COMPLETED THIS SESSION (2026-01-13):
+### IN PROGRESS THIS SESSION (2026-01-13):
+**Quick Fixes:**
+- Distance text: bolder + royal blue (#0055aa), fix black text after reroll
+- Dolphin reroll spin: ensure full 1.25s animation completes every click
+
+**Future Items (identified this session):**
+- Gradient variety: more orange/red gradients for hard sets, striations for progressive builds
+- Reroll variety: prevent cycling between same 1-2 options, endless combinations
+- Generate variety: reduce repetition of similar workouts
+
+### COMPLETED EARLIER (2026-01-13):
 1. **Dolphin reroll button** - Increased to 28px (25% bigger), sharper shadow (0.5 opacity), 1.25s spin animation for complete smooth 360
 2. **Splash rotation** - Adjusted to -144deg for better centered appearance
 3. **Title/Total boxes** - Now use small-caps font-variant with increased padding (6px 14px)

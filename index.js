@@ -1469,8 +1469,8 @@ app.get("/", (req, res) => {
           const subTextColor = textColor === '#fff' ? '#eee' : '#666';
           html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
           if (Number.isFinite(setDist)) {
-            const distColor = textColor === '#fff' ? '#99ccff' : '#0066cc';
-            html.push('<div style="font-weight:600; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
+            const distColor = textColor === '#fff' ? '#99ccff' : '#0055aa';
+            html.push('<div style="font-weight:700; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
           }
           if (Number.isFinite(estSec)) {
             html.push('<div style="font-size:12px; color:' + subTextColor + '; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
@@ -1601,12 +1601,13 @@ app.get("/", (req, res) => {
                   }
                 }
                 
-                // Update distance color
+                // Update distance color - always blue (royal blue for light, light blue for dark)
                 const distanceContainer = restEl ? restEl.nextElementSibling : null;
                 if (distanceContainer) {
                   const distEl = distanceContainer.querySelector('div:first-child');
                   const estEl = distanceContainer.querySelector('div:last-child');
-                  if (distEl) distEl.style.color = newTextColor;
+                  const distColor = newTextColor === '#fff' ? '#99ccff' : '#0055aa';
+                  if (distEl) distEl.style.color = distColor;
                   if (estEl && estEl !== distEl) estEl.style.color = newTextColor === '#fff' ? '#eee' : '#666';
                 }
               } else {
@@ -1624,8 +1625,10 @@ app.get("/", (req, res) => {
             } catch (e) {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
             } finally {
-              btn.disabled = false;
+              // Wait for the full 1.25s spin animation to complete before removing class
               const ds = btn.querySelector('.reroll-dolphin');
+              await new Promise(r => setTimeout(r, 1250));
+              btn.disabled = false;
               if (ds) ds.classList.remove('spinning');
             }
           });

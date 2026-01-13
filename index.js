@@ -1734,8 +1734,10 @@ app.get("/", (req, res) => {
             const bodyEl = cards.querySelector('[data-set-body="' + String(setIndex) + '"]');
             if (!bodyEl) return;
 
-            const currentBody = bodyEl.textContent || "";
-            const currentDist = computeSetDistanceFromBody(currentBody);
+            // Use original body (with rest) for avoidText matching, display body for distance calc
+            const originalBody = bodyEl.getAttribute("data-original-body") || "";
+            const displayBody = bodyEl.textContent || "";
+            const currentDist = computeSetDistanceFromBody(displayBody);
 
             if (!Number.isFinite(currentDist)) {
               renderError("Cannot reroll this set", ["Set distance could not be parsed. Ensure it contains NxD segments like 8x50, 4x100, or a single distance like 600."]);
@@ -1745,6 +1747,7 @@ app.get("/", (req, res) => {
             // Increment reroll counter for this card
             const rerollCount = Number(btn.dataset.rerollCount || 0) + 1;
             btn.dataset.rerollCount = String(rerollCount);
+            console.log('[Reroll] setIndex=' + setIndex + ', rerollCount=' + rerollCount + ', originalBody=' + originalBody.substring(0, 40));
 
             btn.disabled = true;
             const dolphinSpan = btn.querySelector('.reroll-dolphin');
@@ -1773,7 +1776,7 @@ app.get("/", (req, res) => {
                   stroke_butterfly: !!payload.stroke_butterfly,
                   label: (sections[setIndex - 1] && sections[setIndex - 1].label) ? sections[setIndex - 1].label : null,
                   targetDistance: currentDist,
-                  avoidText: currentBody,
+                  avoidText: originalBody,
                   rerollCount: rerollCount
                 }),
               });
@@ -1786,6 +1789,7 @@ app.get("/", (req, res) => {
               }
 
               const nextBody = String(data.setBody || "").trim();
+              console.log('[Reroll] Response received, nextBody=' + nextBody.substring(0, 50));
               if (!nextBody) {
                 renderError("Reroll failed", ["Empty set returned."]);
                 return;
@@ -2644,6 +2648,7 @@ app.post("/reroll-set", (req, res) => {
 
     // Use rerollCount to generate deterministically different seeds each click
     const rerollCount = Number(body.rerollCount) || 1;
+    console.log('[Server Reroll] label=' + label + ', targetDistance=' + targetDistance + ', rerollCount=' + rerollCount);
     
     // Generate a replacement body with the same label and distance
     // Use rerollCount directly to ensure each click gives different pattern

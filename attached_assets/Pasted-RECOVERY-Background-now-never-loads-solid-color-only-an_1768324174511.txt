@@ -1,0 +1,58 @@
+RECOVERY: Background now never loads (solid color only) and button does nothing.
+This strongly suggests bgWrap/bgA/bgB do not exist at init time, or init never runs, or click wiring runs before the button exists.
+
+Goal: Restore working background immediately with minimal, safe changes. index.js only. Do NOT test.
+
+1) Ensure bgWrap/bgA/bgB are inserted into the DOM in the app shell markup that is ALWAYS present (not inside conditional render). Put it near the root container so it exists on first render.
+
+<div id="bgWrap">
+  <div id="bgA" class="bgLayer"></div>
+  <div id="bgB" class="bgLayer"></div>
+</div>
+
+2) Ensure initBackgroundLayers runs AFTER the DOM insertion.
+If you render by setting innerHTML, call initBackgroundLayers() immediately after that innerHTML assignment, not before.
+If you render via a render() function, call initBackgroundLayers() at the end of render() and ensure it is guarded to only run once.
+
+Add:
+
+let bgInitDone = false;
+
+function initBackgroundLayersOnce() {
+  if (bgInitDone) return;
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+  if (!bgA || !bgB) return; // wait until DOM exists
+
+  const url = backgroundImages[bgIndex];
+  bgA.style.backgroundImage = `url(${url})`;
+  bgA.classList.add("isActive");
+  bgB.classList.remove("isActive");
+  activeBgLayer = "A";
+
+  bgInitDone = true;
+}
+
+Call initBackgroundLayersOnce() after the app shell is rendered.
+
+3) Ensure the button click handler is wired AFTER the button exists.
+If the title row is re-rendered on Generate, do not rely on a one-time addEventListener to a node that gets replaced.
+Use event delegation ONCE on document:
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest("#bgCycleBtn");
+  if (!btn) return;
+  cycleBackgroundManually();
+});
+
+Remove any direct btn.addEventListener(...) wiring that might be running before the button exists or gets replaced.
+
+4) Temporary sanity logs (remove after fix)
+Add these logs temporarily:
+- After initBackgroundLayersOnce(): console.log("bg init ok", bgIndex);
+- At start of cycleBackgroundManually(): console.log("bg cycle click");
+
+5) Crossfade code stays the same, but MUST early-return if layers missing:
+If (!bgA || !bgB) return;
+
+Stop after restoring background + click working. Commit + push.

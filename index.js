@@ -961,14 +961,32 @@ app.get("/", (req, res) => {
         }, 280);
       }
 
-      function wireBackgroundCycleButton() {
-        const btn = document.getElementById("bgCycleBtn");
-        if (!btn) return;
-        btn.addEventListener("click", cycleBackgroundManually);
+      let bgInitDone = false;
+
+      function initBackgroundLayersOnce() {
+        if (bgInitDone) return;
+        const bgA = document.getElementById("bgA");
+        const bgB = document.getElementById("bgB");
+        if (!bgA || !bgB) return;
+
+        const url = backgroundImages[bgIndex];
+        bgA.style.backgroundImage = "url(" + url + ")";
+        bgA.classList.add("isActive");
+        bgB.classList.remove("isActive");
+        activeBgLayer = "A";
+
+        bgInitDone = true;
+        console.log("bg init ok", bgIndex);
       }
 
-      initBackgroundLayers();
-      wireBackgroundCycleButton();
+      document.addEventListener("click", function(e) {
+        var btn = e.target.closest && e.target.closest("#bgCycleBtn");
+        if (!btn) return;
+        console.log("bg cycle click");
+        cycleBackgroundManually();
+      });
+
+      initBackgroundLayersOnce();
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 
@@ -2433,7 +2451,7 @@ app.get("/", (req, res) => {
 </head>
 <body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 <div id="bgWrap">
-  <div id="bgA" class="bgLayer" style="background-image: url('${randomBg}');"></div>
+  <div id="bgA" class="bgLayer isActive" style="background-image: url('${randomBg}');"></div>
   <div id="bgB" class="bgLayer"></div>
 </div>
 ${HOME_HTML}

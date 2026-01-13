@@ -287,9 +287,12 @@ Core functionality works. CardGym-style visual polish applied and continuing.
 - Created parseEffortTimeline() to analyze set body text for effort progression patterns
 - Detects: progression keywords (build, descend), alternating (odds/evens), steady (maintain, hold), finale (final sprint)
 - Generates smooth gradients for progressive sets (moderate→strong→hard→fullgas)
-- Generates striped gradients for alternating sets (moderate-hard-moderate-hard)
+- Generates striped gradients for alternating sets with actual zone detection (e.g., "odds steady evens fast" = green-orange stripes)
 - Updated buildOneSetBodyShared with clear effort progression keywords
-- Updated gradientStyleForZones to accept label/body for stripe detection
+- Updated gradientStyleForZones to accept label/body for proper stripe detection
+- Fixed alternating detection: parses exact zones (easy/steady/strong/fast/sprint) for both odds and evens
+- Fixed steady/hold detection: only triggers on "maintain pace" or "same pace", not just any "hold" word
+- Fixed final sprint gradients: capped to one level above base zone (except main sets can go fullgas)
 
 **Future Items:**
 - Generate variety: reduce repetition of similar workouts (different set order, proportions)

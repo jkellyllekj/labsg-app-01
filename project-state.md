@@ -47,13 +47,25 @@ Purpose:
 
 ## Vision
 
+Core identity:
+- This is a coach-quality swim workout generator, not a random set generator
+- Core generation is rule-based first, not AI-first
+- The algorithm is already strong and should be refined, not replaced
+- The app should feel like a real coach, not just outputting sets
+
+AI's future role:
+- Conversational coaching
+- Explaining intent behind sets
+- Asking for feedback ("How did that feel?")
+- Adjusting future sessions based on feedback
+
 Design philosophy:
 - Clean modern UI
 - Mobile first, used poolside
 - Beautiful, friendly, readable
 
 Platform targets:
-1. Android is primary
+1. Android is far in the future
 2. iOS after Android
 3. Web app for development preview and easy sharing
 
@@ -101,6 +113,21 @@ Premium tier:
 - AI assisted generation and coaching
 - Deeper customization and guidance
 - No ads
+
+## Confirmed UI / UX decisions
+
+Dolphin reroll:
+- Spins only
+- No glow, haze, fade, opacity, scaling, or highlight
+- Animation is correct and final
+
+Backgrounds:
+- Stored in /public/backgrounds
+- Format: .webp (currently .png, to be converted)
+- Random background chosen on page load only
+- Generate button does not change background
+- User can manually cycle background via a small icon near the title (to be implemented)
+- Backgrounds are aesthetic, not semantic. They must never interfere with readability.
 
 ## What is frozen for v1
 
@@ -205,6 +232,17 @@ These are not bugs. They are realism and coaching depth gaps to address later.
 
 The authoritative coaching intent and realism rules live in COACH_DESIGN_NOTES.md.
 
+## Current known issues
+
+Workout algorithm produces some excellent sets and some clearly wrong ones.
+
+Errors are conceptual, not structural:
+- Disjointed progressions
+- Incorrect effort placement
+- Some drill and kick logic needs tightening
+
+These issues are best fixed by iteratively refining rules, not by replacing the system.
+
 ## Observed failures
 
 Fixed:
@@ -227,12 +265,20 @@ Remaining:
 ## Next step
 
 Primary:
-- Android Play Store release path
+- Algorithm refinement and UI polish (Android packaging is far in the future)
+
+Near-term roadmap (before Android):
+- Algorithm refinement
+- UI polish
+- Background cycling control
+- Save favourite workouts
+- Session feedback and notes
+- Tiering and ads logic
+- Coach explanations per set
 
 Immediate tasks:
 - Remove Viewport Lab link before production
 - Final mobile testing across a few screen sizes
-- Decide Android approach: keep web wrapper for v1 or start Expo migration
 - Stabilize dice reroll fallback so it never errors when parsing fails
 
 Nice to have before ship:

@@ -2258,19 +2258,21 @@ app.get("/", (req, res) => {
 
   /* __START_ROUTE_HOME_UI_SEND_R195__ */
   const backgroundImages = [
-    '/backgrounds/Page-002%20(Large).png',
-    '/backgrounds/Page-004%20(Large).png',
-    '/backgrounds/Page-006%20(Large).png',
-    '/backgrounds/Page-008%20(Large).png',
-    '/backgrounds/Page-010%20(Large).png',
-    '/backgrounds/Page-012%20(Large).png',
-    '/backgrounds/Page-014%20(Large).png',
-    '/backgrounds/Page-016%20(Large).png',
-    '/backgrounds/Page-018%20(Large).png',
-    '/backgrounds/Page-020%20(Large).png',
-    '/backgrounds/Page-022%20(Large).png',
-    '/backgrounds/Page-024%20(Large).png'
+    "/backgrounds/Page-002 (Large)_result.webp",
+    "/backgrounds/Page-004 (Large)_result.webp",
+    "/backgrounds/Page-006 (Large)_result.webp",
+    "/backgrounds/Page-008 (Large)_result.webp",
+    "/backgrounds/Page-010 (Large)_result.webp",
+    "/backgrounds/Page-012 (Large)_result.webp",
+    "/backgrounds/Page-014 (Large)_result.webp",
+    "/backgrounds/Page-016 (Large)_result.webp",
+    "/backgrounds/Page-018 (Large)_result.webp",
+    "/backgrounds/Page-020 (Large)_result.webp",
+    "/backgrounds/Page-022 (Large)_result.webp",
+    "/backgrounds/Page-022(1) (Large)_result.webp",
+    "/backgrounds/Page-024 (Large)_result.webp"
   ];
+
   const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
   const fullHtml = `<!DOCTYPE html>
 <html>

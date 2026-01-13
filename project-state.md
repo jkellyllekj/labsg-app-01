@@ -277,9 +277,17 @@ Near-term roadmap (before Android):
 - Coach explanations per set
 
 Immediate tasks:
+- Fix manual background switcher. Current behaviour: first click fades to solid green fallback, second click restores the same background. Background does not actually cycle. Page refresh random background still works.
 - Remove Viewport Lab link before production
 - Final mobile testing across a few screen sizes
 - Stabilize dice reroll fallback so it never errors when parsing fails
+
+Known facts:
+- Background images load correctly on page refresh using existing random selection.
+- Manual background button currently toggles background off then back on, but does not advance to a different image.
+
+Next single step:
+- Collect the exact code blocks for background click wiring, background application, and background state variables before making changes.
 
 Nice to have before ship:
 - More workout name variety

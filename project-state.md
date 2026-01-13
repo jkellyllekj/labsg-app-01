@@ -216,6 +216,7 @@ Fixed:
 - Reroll effort only changed once, fixed effort cycling
 - Reroll counter reset after first click, persistent rerollCountMap
 - Dolphin haze after spin, removed filter and cleared inline filter
+- Dolphin reroll haze fixed (2026-01-13): Removed all `filter: drop-shadow(...)` from `@keyframes reroll-spin` and forced `filter: none !important` on `.reroll-dolphin` and `.reroll-dolphin.spinning`. Dolphin now stays crisp during spin.
 - Card background did not update after first reroll, stable selector using data-effort, attribute updated
 
 Remaining:

@@ -911,9 +911,11 @@ app.get("/", (req, res) => {
         if (!bgA || !bgB) return;
 
         const url = backgroundImages[bgIndex];
-        setLayerImage(bgA, url);
+        bgA.style.backgroundImage = "url(" + url + ")";
+
         bgA.classList.add("isActive");
         bgB.classList.remove("isActive");
+
         activeBgLayer = "A";
       }
 
@@ -923,6 +925,7 @@ app.get("/", (req, res) => {
         const bgB = document.getElementById("bgB");
         if (!btn || !bgA || !bgB) return;
 
+        if (btn.disabled) return;
         btn.disabled = true;
 
         const nextIndex = (bgIndex + 1) % backgroundImages.length;
@@ -938,16 +941,20 @@ app.get("/", (req, res) => {
         const fromLayer = activeBgLayer === "A" ? bgA : bgB;
         const toLayer = activeBgLayer === "A" ? bgB : bgA;
 
-        setLayerImage(toLayer, nextUrl);
+        toLayer.classList.remove("isActive");
+        toLayer.style.backgroundImage = "url(" + nextUrl + ")";
+
+        void toLayer.offsetHeight;
 
         toLayer.classList.add("isActive");
-        fromLayer.classList.remove("isActive");
 
         window.setTimeout(function() {
+          fromLayer.classList.remove("isActive");
+
           bgIndex = nextIndex;
           activeBgLayer = activeBgLayer === "A" ? "B" : "A";
           btn.disabled = false;
-        }, 300);
+        }, 280);
       }
 
       function wireBackgroundCycleButton() {

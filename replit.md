@@ -30,6 +30,14 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Probability-based gradient variety: warm-up/cool-down 80% solid, drills always solid, builds 50% gradient, main 50% gradient
+2. Fullgas (red) restricted to main sets only for coach plausibility
+3. Alternating patterns (odds/evens) now use smooth blended gradients instead of hard stripes
+4. LCG-based seeded random with independent nextRandom() calls per decision
+5. Reroll variety improved: seed combines rerollCount + body.length for varied results each click
+6. Kick/pull sets: 70% moderate, 20% strong, 10% hard variety
+
+**Previous Session (2026-01-13):**
 1. Dolphin reroll button: 28px size, sharper shadow (0.5 opacity), 1.25s full 360 spin
 2. Splash rotation adjusted to -144deg for centered appearance
 3. Title/Total boxes: small-caps font-variant with increased padding (6px 14px)

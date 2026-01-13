@@ -284,15 +284,17 @@ Core functionality works. CardGym-style visual polish applied and continuing.
 - Gradient variety: subtle gradient variants for all effort zones (4 per zone) ✓
 
 **CardGym-Style Effort Gradients (DONE):**
-- Created parseEffortTimeline() to analyze set body text for effort progression patterns
-- Detects: progression keywords (build, descend), alternating (odds/evens), steady (maintain, hold), finale (final sprint)
-- Generates smooth gradients for progressive sets (moderate→strong→hard→fullgas)
-- Generates striped gradients for alternating sets with actual zone detection (e.g., "odds steady evens fast" = green-orange stripes)
-- Updated buildOneSetBodyShared with clear effort progression keywords
-- Updated gradientStyleForZones to accept label/body for proper stripe detection
-- Fixed alternating detection: parses exact zones (easy/steady/strong/fast/sprint) for both odds and evens
-- Fixed steady/hold detection: only triggers on "maintain pace" or "same pace", not just any "hold" word
-- Fixed final sprint gradients: capped to one level above base zone (except main sets can go fullgas)
+- Created parseEffortTimeline() with LCG-based seeded random for probability-based variety
+- Independent nextRandom() calls for each set type decision (no shared state issues)
+- Probability distribution implemented:
+  - Warm-up/Cool-down: 80% solid blue, 20% gradient
+  - Drills: 70% green, 30% yellow, always solid (technique focus)
+  - Kick/Pull: 70% moderate, 20% strong, 10% hard
+  - Build: 50% gradient (moderate→strong), 50% solid
+  - Main: 50% gradient, fullgas ONLY here, varied solid options
+- Alternating patterns (odds/evens) now use smooth blended gradients (not hard stripes)
+- variantSeed properly flows through getZoneSpan → gradientStyleForZones → isZoneStriped
+- Reroll variety: seed combines rerollCount + body.length for varied results each click
 
 **Future Items:**
 - Generate variety: reduce repetition of similar workouts (different set order, proportions)

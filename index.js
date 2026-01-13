@@ -514,10 +514,10 @@ app.get("/", (req, res) => {
       #bgWrap {
         position: fixed;
         inset: 0;
-        z-index: 0;
+        z-index: -1;
         pointer-events: none;
       }
-      #bgA, #bgB {
+      .bgLayer {
         position: absolute;
         inset: 0;
         background-size: cover;
@@ -527,9 +527,9 @@ app.get("/", (req, res) => {
         transition: opacity 260ms ease;
         will-change: opacity;
       }
-      #bgA { z-index: 1; }
-      #bgB { z-index: 2; }
-      .isActive { opacity: 1; }
+      .bgLayer.isActive {
+        opacity: 1;
+      }
       .distance-slider {
         width: 100%;
         max-width: 100%;
@@ -893,7 +893,7 @@ app.get("/", (req, res) => {
       let activeBgLayer = "A";
 
       function setLayerImage(layerEl, url) {
-        layerEl.style.backgroundImage = 'url("' + url + '")';
+        layerEl.style.backgroundImage = "url(" + url + ")";
       }
 
       function preloadImage(url) {
@@ -912,10 +912,8 @@ app.get("/", (req, res) => {
 
         const url = backgroundImages[bgIndex];
         setLayerImage(bgA, url);
-
         bgA.classList.add("isActive");
         bgB.classList.remove("isActive");
-
         activeBgLayer = "A";
       }
 
@@ -925,7 +923,6 @@ app.get("/", (req, res) => {
         const bgB = document.getElementById("bgB");
         if (!btn || !bgA || !bgB) return;
 
-        if (btn.disabled) return;
         btn.disabled = true;
 
         const nextIndex = (bgIndex + 1) % backgroundImages.length;
@@ -938,55 +935,29 @@ app.get("/", (req, res) => {
           return;
         }
 
-        // bgB is always on top (z-index 2), so use it as the overlay layer
-        // Set next image on bgB, fade it in over bgA, then copy to bgA and reset
-        bgB.classList.remove("isActive");
-        setLayerImage(bgB, nextUrl);
+        const fromLayer = activeBgLayer === "A" ? bgA : bgB;
+        const toLayer = activeBgLayer === "A" ? bgB : bgA;
 
-        void bgB.offsetHeight;
+        setLayerImage(toLayer, nextUrl);
 
-        // Fade in bgB (new image appears above bgA)
-        bgB.classList.add("isActive");
+        toLayer.classList.add("isActive");
+        fromLayer.classList.remove("isActive");
 
         window.setTimeout(function() {
-          // Copy the image to bgA (the base layer)
-          setLayerImage(bgA, nextUrl);
-          bgA.classList.add("isActive");
-
-          // Hide bgB again for next cycle
-          bgB.classList.remove("isActive");
-
           bgIndex = nextIndex;
+          activeBgLayer = activeBgLayer === "A" ? "B" : "A";
           btn.disabled = false;
-        }, 280);
+        }, 300);
       }
 
-      let bgInitDone = false;
-
-      function initBackgroundLayersOnce() {
-        if (bgInitDone) return;
-        const bgA = document.getElementById("bgA");
-        const bgB = document.getElementById("bgB");
-        if (!bgA || !bgB) return;
-
-        const url = backgroundImages[bgIndex];
-        setLayerImage(bgA, url);
-        bgA.classList.add("isActive");
-        bgB.classList.remove("isActive");
-        activeBgLayer = "A";
-
-        bgInitDone = true;
-        console.log("bg init ok", bgIndex);
-      }
-
-      document.addEventListener("click", function(e) {
-        var btn = e.target.closest && e.target.closest("#bgCycleBtn");
+      function wireBackgroundCycleButton() {
+        const btn = document.getElementById("bgCycleBtn");
         if (!btn) return;
-        console.log("bg cycle click");
-        cycleBackgroundManually();
-      });
+        btn.addEventListener("click", cycleBackgroundManually);
+      }
 
-      initBackgroundLayersOnce();
+      initBackgroundLayers();
+      wireBackgroundCycleButton();
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 
@@ -2451,7 +2422,7 @@ app.get("/", (req, res) => {
 </head>
 <body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 <div id="bgWrap">
-  <div id="bgA" class="bgLayer"></div>
+  <div id="bgA" class="bgLayer" style="background-image: url('${randomBg}');"></div>
   <div id="bgB" class="bgLayer"></div>
 </div>
 ${HOME_HTML}

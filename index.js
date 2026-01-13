@@ -1779,7 +1779,9 @@ app.get("/", (req, res) => {
             const rerollCount = prevCount + 1;
             rerollCountMap.set(setIndex, rerollCount);
 
-            btn.disabled = true;
+            if (btn.dataset.busy === "1") return;
+            btn.dataset.busy = "1";
+            btn.style.pointerEvents = "none";
             const dolphinSpan = btn.querySelector('.reroll-dolphin');
             if (dolphinSpan) {
               dolphinSpan.classList.add('spinning');
@@ -1903,7 +1905,8 @@ app.get("/", (req, res) => {
               // Wait for the full 1.25s spin animation to complete before removing class
               const ds = btn.querySelector('.reroll-dolphin');
               await new Promise(r => setTimeout(r, 1250));
-              btn.disabled = false;
+              btn.style.pointerEvents = "";
+              btn.dataset.busy = "0";
               if (ds) {
                 ds.classList.remove('spinning');
                 ds.style.filter = 'none';

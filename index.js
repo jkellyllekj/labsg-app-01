@@ -430,13 +430,17 @@ app.get("/", (req, res) => {
         animation: fade-out-down 0.7s ease-in forwards;
       }
       @keyframes reroll-spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(-360deg); }
+        0% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+        25% { transform: rotate(-90deg) scale(1.15); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
+        50% { transform: rotate(-180deg) scale(1.2); filter: drop-shadow(0 0 10px rgba(0,180,255,0.8)) drop-shadow(0 0 16px rgba(0,180,255,0.5)); }
+        75% { transform: rotate(-270deg) scale(1.15); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
+        100% { transform: rotate(-360deg) scale(1); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
       }
       .reroll-dolphin {
         display: inline-block;
         font-size: 28px;
         filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
+        transition: filter 0.15s ease;
       }
       .reroll-dolphin.spinning {
         animation: reroll-spin 1.25s ease-in-out;
@@ -1804,7 +1808,9 @@ app.get("/", (req, res) => {
               if (cardContainer) {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
-                const newVariantSeed = rerollCount * 1000 + nextBody.length;
+                // Use Date.now() for true randomness - ensures different styling each reroll
+                const nowMs = Date.now();
+                const newVariantSeed = (nowMs ^ (rerollCount * 7919) ^ nextBody.length) >>> 0;
                 const newZoneSpan = getZoneSpan(label, nextBody, newVariantSeed);
                 const newGradientStyle = newZoneSpan ? gradientStyleForZones(newZoneSpan, label, nextBody, newVariantSeed) : null;
                 let newStyle;
@@ -1815,8 +1821,8 @@ app.get("/", (req, res) => {
                   newStyle = "background:" + newGradientStyle.background + "; border:none; box-shadow:" + dropShadow + ";";
                   newTextColor = newGradientStyle.textColor || '#111';
                 } else {
-                  // Use rerollCount as variant seed for gradient variety on reroll
-                  newStyle = colorStyleForEffort(newEffort, rerollCount) + " box-shadow:" + dropShadow + ";";
+                  // Use nowMs for true randomness on solid color variant
+                  newStyle = colorStyleForEffort(newEffort, nowMs) + " box-shadow:" + dropShadow + ";";
                   // White text only on full red (fullgas)
                   if (newEffort === 'fullgas') {
                     newTextColor = '#fff';

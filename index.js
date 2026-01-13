@@ -1536,6 +1536,9 @@ app.get("/", (req, res) => {
 
   /* __START_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
   const HOME_JS_RENDER_CARDS = `
+      // Persistent Map to track reroll counts per set index (survives innerHTML replacement)
+      const rerollCountMap = new Map();
+      
       function computeSetDistanceFromBody(body) {
         const t = String(body || "");
         let sum = 0;
@@ -1632,6 +1635,9 @@ app.get("/", (req, res) => {
       }
 
       function renderCards(payload, workoutText) {
+        // Clear reroll counts for fresh workout generation
+        rerollCountMap.clear();
+        
         const parts = splitWorkout(workoutText);
         const setLines = parts.setLines || [];
         const footerLines = parts.footerLines || [];
@@ -1751,9 +1757,6 @@ app.get("/", (req, res) => {
 
         const rerollButtons = cards.querySelectorAll("button[data-reroll-set]");
         for (const btn of rerollButtons) {
-          // Track reroll count per button for seed variety
-          btn.dataset.rerollCount = "0";
-          
           btn.addEventListener("click", async () => {
             const setIndex = Number(btn.getAttribute("data-reroll-set"));
             const bodyEl = cards.querySelector('[data-set-body="' + String(setIndex) + '"]');
@@ -1769,9 +1772,10 @@ app.get("/", (req, res) => {
               return;
             }
 
-            // Increment reroll counter for this card
-            const rerollCount = Number(btn.dataset.rerollCount || 0) + 1;
-            btn.dataset.rerollCount = String(rerollCount);
+            // Increment reroll counter using persistent Map (survives innerHTML replacement)
+            const prevCount = rerollCountMap.get(setIndex) || 0;
+            const rerollCount = prevCount + 1;
+            rerollCountMap.set(setIndex, rerollCount);
 
             btn.disabled = true;
             const dolphinSpan = btn.querySelector('.reroll-dolphin');
@@ -1897,7 +1901,11 @@ app.get("/", (req, res) => {
               const ds = btn.querySelector('.reroll-dolphin');
               await new Promise(r => setTimeout(r, 1250));
               btn.disabled = false;
-              if (ds) ds.classList.remove('spinning');
+              if (ds) {
+                ds.classList.remove('spinning');
+                // Explicitly reset filter to prevent haze/glow residue
+                ds.style.filter = 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))';
+              }
             }
           });
         }

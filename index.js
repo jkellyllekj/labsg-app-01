@@ -462,9 +462,11 @@ app.get("/", (req, res) => {
         font-size: 28px;
         filter: none;
         transition: filter 0.15s ease;
+        opacity: 1 !important;
       }
       .reroll-dolphin.spinning {
         animation: reroll-spin 1.25s ease-in-out;
+        opacity: 1 !important;
       }
       .form-row {
         display: flex;

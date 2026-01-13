@@ -1,0 +1,144 @@
+TASK
+Add a manual “change background” icon button next to the workout title pill (yellow pill). Clicking it cycles the background with a short fade.
+
+CONTEXT
+- Single-file Replit app. index.js is the only runtime file.
+- Background images already exist and are randomly selected on page load.
+- The workout title text changes every generation, so DO NOT locate the pill by its text.
+
+HARD RULES
+- Background randomisation happens only on page load.
+- Generate must NEVER change background.
+- Manual cycling happens only via user click.
+- Minimal change. No refactor. No new files.
+
+EXISTING BACKGROUND CODE (already in index.js)
+const backgroundImages = [
+  "/backgrounds/Page-002 (Large)_result.webp",
+  "/backgrounds/Page-004 (Large)_result.webp",
+  "/backgrounds/Page-006 (Large)_result.webp",
+  "/backgrounds/Page-008 (Large)_result.webp",
+  "/backgrounds/Page-010 (Large)_result.webp",
+  "/backgrounds/Page-012 (Large)_result.webp",
+  "/backgrounds/Page-014 (Large)_result.webp",
+  "/backgrounds/Page-016 (Large)_result.webp",
+  "/backgrounds/Page-018 (Large)_result.webp",
+  "/backgrounds/Page-020 (Large)_result.webp",
+  "/backgrounds/Page-022 (Large)_result.webp",
+  "/backgrounds/Page-022(1) (Large)_result.webp",
+  "/backgrounds/Page-024 (Large)_result.webp"
+];
+
+const randomBg = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+
+IMPLEMENTATION
+
+1) Track current background index
+Add near the existing background code:
+
+let bgIndex = backgroundImages.indexOf(randomBg);
+if (bgIndex < 0) bgIndex = 0;
+
+2) Apply background via a helper
+Use the SAME element currently used for the background (document.body or an existing background container).
+
+Add:
+
+const BG_TARGET = document.getElementById("bg") || document.body;
+
+function applyBackgroundByIndex(index) {
+  const url = backgroundImages[index];
+  BG_TARGET.style.backgroundImage = `url(${url})`;
+}
+
+3) Manual cycle handler (user click only)
+Add:
+
+function cycleBackgroundManually() {
+  const btn = document.getElementById("bgCycleBtn");
+  if (!btn) return;
+
+  btn.disabled = true;
+
+  BG_TARGET.style.transition = "opacity 220ms ease";
+  BG_TARGET.style.opacity = "0";
+
+  setTimeout(() => {
+    bgIndex = (bgIndex + 1) % backgroundImages.length;
+    applyBackgroundByIndex(bgIndex);
+
+    BG_TARGET.style.opacity = "1";
+
+    setTimeout(() => {
+      btn.disabled = false;
+    }, 260);
+  }, 220);
+}
+
+function wireBackgroundCycleButton() {
+  const btn = document.getElementById("bgCycleBtn");
+  if (!btn) return;
+  btn.addEventListener("click", cycleBackgroundManually);
+}
+
+Call wireBackgroundCycleButton() once after the UI renders.
+Do NOT call cycleBackgroundManually() anywhere else.
+Do NOT add background logic to Generate.
+
+4) Insert icon button next to title pill
+Find the container that renders the workout title pill (yellow pill).
+Insert this button immediately LEFT of the pill element, using structure/classes, not text:
+
+<button id="bgCycleBtn"
+        class="bgCycleBtn"
+        type="button"
+        aria-label="Change background"
+        title="Change background">
+  <svg viewBox="0 0 24 24" class="bgCycleIcon" aria-hidden="true">
+    <path d="M6 13a6 6 0 0 0 10.2 4.2l1.3 1.3A8 8 0 0 1 4 13h2z"/>
+    <path d="M18 11a6 6 0 0 0-10.2-4.2L6.5 5.5A8 8 0 0 1 20 11h-2z"/>
+    <path d="M7 6v4H3M17 18v-4h4"/>
+  </svg>
+</button>
+
+5) CSS
+Add to existing styles:
+
+.bgCycleBtn {
+  width: 34px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.18);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.bgCycleBtn:hover { background: rgba(255,255,255,0.28); }
+.bgCycleBtn:disabled { opacity: 0.5; cursor: default; }
+.bgCycleIcon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: rgba(0,0,0,0.75);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+Ensure the title row remains a flex container with a small gap so layout does not shift.
+
+VERIFICATION
+- Reload page → background randomises once.
+- Generate → workout changes, background unchanged.
+- Click icon → background cycles with fade.
+- Dolphin reroll unchanged.
+
+PROJECT STATE UPDATE
+Add one bullet under Immediate Tasks:
+- Manual background cycling icon added next to workout title pill (no Generate coupling).
+
+Commit and push when done.

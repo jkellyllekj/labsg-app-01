@@ -1,0 +1,88 @@
+BUG STILL PRESENT
+First click fades to fallback aqua and stays. Second click fades in next image. This implies:
+- layers not visible due to stacking/opaque wrapper, OR
+- background still applied to body, OR
+- toLayer is underneath and not visible.
+
+GOAL
+One click must crossfade immediately with no fallback colour visible.
+
+MINIMAL FIX (index.js only). Do NOT test.
+
+1) ENFORCE LAYER STACKING (CSS)
+Add/ensure these exact rules:
+
+#bgWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 0;           /* behind app, above body */
+  pointer-events: none;
+}
+
+#bgA, #bgB {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  will-change: opacity;
+}
+
+/* Explicit stack so the "to" layer can appear above "from" during overlap */
+#bgA { z-index: 1; }
+#bgB { z-index: 2; }
+
+.isActive { opacity: 1; }
+
+2) ENSURE APP CONTENT IS ABOVE BACKGROUND AND TRANSPARENT (CSS)
+Find the main app wrapper/container (whatever holds your cards + controls).
+Add/ensure:
+
+#app, .app, .container (use the real selector you have) {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+Also remove/override any solid background colour on that wrapper (the aqua is likely coming from here).
+
+3) STOP USING BODY BACKGROUND ON CYCLE (JS)
+Search for any code that sets:
+document.body.style.backgroundImage = ...
+or BG_TARGET.style.backgroundImage = ...
+
+If your bg layers exist (bgA/bgB), do not set body backgroundImage at all during cycling.
+Only set images on bgA/bgB.
+
+4) INIT MUST MAKE ONE LAYER ACTIVE (JS)
+Ensure initBackgroundLayers() sets bgA active and bgB inactive:
+
+function initBackgroundLayers() {
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+  if (!bgA || !bgB) return;
+
+  const url = backgroundImages[bgIndex];
+  bgA.style.backgroundImage = `url(${url})`;
+
+  bgA.classList.add("isActive");
+  bgB.classList.remove("isActive");
+
+  activeBgLayer = "A";
+}
+
+Call initBackgroundLayers() once after bgWrap/bgA/bgB are inserted into DOM.
+
+5) CROSSFADE MUST BRING NEW LAYER ABOVE OLD DURING OVERLAP (JS)
+In cycleBackgroundManually():
+- After preload:
+  - Set the NEXT image on the layer that has the HIGHER z-index during the transition.
+Simplest: always fade in bgB then swap, then fade in bgA next time by swapping z-index.
+
+Minimal approach:
+- Keep bgB always above bgA via CSS z-index as above.
+- During transition:
+  - set image on bgB, set bgB active (old stays active), after 280ms remove old active.
+  - Then swap roles by sw

@@ -514,10 +514,10 @@ app.get("/", (req, res) => {
       #bgWrap {
         position: fixed;
         inset: 0;
-        z-index: -1;
+        z-index: 0;
         pointer-events: none;
       }
-      .bgLayer {
+      #bgA, #bgB {
         position: absolute;
         inset: 0;
         background-size: cover;
@@ -527,9 +527,9 @@ app.get("/", (req, res) => {
         transition: opacity 260ms ease;
         will-change: opacity;
       }
-      .bgLayer.isActive {
-        opacity: 1;
-      }
+      #bgA { z-index: 1; }
+      #bgB { z-index: 2; }
+      .isActive { opacity: 1; }
       .distance-slider {
         width: 100%;
         max-width: 100%;
@@ -938,21 +938,25 @@ app.get("/", (req, res) => {
           return;
         }
 
-        const fromLayer = activeBgLayer === "A" ? bgA : bgB;
-        const toLayer = activeBgLayer === "A" ? bgB : bgA;
+        // bgB is always on top (z-index 2), so use it as the overlay layer
+        // Set next image on bgB, fade it in over bgA, then copy to bgA and reset
+        bgB.classList.remove("isActive");
+        bgB.style.backgroundImage = "url(" + nextUrl + ")";
 
-        toLayer.classList.remove("isActive");
-        toLayer.style.backgroundImage = "url(" + nextUrl + ")";
+        void bgB.offsetHeight;
 
-        void toLayer.offsetHeight;
-
-        toLayer.classList.add("isActive");
+        // Fade in bgB (new image appears above bgA)
+        bgB.classList.add("isActive");
 
         window.setTimeout(function() {
-          fromLayer.classList.remove("isActive");
+          // Copy the image to bgA (the base layer)
+          bgA.style.backgroundImage = "url(" + nextUrl + ")";
+          bgA.classList.add("isActive");
+
+          // Hide bgB again for next cycle
+          bgB.classList.remove("isActive");
 
           bgIndex = nextIndex;
-          activeBgLayer = activeBgLayer === "A" ? "B" : "A";
           btn.disabled = false;
         }, 280);
       }

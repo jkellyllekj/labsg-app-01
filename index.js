@@ -986,7 +986,7 @@ app.get("/", (req, res) => {
         cycleBackgroundManually();
       });
 
-      document.addEventListener("DOMContentLoaded", initBackgroundLayersOnce);
+      initBackgroundLayersOnce();
   `;
   /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
 

@@ -269,11 +269,19 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-12: Dolphin Animation Redesign COMPLETE (v2)**
+**STATUS 2026-01-13: CardGym Visual Polish Session COMPLETE**
 
-Core functionality works. Animation fully redesigned based on user feedback.
+Core functionality works. CardGym-style visual polish applied.
 
-### COMPLETED THIS SESSION (2026-01-12, later):
+### COMPLETED THIS SESSION (2026-01-13):
+1. **Dolphin reroll button** - Increased to 28px (25% bigger), sharper shadow (0.5 opacity), 1.25s spin animation for complete smooth 360
+2. **Splash rotation** - Adjusted to -144deg for better centered appearance
+3. **Title/Total boxes** - Now use small-caps font-variant with increased padding (6px 14px)
+4. **Distance text on cards** - Now displays in blue (#0066cc) for visual distinction
+5. **Emoji intensity panel** - Completely recreated with CardGym-style gradient background (blue → green → yellow → orange → red) with 5 effort-level faces (😴 ☕ 👍 💪 🔥)
+6. **Gap reduced** - Title now appears closer to generate panel (10px instead of 30px)
+
+### COMPLETED PREVIOUS SESSION (2026-01-12, later):
 1. **Dolphin position FIXED** - Now anchored to right side of button row (was inline with "Generating..." text which caused issues when text wrapped on different screen sizes)
 2. **Dolphin size INCREASED** - 20% bigger (28px to 34px font, 44px to 52px wrapper)
 3. **Animation arc HIGHER** - Goes up to -56px (was -38px) for more dramatic loop
@@ -488,6 +496,15 @@ WORKING-METHOD-REPLIT.md now includes enhanced Pause In Action protocol that req
 2. Producing a Handover Message
 3. Producing a Next Agent Prompt
 Ideas must never be lost between sessions.
+
+### 2026-01-13 — CardGym visual polish session
+Applied CardGym-style visual enhancements:
+- Title/Total boxes: small-caps font-variant, increased padding (6px 14px)
+- Distance text: blue (#0066cc) on cards for visual distinction
+- Emoji intensity panel: gradient background (blue → green → yellow → orange → red) with 5 effort faces
+- Dolphin reroll: 28px size, sharper shadow, 1.25s full 360 spin
+- Splash rotation: -144deg for centered appearance
+- Gap reduction: 10px between generate panel and title
 
 ### 2026-01-09 — Build set reroll variety
 Build set generation now has 4 pattern variations and 5 description options (build, descend, negative split, build to fast, smooth to strong) so rerolling produces different results.

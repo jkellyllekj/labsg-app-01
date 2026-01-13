@@ -29,7 +29,15 @@ The application runs as a single-file Express server serving both the API and a 
 - Smooth scroll to workout title after 350ms delay
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
-**Session Just Completed (2026-01-12, latest):**
+**Session Just Completed (2026-01-13, latest):**
+1. Dolphin reroll button: 28px size, sharper shadow (0.5 opacity), 1.25s full 360 spin
+2. Splash rotation adjusted to -144deg for centered appearance
+3. Title/Total boxes: small-caps font-variant with increased padding (6px 14px)
+4. Distance text on cards now displays in blue (#0066cc)
+5. Emoji intensity panel: gradient background (blue→green→yellow→orange→red) with 5 faces (😴 ☕ 👍 💪 🔥)
+6. Gap between generate panel and title reduced to 10px
+
+**Previous Session (2026-01-12, latest):**
 1. Stronger drop shadows on cards (0 8px 24px rgba(0,0,0,0.35)) for more visual depth
 2. Bolder interval/distance text (font-weight:600)
 3. Dice button replaced with small dolphin that does quick 360 spin (0.2s) on click

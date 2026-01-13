@@ -286,10 +286,17 @@ Core functionality works. Reroll effort cycling now works correctly.
 - Map clears when generating a new workout so counts reset fresh
 - Effort levels now properly cycle: moderate → strong → hard → fullgas for kick/pull
 
-**Dolphin Haze Fix (DONE):**
+**Dolphin Haze Fix (DONE - Updated 2026-01-13):**
 - Root cause: CSS animation glow filter left residue after spin ended
-- Solution: Explicit filter reset in finally block: `ds.style.filter = 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))'`
-- Dolphin now returns to crisp non-glowing state after each reroll animation
+- Solution: Removed all drop-shadow filters from .reroll-dolphin CSS and @keyframes reroll-spin 100%
+- Finally block now sets filter to 'none' and removes the property entirely
+- Dolphin now appears crisp with no muddy haze after each reroll animation
+
+**Reroll Card Update Fix (DONE - 2026-01-13):**
+- Root cause: Card container selection used style-based selector that broke after rerenders
+- Solution: Changed from closest('[style*="border-radius:12px"]') to closest('[data-effort]')
+- Added cardContainer.setAttribute('data-effort', newEffort) after determining new effort level
+- Card background now updates correctly on every dolphin click (not just first)
 
 **Server-Side Effort Cycling (DONE - previous fix):**
 - buildOneSetBodyShared uses rerollCount to deliberately cycle through effort levels

@@ -30,6 +30,13 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Fixed reroll card update: Changed card container selector from style-based to data-effort attribute selector
+2. Added setAttribute('data-effort', newEffort) so cards remain selectable after style changes
+3. Fixed dolphin haze completely: Removed all drop-shadow filters from CSS, set filter to none in finally block
+4. Card background now updates correctly on every dolphin click (not just first)
+5. TEST PASSED: Generate workout, pick one set, click dolphin 5 times - card changes on every click, dolphin ends crisp
+
+**Previous Session (2026-01-13):**
 1. Fixed reroll counter persistence: Changed from btn.dataset to persistent Map (rerollCountMap) that survives innerHTML replacement
 2. Reroll now properly increments 1,2,3,4... on each click, cycling through effort levels
 3. Fixed dolphin haze: Explicit filter reset in finally block prevents glow residue after animation

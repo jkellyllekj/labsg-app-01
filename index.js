@@ -455,12 +455,12 @@ app.get("/", (req, res) => {
         25% { transform: rotate(-90deg) scale(1.15); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
         50% { transform: rotate(-180deg) scale(1.2); filter: drop-shadow(0 0 10px rgba(0,180,255,0.8)) drop-shadow(0 0 16px rgba(0,180,255,0.5)); }
         75% { transform: rotate(-270deg) scale(1.15); filter: drop-shadow(0 0 8px rgba(0,180,255,0.7)) drop-shadow(0 0 12px rgba(0,180,255,0.4)); }
-        100% { transform: rotate(-360deg) scale(1); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+        100% { transform: rotate(-360deg) scale(1); filter: none; }
       }
       .reroll-dolphin {
         display: inline-block;
         font-size: 28px;
-        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
+        filter: none;
         transition: filter 0.15s ease;
       }
       .reroll-dolphin.spinning {
@@ -1829,10 +1829,11 @@ app.get("/", (req, res) => {
               bodyEl.setAttribute("data-original-body", nextBody);
 
               // Update card color based on new effort level
-              const cardContainer = bodyEl.closest('[style*="border-radius:12px"]');
+              const cardContainer = bodyEl.closest('[data-effort]');
               if (cardContainer) {
                 const label = sections[setIndex - 1] && sections[setIndex - 1].label ? sections[setIndex - 1].label : "";
                 const newEffort = getEffortLevel(label, nextBody);
+                cardContainer.setAttribute('data-effort', newEffort);
                 // Use Date.now() for true randomness - ensures different styling each reroll
                 const nowMs = Date.now();
                 const newVariantSeed = (nowMs ^ (rerollCount * 7919) ^ nextBody.length) >>> 0;
@@ -1903,8 +1904,8 @@ app.get("/", (req, res) => {
               btn.disabled = false;
               if (ds) {
                 ds.classList.remove('spinning');
-                // Explicitly reset filter to prevent haze/glow residue
-                ds.style.filter = 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))';
+                ds.style.filter = 'none';
+                ds.style.removeProperty('filter');
               }
             }
           });

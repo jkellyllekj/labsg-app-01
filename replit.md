@@ -30,6 +30,11 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Fixed reroll variety bug: avoidText was sending stripped body (no rest) but server returns full body with rest - now uses data-original-body attribute for proper matching
+2. Reroll now properly varies on every click: Main sets show max effort → build+strong → race pace → descend → strong hold variety
+3. Kick/pull reroll variety: relaxed → sprint → streamline → strong → fast
+
+**Previous Session (2026-01-13):**
 1. Probability-based gradient variety: warm-up/cool-down 80% solid, drills always solid, builds 50% gradient, main 50% gradient
 2. Fullgas (red) restricted to main sets only for coach plausibility
 3. Alternating patterns (odds/evens) now use smooth blended gradients instead of hard stripes

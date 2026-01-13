@@ -263,6 +263,8 @@ UI defects:
 - ~~Distance turns black after reroll~~ FIXED 2026-01-13: Now stays royal blue after reroll
 - ~~Dolphin spin stops after 1-2 clicks~~ FIXED 2026-01-13: Animation now waits 1.25s to complete before removing spinning class
 - ~~Reroll effort level only changes once~~ FIXED 2026-01-13: Expanded all description arrays (kick, pull, main, build) to span moderate→fullgas effort levels
+- ~~Reroll counter resets after first click~~ FIXED 2026-01-13: Changed from btn.dataset to persistent rerollCountMap that survives innerHTML replacement
+- ~~Dolphin button has haze after spin~~ FIXED 2026-01-13: Added explicit filter reset in finally block to remove glow residue
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
 
@@ -272,29 +274,27 @@ UI defects:
 
 ## Next single step
 
-**STATUS 2026-01-13: CardGym Visual Polish Session - Continuing**
+**STATUS 2026-01-13: Reroll Counter Persistence Fix - COMPLETE**
 
-Core functionality works. CardGym-style visual polish applied and continuing.
+Core functionality works. Reroll effort cycling now works correctly.
 
-### IN PROGRESS THIS SESSION (2026-01-13):
-**Quick Fixes (DONE):**
-- Distance text: bolder + royal blue (#0055aa), fix black text after reroll ✓
-- Dolphin reroll spin: ensure full 1.25s animation completes every click ✓
-- Reroll effort variety: expanded description arrays to span all 5 effort levels ✓
-- Gradient variety: subtle gradient variants for all effort zones (4 per zone) ✓
+### COMPLETED THIS SESSION (2026-01-13):
+**Reroll Counter Persistence Fix (DONE):**
+- Root cause: btn.dataset.rerollCount was being wiped when innerHTML replaced card elements
+- Solution: Created persistent `rerollCountMap` (JavaScript Map) to store reroll counts outside DOM
+- Map is keyed by setIndex, increments correctly on each click: 1, 2, 3, 4...
+- Map clears when generating a new workout so counts reset fresh
+- Effort levels now properly cycle: moderate → strong → hard → fullgas for kick/pull
 
-**CardGym-Style Effort Gradients (DONE):**
-- Created parseEffortTimeline() with LCG-based seeded random for probability-based variety
-- Independent nextRandom() calls for each set type decision (no shared state issues)
-- Probability distribution implemented:
-  - Warm-up/Cool-down: 80% solid blue, 20% gradient
-  - Drills: 70% green, 30% yellow, always solid (technique focus)
-  - Kick/Pull: 70% moderate, 20% strong, 10% hard
-  - Build: 50% gradient (moderate→strong), 50% solid
-  - Main: 50% gradient, fullgas ONLY here, varied solid options
-- Alternating patterns (odds/evens) now use smooth blended gradients (not hard stripes)
-- variantSeed properly flows through getZoneSpan → gradientStyleForZones → isZoneStriped
-- Reroll variety: seed combines rerollCount + body.length for varied results each click
+**Dolphin Haze Fix (DONE):**
+- Root cause: CSS animation glow filter left residue after spin ended
+- Solution: Explicit filter reset in finally block: `ds.style.filter = 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))'`
+- Dolphin now returns to crisp non-glowing state after each reroll animation
+
+**Server-Side Effort Cycling (DONE - previous fix):**
+- buildOneSetBodyShared uses rerollCount to deliberately cycle through effort levels
+- When rerollCount is 0/undefined, uses seedA for random initial variety
+- Stable cycling: rerollCount stays fixed through retry loop (only seed varies)
 
 **Future Items:**
 - Generate variety: reduce repetition of similar workouts (different set order, proportions)

@@ -30,6 +30,12 @@ The application runs as a single-file Express server serving both the API and a 
 - ~20% multi-part sets for main sets 400m+ (50/50 split, 3-part ladder, mixed distances)
 
 **Session Just Completed (2026-01-13, latest):**
+1. Fixed reroll color stuck bug: Changed seed calculation from `rerollCount * 1000` to `Date.now() XOR rerollCount XOR bodyLength` for true randomness
+2. Root cause: The old multiplier 1000 was divisible by 4, so `% 4` variant selection always produced same result
+3. Dolphin animation now pops instead of fades: scale pulse (1.0→1.2→1.0) with cyan glow during spin
+4. Glow effect uses drop-shadow with rgba(0,180,255) for aqua/cyan highlight
+
+**Previous Session (2026-01-13):**
 1. Fixed reroll COLOR updating: variantSeed multiplier increased from 13 to 1000 for bigger seed jumps between rerolls
 2. Card colors now properly match text content on each reroll (sprint text = red card, strong text = orange card, etc.)
 3. Console-log verified: getEffortLevel, colorStyleForEffort, and gradientStyleForZones all work correctly on reroll

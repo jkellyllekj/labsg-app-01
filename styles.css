@@ -40,7 +40,36 @@
         width: var(--dolphin-size-generate);
         height: var(--dolphin-size-generate);
       }
-      /* Effort bar icons */
+      /* Effort strip wrapper: swipe only when needed */
+      .effortScrollWrap {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Effort strip: 5 equal tiles, fills big phones, scrolls on tiny */
+      .effortStrip {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+        min-width: 360px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      }
+
+      /* True square tiles + dead-centre content */
+      .effortTile {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        box-sizing: border-box;
+        padding: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Bigger icons, no margin tricks */
       .effortIcon {
         width: 62px;
         height: 62px;
@@ -48,8 +77,11 @@
         display: block;
         margin: 0;
         filter: none !important;
-        opacity: 1 !important;
       }
+
+      /* Micro nudges to counter uneven transparent padding in PNGs */
+      .effortStrip .effortTile:nth-child(2) .effortIcon { transform: translateX(2px); }
+      .effortStrip .effortTile:nth-child(3) .effortIcon { transform: translateX(-2px); }
       /* Splash fixed angle - never spins */
       .splashFixed {
         transform: rotate(-130deg);

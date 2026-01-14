@@ -1,0 +1,109 @@
+Yep. The reason it “still looks the same” is because your live renderEmojiIntensityStrip() is still the old inline version with padding:8px 4px and text-align:center, and your .effortIcon is still 50px with margin:0 auto. That combination will never give you the tight, square, dead-centre look you want.
+
+Also, even once we make the tiles square and flex-centred, you can still get a visual off-centre look if the PNGs have uneven transparent padding. The fix for that is a tiny per-icon nudge (2–3px), which is totally fine for a 5-icon strip.
+
+Here is the smallest, guaranteed fix.
+
+1) Replace the strip builder inside renderEmojiIntensityStrip() (this is still old)
+
+File: index.js 
+
+index
+
+Inside function renderEmojiIntensityStrip() {, find the block that starts:
+
+let strip = '<div style=\\"margin-top:12px;\\">';
+strip += '<div style=\\"display:flex; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+
+
+…and ends with:
+
+strip += '</div></div>';
+return strip;
+
+
+Replace that whole block with this:
+
+let strip = '<div style=\\"margin-top:6px;\\">';
+
+// Scroll wrapper. On big phones you should see all 5 without scrolling.
+// On smaller widths it can swipe.
+strip += '<div class=\\"effortScrollWrap\\">';
+
+// Inner strip: full width, but won’t collapse below 360px.
+strip += '<div class=\\"effortStrip\\">';
+
+for (let i = 0; i < 5; i++) {
+  const isActive = (i + 1) <= level;
+  const opacity = isActive ? '1' : '0.4';
+
+  strip += '<div class=\\"effortTile\\" style=\\"background:' + bgColors[i] + ';\\">';
+  strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
+  strip += '</div>';
+}
+
+strip += '</div></div></div>';
+return strip;
+
+
+This removes the old padding and gives us clean CSS control.
+
+2) Add the actual centring and square behaviour in CSS
+
+File: styles.css 
+
+styles
+
+Add this near your existing .effortIcon area:
+
+/* Effort strip wrapper: swipe only when needed */
+.effortScrollWrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Effort strip: 5 equal tiles, fills big phones, scrolls on tiny */
+.effortStrip {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 360px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* True square tiles + dead-centre content */
+.effortTile {
+  flex: 1 1 0;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  padding: 2px;              /* less top and bottom border */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bigger icons, no margin tricks */
+.effortIcon {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin: 0;
+  filter: none !important;
+}
+
+3) Fix the “green left / yellow right” visual issue (tiny nudges)
+
+If the PNGs themselves have uneven transparent padding, flex-centre still centres the image box, not the drawing inside it.
+
+Add these micro-nudges (start conservative):
+
+/* Micro nudges to counter uneven transparent padding in PNGs */
+.effortStrip .effortTile:nth-child(2) .effortIcon { transform: translateX(2px); }  /* green: push right */
+.effortStrip .effortTile:nth-child(3) .effortIcon { transform: translateX(-2px); } /* yellow: pull left */
+
+
+If you want, we can tune these by 1px steps after your phone screenshot.

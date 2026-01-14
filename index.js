@@ -1536,21 +1536,20 @@ app.get("/", (req, res) => {
         // Gradient background colors matching CardGym: blue -> green -> yellow -> orange -> red
         const bgColors = ['#b9f0fd', '#cfffc0', '#fcf3d5', '#ffc374', '#fe5050'];
         
-        let strip = '<div style=\\"margin-top:8px;\\">';
+        let strip = '<div style=\\"margin-top:6px;\\">';
         
-        // Scroll wrapper (only scrolls if it truly needs to)
-        strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;\\">';
+        // Scroll wrapper. On big phones you should see all 5 without scrolling.
+        // On smaller widths it can swipe.
+        strip += '<div class=\\"effortScrollWrap\\">';
         
-        // Inner strip: full width, but never less than a sensible minimum.
-        // On big phones this fits without scrolling.
-        strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:100%; min-width:360px; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+        // Inner strip: full width, but won't collapse below 360px.
+        strip += '<div class=\\"effortStrip\\">';
         
         for (let i = 0; i < 5; i++) {
           const isActive = (i + 1) <= level;
           const opacity = isActive ? '1' : '0.4';
           
-          // Square tile, tighter padding, true centre
-          strip += '<div style=\\"flex:1 1 0; aspect-ratio:1 / 1; box-sizing:border-box; padding:2px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
+          strip += '<div class=\\"effortTile\\" style=\\"background:' + bgColors[i] + ';\\">';
           strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
           strip += '</div>';
         }

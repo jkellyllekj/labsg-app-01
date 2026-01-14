@@ -1,0 +1,131 @@
+1) Update PS090 Recent Fixes
+
+Replace the content inside PS090 Recent Fixes with this updated section (or append these new items at the end).
+
+Paste:
+
+Add under 2026-01-14:
+
+Dolphin animation stabilised
+
+Centralised dolphin animation into one helper
+
+Cancels older timers and tokenises runs to avoid overlap
+
+Works on repeated presses and rapid presses
+
+Custom SwimGen dolphin icon set created and adopted
+
+Replaced emoji dolphin with custom dolphin images
+
+Added 6 assets: base plus 5 effort levels
+
+Assets stored under public/assets/dolphins/
+
+CSS extraction started
+
+Moved most inline CSS out into styles.css
+
+Viewport Lab CSS is scoped to avoid bleeding into the main UI
+
+Why this matters: the project-state currently still talks as if the dolphin stabilisation patch is queued, and it does not mention the new dolphin assets or CSS separation. 
+
+project-state
+
+2) Update PS100 Current Known UI Issues
+
+Replace the content inside PS100 Current Known UI Issues with this updated list, because the issues have moved on.
+
+Paste:
+
+Dolphin and splash animation
+
+Splash appears at the wrong resting angle
+
+Desired: fixed resting angle rotated left about 130 degrees
+
+Splash must never spin
+
+Splash is not visible because scroll or reveal happens too early
+
+Desired: splash becomes visible first, then smooth scroll happens
+
+Dolphin fade out and splash fade in are currently sequential
+
+Desired: crossfade at the same time over 0.2 seconds
+
+Generate dolphin sizing regression
+
+Dolphin sometimes returns to small size after generation
+
+Desired: generate dolphin remains large idle after completion
+
+Effort bar icons
+
+Effort dolphins still read too small on mobile
+
+Increase icon size by another 25 percent
+
+Coffee cup and Z must be legible at small sizes
+
+Threshold and Full Gas dolphins look faded on red backgrounds
+
+Desired for now: revert them to blue and rely on facial expression
+
+Remove warm tint from those two assets
+
+Layout polish parked
+
+Set card dolphin and metres alignment is noted but not urgent yet
+
+Desired: dolphin aligns with set title line
+
+Desired: metres aligns with the set detail line
+
+May be revisited once sets contain longer instructions
+
+This captures what you reported today and replaces older items that are no longer accurate. 
+
+project-state
+
+3) Update PS120 Next Single Step
+
+PS120 must match what you actually want the next agent to do. Right now it still describes the old dolphin stabilisation patch as the next step. Replace PS120 with this.
+
+Paste:
+
+Next Single Step
+
+Pick one only.
+
+UI only.
+
+Fix splash and icon presentation:
+
+Lock splash to a fixed resting angle rotated left about 130 degrees
+
+Ensure splash never spins
+
+Crossfade dolphin out and splash in at the same time over 0.2 seconds
+
+Delay scroll or reveal so splash is visible before the page moves
+
+Keep generate dolphin large at rest after completion
+
+Effort bar icons: increase size by another 25 percent
+
+Threshold and Full Gas: revert to blue assets with no warm tint
+
+Stop after this single pass and wait for Jess manual testing feedback.
+
+That makes the next move unambiguous. 
+
+project-state
+
+4) Optional but useful: update PS060 Current System Snapshot
+
+This is optional, but it will prevent confusion for the next agent.
+
+Add one bullet under Routes and tools:
+
+Dolphin assets are served from public/assets/dolphins/ and used across UI and effort bar

@@ -1962,11 +1962,11 @@ app.get("/", (req, res) => {
         return token;
       }
 
-      function dolphinAnimFinish(mainEl, extraEls, activeBtn) {
+      function dolphinAnimFinish(mainEl, extraEls, activeBtn, onSplashShown) {
         const token = __dolphinAnimToken;
         const all = [mainEl].concat(Array.isArray(extraEls) ? extraEls : []).filter(Boolean);
 
-        const SPIN_MS = 1000;          // one full loop
+        const SPIN_MS = 800;           // one full loop (sped up from 1000)
         const FADE_MS = 200;           // cross-fade chunk
         const SPLASH_HOLD_MS = 1000;   // keep splash visible
         const IDLE_FADEIN_MS = 200;    // dolphin fade back in
@@ -2004,6 +2004,11 @@ app.get("/", (req, res) => {
               void el.offsetWidth;
               el.style.opacity = "1";
               el.style.transform = "rotate(-135deg) scale(1.15)";
+            }
+
+            // Trigger scroll/reveal callback NOW that splash is visible
+            if (typeof onSplashShown === "function") {
+              try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
             }
 
             // Settle splash scale back to 1.0 quickly
@@ -2280,8 +2285,6 @@ app.get("/", (req, res) => {
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
-          // Dolphin animation finish (stabilised)
-          dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
           statusPill.textContent = "";
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
           const nameDisplayEl = document.getElementById("workoutNameDisplay");
@@ -2313,45 +2316,43 @@ app.get("/", (req, res) => {
           void cards.offsetWidth;
           if (nameDisplayEl) void nameDisplayEl.offsetWidth;
 
-          // Wait until splash is visible before scrolling
-          // Timing: dolphin fade-out (200ms) + splash fade-in (200ms) + buffer
-          await new Promise(r => setTimeout(r, 420));
+          // Dolphin animation finish with callback when splash appears
+          dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn, () => {
+            // STEP 2: Scroll to workout area when splash is visible
+            const scrollTarget = nameDisplayEl && nameDisplayEl.style.display !== "none" ? nameDisplayEl : cards;
+            if (scrollTarget) {
+              scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
 
-          // STEP 2: Scroll to workout area - title has padding-top:20px for clearance
-          const scrollTarget = nameDisplayEl && nameDisplayEl.style.display !== "none" ? nameDisplayEl : cards;
-          if (scrollTarget) {
-            // Use scrollIntoView with block:start - title's padding-top provides clearance
-            scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-
-          // STEP 3: Wait for scroll to complete before fading in (longer delay for deliberate feel)
-          await new Promise(r => setTimeout(r, 700));
-          
-          // Fade in title first (0.7s)
-          if (nameDisplayEl && nameDisplayEl.style.display !== "none") {
-            nameDisplayEl.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
-            nameDisplayEl.style.opacity = "1";
-            nameDisplayEl.style.transform = "translateY(0)";
-          }
-          
-          // Fade in cards (0.7s)
-          cards.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
-          cards.style.opacity = "1";
-          cards.style.transform = "translateY(0)";
-          
-          // Fade in Total and Summary at the same time
-          if (totalBox.style.display !== "none") {
-            void totalBox.offsetWidth;
-            totalBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
-            totalBox.style.opacity = "1";
-            totalBox.style.transform = "translateY(0)";
-          }
-          if (footerBox.style.display !== "none") {
-            void footerBox.offsetWidth;
-            footerBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
-            footerBox.style.opacity = "1";
-            footerBox.style.transform = "translateY(0)";
-          }
+            // STEP 3: Fade in content after scroll starts
+            setTimeout(() => {
+              // Fade in title first (0.7s)
+              if (nameDisplayEl && nameDisplayEl.style.display !== "none") {
+                nameDisplayEl.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+                nameDisplayEl.style.opacity = "1";
+                nameDisplayEl.style.transform = "translateY(0)";
+              }
+              
+              // Fade in cards (0.7s)
+              cards.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+              cards.style.opacity = "1";
+              cards.style.transform = "translateY(0)";
+              
+              // Fade in Total and Summary at the same time
+              if (totalBox.style.display !== "none") {
+                void totalBox.offsetWidth;
+                totalBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+                totalBox.style.opacity = "1";
+                totalBox.style.transform = "translateY(0)";
+              }
+              if (footerBox.style.display !== "none") {
+                void footerBox.offsetWidth;
+                footerBox.style.transition = "opacity 0.7s ease-out, transform 0.7s ease-out";
+                footerBox.style.opacity = "1";
+                footerBox.style.transform = "translateY(0)";
+              }
+            }, 500);
+          });
 
           const fp = fingerprintWorkoutText(workoutText);
           saveLastWorkoutFingerprint(fp);

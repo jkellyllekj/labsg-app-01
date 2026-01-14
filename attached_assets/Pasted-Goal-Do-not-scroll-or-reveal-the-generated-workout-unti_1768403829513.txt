@@ -1,0 +1,94 @@
+Goal
+
+Do not scroll or reveal the generated workout until after the splash has appeared. If needed, slightly speed up the loop so the splash happens sooner.
+
+Where to edit
+
+In index.js, find the dolphin animation helper you added earlier. It will have:
+
+a “start run” function
+
+some timeouts for loop completion
+
+a “finish” phase that shows splash and then resets to dolphin
+
+Also find where the code currently:
+
+scrolls to the generated section (scrollIntoView, window.scrollTo, etc), OR
+
+reveals/unhides the generated section (changing display, opacity, max-height, adding a class, etc)
+
+Change 1: move the scroll/reveal to after splash is visible
+
+You must ensure the ordering is:
+
+dolphin loop finishes
+
+dolphin fades out (0.2s)
+
+splash fades in + grows (0.2s)
+
+only now: scroll/reveal generated workout
+
+hold splash (1.0s)
+
+splash fades out (0.2s)
+
+dolphin fades back in (0.2s)
+
+Implementation: add a callback that runs right after splash is made visible.
+
+Do this pattern (minimal)
+
+Inside the dolphin helper, in the timeout where you set splash opacity to 1, immediately call a callback:
+
+// inside dolphin helper, at the moment splash appears
+splashEl.style.opacity = "1";
+splashEl.style.transform = "scale(1.12) rotate(-135deg)";
+
+// NEW: trigger scroll/reveal here
+if (typeof onSplashShown === "function") onSplashShown();
+
+
+Then, wherever you start the animation for Generate, pass onSplashShown and remove any earlier scroll/reveal calls.
+
+Example call site:
+
+runDolphinAnimation({
+  dolphinEl,
+  splashEl,
+  onSplashShown: () => {
+    // move the scroll/reveal here
+    revealGeneratedWorkout();
+    scrollGeneratedIntoViewSmooth();
+  }
+});
+
+
+If the current code does not use an options object, do the smallest equivalent: set a global pendingScrollAfterSplash = true and consume it when splash appears. But callback is cleaner and still small.
+
+Change 2: If it still feels slow, speed up only the loop duration
+
+Find the dolphin loop duration constant or the timeout that represents “one full loop”.
+
+Reduce it slightly, do not touch other timings:
+
+loop duration: reduce by 15 to 25 percent
+
+Example:
+
+if it is 1200ms, try 950ms
+
+if it is 1000ms, try 800ms
+
+Do not change:
+
+fade out 0.2
+
+splash fade in 0.2
+
+hold 1.0
+
+splash fade out 0.2
+
+dolphin fade in 0.2

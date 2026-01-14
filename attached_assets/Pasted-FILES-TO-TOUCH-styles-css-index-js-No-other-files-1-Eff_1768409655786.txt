@@ -1,0 +1,207 @@
+FILES TO TOUCH
+
+
+styles.css
+
+
+index.js
+
+
+No other files.
+
+1. Effort bar icons (styles.css)
+Goal
+
+
+Increase size by another 25%.
+
+
+Remove all filters, opacity, or inherited tint.
+
+
+Ensure assets render pure blue everywhere.
+
+
+Edit
+Locate the .effortIcon rule and replace it fully.
+.effortIcon {
+  width: 62px;           /* +25% from 50px */
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+Do not add new classes.
+Do not add media queries yet.
+This alone should make the coffee cup and Z legible.
+
+2. Lock splash rotation angle and prevent spin (styles.css)
+Goal
+
+
+Splash has a fixed resting angle.
+
+
+Never spins.
+
+
+Never inherits animation transforms.
+
+
+Add a dedicated class once.
+.splashFixed {
+  transform: rotate(-130deg);
+  animation: none !important;
+  will-change: opacity;
+}
+
+
+3. Crossfade dolphin ↔ splash simultaneously (index.js)
+Goal
+
+
+Dolphin fades out and splash fades in at the same time.
+
+
+Duration ~200ms.
+
+
+No waiting for one to finish.
+
+
+Change
+Find the helper that handles generate animation (the same one you stabilised recently).
+Where you currently have logic equivalent to:
+
+
+dolphin fade out
+
+
+then splash show
+
+
+then scroll
+
+
+Replace the timing only, not structure:
+Conceptual instruction (not a refactor):
+
+
+Apply opacity: 0 to dolphin
+
+
+Apply opacity: 1 to splash
+
+
+Do both in the same tick
+
+
+Use transition: opacity 200ms ease
+
+
+If there is a setTimeout separating them, remove the separation and apply both state changes together.
+
+4. Ensure splash is visible before scroll (index.js)
+Goal
+
+
+Splash is seen.
+
+
+Scroll happens after visibility, not before.
+
+
+Minimal fix
+
+
+Delay scroll by 150–200ms after splash opacity is set to 1.
+
+
+Do not change scroll logic itself. Only the delay.
+
+5. Apply fixed rotation to generate splash (index.js)
+When the splash element is created or selected:
+
+
+Add the splashFixed class.
+
+
+Do not animate rotation.
+
+
+Do not reuse any spin class.
+
+
+
+6. Keep generate dolphin large after completion (index.js)
+Goal
+
+
+Once generation finishes, dolphin remains in its large idle size.
+
+
+Fix
+
+
+Ensure the class dolphinIcon--generate is not removed at the end of the animation cleanup.
+
+
+Cleanup should remove spin or fade classes only.
+
+
+
+What NOT to touch
+
+
+No background code.
+
+
+No set layout.
+
+
+No new assets.
+
+
+No refactors.
+
+
+No project-state edits.
+
+
+
+Definition of done (manual test checklist)
+Jess to confirm after Agent runs:
+
+
+Effort bar dolphins are visibly larger and crisp.
+
+
+Threshold and Full Gas are blue, not faded.
+
+
+Splash rests angled left ~130° and never spins.
+
+
+Dolphin and splash crossfade together.
+
+
+Splash is visible before scroll.
+
+
+Generate dolphin stays large when idle.
+
+
+If any one of these fails, stop and report. Do not “fix forward”.
+
+Next action
+You can now paste the Agent execution instruction:
+
+Read PROJECT_STATE.md and WORKING-METHOD-REPLIT.md.
+Current task: Fix splash and icon presentation only.
+Files to touch: styles.css, index.js.
+Proceed with the bounded changes exactly as specified.
+
+I will wait for your manual test feedback before proposing anything else.Sources

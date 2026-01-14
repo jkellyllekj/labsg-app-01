@@ -1988,85 +1988,97 @@ app.get("/", (req, res) => {
           // Stop spinning
           for (const el of all) el.classList.remove("dolphinSpin");
 
-          // Fade dolphin out
+          // Crossfade: dolphin fades out AND splash fades in simultaneously
           for (const el of all) {
-            el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
-            el.style.opacity = "1";
-            el.style.transform = "rotate(0deg) scale(1)";
-            void el.offsetWidth;
-            el.style.opacity = "0";
+            // Create splash element with fixed angle class
+            const splashSpan = document.createElement("span");
+            splashSpan.className = "splashFixed";
+            splashSpan.textContent = "💦";
+            splashSpan.style.position = "absolute";
+            splashSpan.style.top = "50%";
+            splashSpan.style.left = "50%";
+            splashSpan.style.translate = "-50% -50%";
+            splashSpan.style.fontSize = "inherit";
+            splashSpan.style.opacity = "0";
+            splashSpan.style.transition = "opacity " + FADE_MS + "ms ease";
+            
+            // Position container relatively if needed
+            if (getComputedStyle(el).position === "static") {
+              el.style.position = "relative";
+            }
+            
+            // Start dolphin fade out
+            const dolphinImg = el.querySelector("img");
+            if (dolphinImg) {
+              dolphinImg.style.transition = "opacity " + FADE_MS + "ms ease";
+              dolphinImg.style.opacity = "0";
+            }
+            
+            // Insert splash and fade in at same time
+            el.appendChild(splashSpan);
+            void splashSpan.offsetWidth;
+            splashSpan.style.opacity = "1";
           }
 
-          // Swap to splash and "explode" in (rotated left)
+          // Trigger scroll/reveal callback after splash is clearly visible (150ms delay)
+          __dolphinAnimTimers.push(setTimeout(() => {
+            if (typeof onSplashShown === "function") {
+              try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
+            }
+          }, FADE_MS + 150));
+
+          // Hold splash, then fade out and reset to idle dolphin
           __dolphinAnimTimers.push(setTimeout(() => {
             if (token !== __dolphinAnimToken) return;
 
+            // Fade out splash
             for (const el of all) {
-              el.innerHTML = "💦";
-              el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
-              el.style.opacity = "0";
-              el.style.transform = "scale(0.75)";
-              void el.offsetWidth;
-              el.style.opacity = "1";
-              el.style.transform = "scale(1.08)";
+              const splash = el.querySelector(".splashFixed");
+              if (splash) {
+                splash.style.transition = "opacity " + FADE_MS + "ms ease";
+                splash.style.opacity = "0";
+              }
             }
 
-            // Trigger scroll/reveal callback after splash is clearly visible
-            __dolphinAnimTimers.push(setTimeout(() => {
-              if (typeof onSplashShown === "function") {
-                try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
-              }
-            }, 150));
-
-            // Settle splash scale back to 1.0 quickly (overshoot effect)
-            __dolphinAnimTimers.push(setTimeout(() => {
-              if (token !== __dolphinAnimToken) return;
-              for (const el of all) {
-                el.style.transition = "transform 120ms ease-out";
-                el.style.transform = "scale(1)";
-              }
-            }, FADE_MS + 20));
-
-            // Hold splash, then fade out and reset to idle dolphin
             __dolphinAnimTimers.push(setTimeout(() => {
               if (token !== __dolphinAnimToken) return;
 
-              for (const el of all) {
-                el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
-                el.style.opacity = "0";
-                el.style.transform = "scale(0.9)";
+              for (let i = 0; i < all.length; i++) {
+                const el = all[i];
+                const isMain = (i === 0);
+                const imgClass = isMain ? "dolphinIcon dolphinIcon--generate" : "dolphinIcon";
+                // Remove splash and restore dolphin
+                const splash = el.querySelector(".splashFixed");
+                if (splash) splash.remove();
+                const oldImg = el.querySelector("img");
+                if (oldImg) oldImg.remove();
+                
+                const newImg = document.createElement("img");
+                newImg.className = imgClass;
+                newImg.src = "/assets/dolphins/dolphin-base.png";
+                newImg.alt = "";
+                newImg.style.opacity = "0";
+                newImg.style.transition = "opacity " + IDLE_FADEIN_MS + "ms ease";
+                el.appendChild(newImg);
+                void newImg.offsetWidth;
+                newImg.style.opacity = "1";
               }
 
+              // Explicit final reset after dolphin fade-in completes
               __dolphinAnimTimers.push(setTimeout(() => {
                 if (token !== __dolphinAnimToken) return;
-
-                for (let i = 0; i < all.length; i++) {
-                  const el = all[i];
-                  const isMain = (i === 0);
-                  const imgClass = isMain ? "dolphinIcon dolphinIcon--generate" : "dolphinIcon";
-                  el.innerHTML = '<img class="' + imgClass + '" src="/assets/dolphins/dolphin-base.png" alt="">';
-                  el.style.transition = "opacity 200ms linear";
-                  el.style.opacity = "0";
-                  el.style.transform = "rotate(0deg) scale(1)";
-                  void el.offsetWidth;
+                for (const el of all) {
+                  el.style.position = "";
+                  el.style.display = "";
                   el.style.opacity = "1";
+                  el.style.transform = "";
+                  el.style.transition = "";
+                  el.classList.remove("animating");
                 }
-
-                // Explicit final reset after dolphin fade-in completes
-                __dolphinAnimTimers.push(setTimeout(() => {
-                  if (token !== __dolphinAnimToken) return;
-                  for (const el of all) {
-                    el.style.display = "";
-                    el.style.opacity = "1";
-                    el.style.transform = "";
-                    el.style.transition = "";
-                    el.classList.remove("animating");
-                  }
-                  if (activeBtn) activeBtn.classList.remove("active");
-                }, 200));
-              }, FADE_MS));
-            }, SPLASH_HOLD_MS));
-          }, FADE_MS));
+                if (activeBtn) activeBtn.classList.remove("active");
+              }, IDLE_FADEIN_MS));
+            }, FADE_MS));
+          }, SPLASH_HOLD_MS));
         }, wait));
       }
 

@@ -42,11 +42,13 @@
       }
       /* Effort bar icons */
       .effortIcon {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         object-fit: contain;
         display: block;
         margin: 0 auto;
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.85))
+                drop-shadow(0 0 6px rgba(255,255,255,0.35));
       }
       /* Glass chip for text legibility */
       .glassChip {
@@ -265,10 +267,10 @@
       }
       @keyframes reroll-spin {
         0% { transform: rotate(0deg); }
-        25% { transform: rotate(-90deg); }
-        50% { transform: rotate(-180deg); }
-        75% { transform: rotate(-270deg); }
-        100% { transform: rotate(-360deg); }
+        25% { transform: rotate(90deg); }
+        50% { transform: rotate(180deg); }
+        75% { transform: rotate(270deg); }
+        100% { transform: rotate(360deg); }
       }
       .reroll-dolphin {
         display: inline-block;

@@ -2007,10 +2007,10 @@ app.get("/", (req, res) => {
               el.innerHTML = "💦";
               el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
               el.style.opacity = "0";
-              el.style.transform = "scale(0.75)";
+              el.style.transform = "scale(0.75) rotate(-130deg)";
               void el.offsetWidth;
               el.style.opacity = "1";
-              el.style.transform = "scale(1.08)";
+              el.style.transform = "scale(1.08) rotate(-130deg)";
             }
 
             // Trigger scroll/reveal callback NOW that splash is visible
@@ -2023,7 +2023,7 @@ app.get("/", (req, res) => {
               if (token !== __dolphinAnimToken) return;
               for (const el of all) {
                 el.style.transition = "transform 120ms ease-out";
-                el.style.transform = "scale(1)";
+                el.style.transform = "scale(1) rotate(-130deg)";
               }
             }, FADE_MS + 20));
 
@@ -2034,7 +2034,7 @@ app.get("/", (req, res) => {
               for (const el of all) {
                 el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
                 el.style.opacity = "0";
-                el.style.transform = "scale(0.9)";
+                el.style.transform = "scale(0.9) rotate(-130deg)";
               }
 
               __dolphinAnimTimers.push(setTimeout(() => {

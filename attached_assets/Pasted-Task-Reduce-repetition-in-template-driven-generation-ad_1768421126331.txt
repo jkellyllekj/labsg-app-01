@@ -1,0 +1,77 @@
+Task: Reduce repetition in template driven generation, add controlled variety, and ensure occasional red appears, without changing buildWorkout section percentages.
+
+Constraints:
+
+Do not touch buildWorkout percentage allocation yet.
+
+No UI changes unless required to support logic. Console logs are ok but remove before finishing.
+
+Keep edits minimal and block level, follow existing marker block method if present.
+
+Step 1, fix repeated outputs by making the seed change on every Generate.
+
+Find the Generate button handler, the place that calls buildWorkout.
+
+Ensure it creates a fresh runSeed each click using Date.now plus Math.random, then passes runSeed into buildWorkout.
+
+Ensure reroll uses a different seed too, for example runSeed plus a counter, so repeated clicks do not recreate the same templates.
+
+Step 2, make template picking actually random among all templates that fit.
+
+In pickTemplate(sectionKey, targetDistance, seed), do not return the first match.
+
+Filter all templates that fit, then pick one by seeded index, for example idx = seed % fits.length.
+
+Also shuffle by sectionKey hash so warmup and cooldown do not always land on the same first option.
+
+Step 3, expand templates so small workouts do not fall into the same few patterns.
+
+Add at least 6 templates each for warmup, build, drill, kick, cooldown.
+
+Add at least 6 templates for main as well, since main is still becoming repetitive.
+
+Include cooldown templates that can be 250 and 300 in 25m pools, for example 5x50 easy, 300 easy choice, 6x50 easy.
+
+Avoid “1x75” style fragments in 25m and 50m pools unless there is a strong reason. Prefer 50s, 100s, 200s, 300s, 400s, 500s.
+
+Step 4, enforce “home end” finish inside each section for 25m and 50m.
+
+You already have endsAtHomeEnd. Use it for each section body, not just workout total.
+
+If a template fits targetDistance but fails home end check, skip it and pick another.
+
+If no template fits after filtering, fall back to existing generator, but force a “round number” fallback for 25m and 50m. Example warmup becomes 300 or 400 instead of 225.
+
+Step 5, make red appear sometimes, controlled, not always.
+
+Add a simple rule in buildWorkout after all sets are built.
+
+If no set has hard or fullgas wording, then with probability about 0.2 promote one set, preferably main or kick, to include “hard” or “full gas” phrasing so the card gradient reaches red.
+
+Do not put hard or fullgas in warmup or cooldown.
+
+Step 6, update project state.
+
+In project-state.md add a short entry under recent fixes noting:
+
+“Templates now vary per Generate click via runSeed.”
+
+“Template picker selects among all fitting templates.”
+
+“Per section home end enforced for 25m and 50m.”
+
+“Occasional red injected if missing.”
+
+Also add a checkpoint note: “Rollback safe point, Jan 14 around 18:00, May checkpoint, before tier work”.
+
+Verification steps for the agent before finishing:
+
+Generate 10 workouts at 1500, 25m. You should see at least 3 different warmups and at least 3 different mains.
+
+Generate 10 workouts at 2600, 25m. Main should not be 6x200 most of the time.
+
+In 20 generated workouts, red should appear in about 2 to 6 of them, never in warmup or cooldown.
+
+No 1x25 fragments in warmup, build, drill, kick, cooldown for 25m and 50m unless the whole section is deliberately that style and still ends at home end.
+
+END

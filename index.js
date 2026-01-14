@@ -160,37 +160,91 @@ const SECTION_TEMPLATES = {
     { body: "400 easy", dist: 400 },
     { body: "4x100 easy", dist: 400 },
     { body: "8x50 easy", dist: 400 },
-    { body: "200 easy\n4x50 build", dist: 400 }
+    { body: "200 easy\n4x50 build", dist: 400 },
+    { body: "6x50 easy choice", dist: 300 },
+    { body: "4x75 easy", dist: 300 },
+    { body: "200 easy\n2x100 build", dist: 400 },
+    { body: "500 easy", dist: 500 },
+    { body: "2x200 easy", dist: 400 },
+    { body: "10x50 easy", dist: 500 }
   ],
   build: [
     { body: "4x50 build", dist: 200 },
     { body: "6x50 build", dist: 300 },
-    { body: "2x100 negative split", dist: 200 }
+    { body: "2x100 negative split", dist: 200 },
+    { body: "4x100 build", dist: 400 },
+    { body: "8x50 build", dist: 400 },
+    { body: "3x100 descend", dist: 300 },
+    { body: "2x150 build", dist: 300 },
+    { body: "6x50 descend 1-3 twice", dist: 300 }
   ],
   drill: [
     { body: "6x50 drill choice", dist: 300 },
     { body: "8x25 drill choice", dist: 200 },
-    { body: "6x50 drill down swim back", dist: 300 }
+    { body: "6x50 drill down swim back", dist: 300 },
+    { body: "4x50 drill", dist: 200 },
+    { body: "4x100 drill swim", dist: 400 },
+    { body: "8x50 catch up", dist: 400 },
+    { body: "6x50 fingertip drag", dist: 300 },
+    { body: "4x75 drill choice", dist: 300 }
   ],
   kick: [
     { body: "6x50 kick descend", dist: 300 },
     { body: "4x100 kick strong", dist: 400 },
-    { body: "8x25 kick fast", dist: 200 }
+    { body: "8x25 kick fast", dist: 200 },
+    { body: "4x50 kick moderate", dist: 200 },
+    { body: "6x50 kick build", dist: 300 },
+    { body: "8x50 kick choice", dist: 400 },
+    { body: "4x75 kick", dist: 300 },
+    { body: "200 kick\n4x50 kick fast", dist: 400 }
   ],
   cooldown: [
     { body: "200 easy", dist: 200 },
     { body: "300 easy", dist: 300 },
-    { body: "4x100 loosen", dist: 400 }
+    { body: "4x100 loosen", dist: 400 },
+    { body: "4x50 easy", dist: 200 },
+    { body: "5x50 easy", dist: 250 },
+    { body: "6x50 easy", dist: 300 },
+    { body: "300 easy choice", dist: 300 },
+    { body: "2x150 easy", dist: 300 }
+  ],
+  main: [
+    { body: "6x100 strong", dist: 600 },
+    { body: "8x100 moderate", dist: 800 },
+    { body: "4x200 strong", dist: 800 },
+    { body: "5x100 descend", dist: 500 },
+    { body: "3x200 build", dist: 600 },
+    { body: "10x100 steady", dist: 1000 },
+    { body: "8x50 fast\n4x100 moderate", dist: 800 },
+    { body: "400 strong\n4x100 descend", dist: 800 },
+    { body: "6x150 strong", dist: 900 },
+    { body: "4x150 build\n4x50 fast", dist: 800 }
   ]
 };
 
-function pickTemplate(section, targetDistance, seed) {
+function pickTemplate(section, targetDistance, seed, poolLen) {
   const list = SECTION_TEMPLATES[section];
   if (!list) return null;
-  const fits = list.filter(t => t.dist <= targetDistance);
+  
+  // Filter templates that fit distance AND end at home end
+  const fits = list.filter(t => {
+    if (t.dist > targetDistance) return false;
+    // For 25m and 50m pools, enforce home end
+    if (poolLen === 25 || poolLen === 50) {
+      if (!endsAtHomeEnd(t.dist, poolLen)) return false;
+    }
+    return true;
+  });
+  
   if (!fits.length) return null;
-  const idx = (seed >>> 0) % fits.length;
-  return fits[idx];
+  
+  // Shuffle fits based on seed + section hash for variety
+  const sectionHash = fnv1a32(section);
+  const shuffled = shuffleWithSeed(fits, (seed ^ sectionHash) >>> 0);
+  
+  // Pick from shuffled list
+  const idx = ((seed * 7919) >>> 0) % shuffled.length;
+  return shuffled[idx];
 }
 
 function normalizeSectionKey(label) {
@@ -200,6 +254,7 @@ function normalizeSectionKey(label) {
   if (l.includes("drill")) return "drill";
   if (l.includes("kick")) return "kick";
   if (l.includes("cool")) return "cooldown";
+  if (l.includes("main")) return "main";
   return null;
 }
 
@@ -283,7 +338,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Use real targetDistance only (allocator now ensures clean distances)
   const sectionKey = normalizeSectionKey(label);
   if (sectionKey) {
-    const template = pickTemplate(sectionKey, target, seedA);
+    const template = pickTemplate(sectionKey, target, seedA, base);
     if (template) {
       return template.body;
     }
@@ -4179,6 +4234,31 @@ app.post("/generate-workout", (req, res) => {
     }
 
     while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
+
+    // RED INJECTION: If no set has hard/fullgas wording, ~20% chance to promote one
+    const hasRedEffort = lines.some(line => {
+      const low = String(line).toLowerCase();
+      return low.includes("hard") || low.includes("full gas") || low.includes("fullgas") || low.includes("all out");
+    });
+    
+    if (!hasRedEffort && ((seed * 31337) >>> 0) % 5 === 0) {
+      // Find a main or kick line to promote (not warmup or cooldown)
+      for (let i = 0; i < lines.length; i++) {
+        const line = String(lines[i]);
+        const low = line.toLowerCase();
+        if ((low.includes("main") || low.includes("kick")) && !low.includes("warm") && !low.includes("cool")) {
+          // Replace "strong" or "fast" with "hard" or add "hard" if just "moderate"
+          if (low.includes("strong")) {
+            lines[i] = line.replace(/strong/gi, "hard");
+          } else if (low.includes("fast")) {
+            lines[i] = line.replace(/fast/gi, "hard");
+          } else if (low.includes("moderate")) {
+            lines[i] = line.replace(/moderate/gi, "strong");
+          }
+          break;
+        }
+      }
+    }
 
     const footer = [];
     footer.push("");

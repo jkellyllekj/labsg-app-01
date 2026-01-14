@@ -242,6 +242,14 @@ Workout area:
   - Prevents 125-225 fragments and allows templates to validate
   - Template selection now uses real targetDistance (allocator ensures clean values)
 
+- Template variety and red injection (Jan 14)
+  - Templates now vary per Generate click via runSeed
+  - Template picker selects among all fitting templates with shuffle
+  - Per-section home end enforced for 25m and 50m pools
+  - Expanded templates: 11 warmup, 8 build, 8 drill, 8 kick, 8 cooldown, 10 main
+  - Occasional red injected (~20% probability) if missing, never in warmup/cooldown
+  - Rollback safe point: Jan 14 around 18:00, before tier work
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

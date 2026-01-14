@@ -1985,17 +1985,9 @@ app.get("/", (req, res) => {
       }
       
       function extractRestDisplay(body) {
-        // Extract all rest display values from set body (may have multiple lines)
-        const t = String(body || "");
-        const matches = [];
-        const re = /rest\\s*(\\d+)\\s*s/gi;
-        let m;
-        while ((m = re.exec(t)) !== null) {
-          const val = m[1] + "s";
-          if (!matches.includes(val)) matches.push(val);
-        }
-        // Return unique rest values joined, or null if none
-        return matches.length ? matches.join("/") : null;
+        // Free tier: never display rest seconds.
+        // Rest UI will return later behind a paid-tier flag.
+        return null;
       }
       
       function stripRestFromBody(body) {
@@ -2005,6 +1997,18 @@ app.get("/", (req, res) => {
           .map(line => line.replace(/\\s*rest\\s*\\d+\\s*s/gi, "").trim())
           .filter(line => line.length > 0)
           .join("\\n");
+      }
+
+      function cycleCardEffortFallback(bodyEl) {
+        const card = bodyEl ? bodyEl.closest('[data-effort]') : null;
+        if (!card) return;
+
+        const order = ["easy", "steady", "moderate", "strong", "hard", "fullgas"];
+        const cur = (card.getAttribute("data-effort") || "steady").toLowerCase();
+        const idx = Math.max(0, order.indexOf(cur));
+        const next = order[(idx + 1) % order.length];
+
+        card.setAttribute("data-effort", next);
       }
 
       function estimateSwimSeconds(body, paceSecPer100, label) {
@@ -2206,14 +2210,18 @@ app.get("/", (req, res) => {
 
               const data = await res.json().catch(() => null);
               if (!res.ok || !data || data.ok !== true) {
-                const msg = data && data.error ? data.error : ("HTTP " + res.status);
-                renderError("Reroll failed", [msg]);
+                // Reroll must never show a scary failure box in v1.
+                // Provide a guaranteed visible fallback: cycle the effort colour.
+                console.warn("Reroll failed:", data && data.error ? data.error : ("HTTP " + res.status));
+                cycleCardEffortFallback(bodyEl);
                 return;
               }
 
               const nextBody = String(data.setBody || "").trim();
               if (!nextBody) {
-                renderError("Reroll failed", ["Empty set returned."]);
+                // Silent fallback for empty set
+                console.warn("Reroll returned empty set");
+                cycleCardEffortFallback(bodyEl);
                 return;
               }
 

@@ -223,6 +223,11 @@ Workout area:
   - Template selection now uses normalized key instead of raw label
   - Templates now actually fire for matching sections
 
+- Added minimum section distance floors so templates can fire on small workouts
+  - SECTION_MIN_DIST: warmup 300, build/drill/kick/cooldown 200
+  - Template selection uses effectiveTarget = max(target, minDist)
+  - Excess distance implicitly shifts to main set
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

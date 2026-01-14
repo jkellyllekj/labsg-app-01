@@ -203,6 +203,14 @@ function normalizeSectionKey(label) {
   return null;
 }
 
+const SECTION_MIN_DIST = {
+  warmup: 300,
+  build: 200,
+  drill: 200,
+  kick: 200,
+  cooldown: 200
+};
+
 // ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
 function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) {
   const base = poolLen;
@@ -334,9 +342,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // WARM-UP: Simple easy swim with variety
   // Guard: warm-up must not contain hard effort keywords
   if (k.includes("warm")) {
-    // Try template first
+    // Try template first with minimum distance floor
     const sectionKey = normalizeSectionKey(label);
-    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
     if (template) return template.body;
     
     const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
@@ -356,9 +366,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   // BUILD: Build set with variety - clear progression keywords for gradient
   if (k.includes("build")) {
-    // Try template first
+    // Try template first with minimum distance floor
     const sectionKey = normalizeSectionKey(label);
-    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
     if (template) return template.body;
     
     const buildSetDescs = [
@@ -374,9 +386,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // DRILL: Named drill with nice display
   // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
   if (k.includes("drill")) {
-    // Try template first
+    // Try template first with minimum distance floor
     const sectionKey = normalizeSectionKey(label);
-    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
     if (template) return template.body;
     
     const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
@@ -397,9 +411,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Use rerollNum to CYCLE through effort levels deliberately
   // Guard: no "relaxed" or "easy" with short reps (25-50)
   if (k.includes("kick")) {
-    // Try template first
+    // Try template first with minimum distance floor
     const sectionKey = normalizeSectionKey(label);
-    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
     if (template) return template.body;
     
     const finNote = hasFins ? " with fins" : "";
@@ -448,9 +464,11 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // COOL-DOWN: Easy swim with variety
   // Guard: cool-down must not contain hard effort keywords
   if (k.includes("cool")) {
-    // Try template first
+    // Try template first with minimum distance floor
     const sectionKey = normalizeSectionKey(label);
-    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
     if (template) return template.body;
     
     const coolDescs = ["easy choice", stroke + " easy", "easy swim", "choice loosen up", "relaxed swim"];

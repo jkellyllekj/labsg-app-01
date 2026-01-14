@@ -2000,10 +2000,10 @@ app.get("/", (req, res) => {
               el.textContent = "💦";
               el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
               el.style.opacity = "0";
-              el.style.transform = "rotate(-135deg) scale(0.7)";
+              el.style.transform = "scale(0.75)";
               void el.offsetWidth;
               el.style.opacity = "1";
-              el.style.transform = "rotate(-135deg) scale(1.15)";
+              el.style.transform = "scale(1.08)";
             }
 
             // Trigger scroll/reveal callback NOW that splash is visible
@@ -2011,12 +2011,12 @@ app.get("/", (req, res) => {
               try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
             }
 
-            // Settle splash scale back to 1.0 quickly
+            // Settle splash scale back to 1.0 quickly (overshoot effect)
             __dolphinAnimTimers.push(setTimeout(() => {
               if (token !== __dolphinAnimToken) return;
               for (const el of all) {
-                el.style.transition = "transform 160ms ease-out";
-                el.style.transform = "rotate(-135deg) scale(1)";
+                el.style.transition = "transform 120ms ease-out";
+                el.style.transform = "scale(1)";
               }
             }, FADE_MS + 20));
 
@@ -2027,7 +2027,7 @@ app.get("/", (req, res) => {
               for (const el of all) {
                 el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
                 el.style.opacity = "0";
-                el.style.transform = "rotate(-135deg) scale(0.9)";
+                el.style.transform = "scale(0.9)";
               }
 
               __dolphinAnimTimers.push(setTimeout(() => {

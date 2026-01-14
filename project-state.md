@@ -247,3 +247,221 @@ Stop after that single pass and wait for Jess testing feedback.
 ---
 
 <!-- __END_FILE_PROJECT_STATE_PS000__ -->
+<!-- __START_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+Current System Snapshot
+
+Backgrounds:
+
+Random background works on page load
+
+Manual background cycling works
+
+Two layer crossfade is live and does not flash fallback green in normal use
+
+Routes and tools:
+
+/viewport-lab exists and is used for multi viewport testing
+
+Viewport Lab includes a colour picker panel (recent request: make it draggable)
+
+UI top area:
+
+Ad placeholder banner at top
+
+Currently used as a link to Viewport Lab in some iterations
+
+Single Swim Gen panel contains:
+
+Title row with Swim Gen chip plus a small dolphin icon and a background icon
+
+Distance slider
+
+Distance readout shown as a right side chip showing only the number (example 1500)
+
+Pool length buttons (25m, 50m, 25yd)
+
+Advanced options chip
+
+Generate control on the right as a square style button that includes a dolphin
+
+Dolphin is intended to animate on generate
+
+White chip transparency has been iterated (25 percent then 50 percent, target is now about 35 percent)
+
+Workout area:
+
+Workout title chip (example Mixed Bag) appears above the sets
+
+Has a dolphin regen control and a background control nearby in current iterations
+
+Set cards render below and remain full width (no extra enclosing panel around the list)
+
+Per set dolphins have been moved to the right side near metres, alignment still being tuned
+
+Summary area exists at bottom and is being restyled to match chip language
+
+<!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+
+project-state.md
+PS090
+
+<!-- __START_PS_RECENT_FIXES_PS090__ -->
+Recent Fixes
+
+2026-01-13
+
+Manual background cycle button fixed
+
+Root cause: backgroundImage used url(...) without quotes and broke on filenames with spaces and parentheses
+
+Fix: setLayerImage now uses url("...") quoting so CSS stays valid
+
+2026-01-13 to 2026-01-14
+
+UI condensation and tier scaffolding started
+
+Controls consolidated into a single Swim Gen panel
+
+Ad placeholder banner added
+
+Workout cards remain full width below
+
+2026-01-14
+
+Clear glass style iteration for Swim Gen panel
+
+Transparent interior, border, highlight, shadow
+
+No frosted blur on the panel
+
+2026-01-14
+
+Readability mitigation via white chips and glow selection language
+
+White chip transparency tested at 25 percent then 50 percent
+
+Current target is about 35 percent
+
+Generate area converted to a right side square button containing a dolphin
+
+Added additional regen and background controls near the workout title chip (example Mixed Bag)
+
+Per set dolphins moved to right side near metres, alignment partially improved
+
+Queued, not applied yet:
+
+Dolphin animation stabilisation patch for repeated presses
+
+Centralise dolphin spin and splash into one helper
+
+Cancel overlapping timeouts
+
+Always complete one loop then splash then reset
+
+<!-- __END_PS_RECENT_FIXES_PS090__ -->
+
+project-state.md
+PS100
+
+<!-- __START_PS_CURRENT_KNOWN_UI_ISSUES_PS100__ -->
+Current Known UI Issues
+
+Dolphin animation glitching
+
+First generate sometimes looks acceptable, later presses often skip spin and splash
+
+Dolphins can jump straight to updated set output without completing a loop
+
+Cause is likely overlapping timeouts and multiple code paths toggling dolphin state
+
+Fix is queued: centralise animation and cancel older timers before starting a new cycle
+
+Icon styling mismatch and halo
+
+Some background icon instances are showing a chip or halo plate when they should be a pure silhouette icon
+
+Desired: background icon can be changed later, but for now it must be unboxed, no halo, no chip
+
+Per set dolphins and metres alignment
+
+Desired layout:
+
+Dolphin aligned with the set title line (Warm up, Build, Drill)
+
+Metres aligned with the set detail line (example 5x25 freestyle descend to hard)
+
+There should be vertical spacing between the dolphin and the metres
+
+Custom pool length override
+
+No custom button is needed
+
+Typing a value into custom pool length should automatically switch to custom and override 25m, 50m, 25yd
+
+Current behaviour is regressed or blocked in some iterations and must be restored
+
+Advanced options readability and clickability
+
+Advanced options contents can become hard to read depending on background
+
+Some interactive controls have been blocked by layout layering in some iterations
+
+Requirement: all controls clickable, and readability improved without frosting the whole panel
+
+Chip transparency tuning
+
+White chip backgrounds have been tested at 25 percent and 50 percent transparency
+
+Current target is 35 percent for readability and glass feel balance
+
+Summary styling and content
+
+Remove the word Summary
+
+Pool and total lengths capsules should match the top chip language and styling
+
+Avoid extra surrounding wrappers beyond the summary card itself
+
+Viewport Lab colour picker
+
+Requested: colour picker panel should be draggable and persist position
+
+Parked, not active work yet
+
+Depth or parallax feel as the page scrolls or transitions
+
+Must not be started until current UI behaviour is stable
+
+Regression to avoid
+
+Do not reintroduce an extra wide panel that wraps the workout cards
+
+Cards must remain full width
+
+<!-- __END_PS_CURRENT_KNOWN_UI_ISSUES_PS100__ -->
+
+project-state.md
+PS120
+
+<!-- __START_PS_NEXT_SINGLE_STEP_PS120__ -->
+Next Single Step
+
+Pick one only.
+
+Apply the queued dolphin animation stabilisation patch:
+
+Target block: ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+Add a small helper that:
+
+Cancels older dolphin animation timers
+
+Forces restart of CSS animation reliably
+
+Ensures one full loop then splash then reset
+
+Works consistently for the main Generate dolphin and regen dolphins
+
+Stop after patch and wait for Jess manual testing feedback on repeated presses
+
+<!-- __END_PS_NEXT_SINGLE_STEP_PS120__ -->

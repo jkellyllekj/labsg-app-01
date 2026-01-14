@@ -44,5 +44,5 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node index.js"
+args = "node index.patched.js"
 waitForPort = 5000

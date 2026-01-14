@@ -1,0 +1,254 @@
+UI only. Smallest reversible changes. index.js only. Do not touch generation logic or background logic.
+
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_DOM_R130
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+ROUTE_VIEWPORT_LAB_R175
+
+1) ROUTE_HOME_UI_HTML_R110
+A) Reduce global side padding by 5px per side
+
+Find the <body style="padding:10px; ..."> in the home HTML and change:
+
+padding:10px; to padding:5px;
+
+This will reclaim the extra width on generator, cards, and summary.
+
+B) Swim Gen title less bold, more small caps like Total
+
+Find:
+
+<h3 style="margin:0; font-size:22px; font-weight:900;"><span class="glassChip">Swim Gen</span></h3>
+
+
+Replace with:
+
+<h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
+  <span class="glassChip">Swim Gen</span>
+</h3>
+
+C) Make Summary glass
+
+Find the footerBox div in the home HTML. It currently has a white background and border.
+
+Replace the entire footerBox tag with:
+
+<div id="footerBox" class="glassSummary" style="display:none; margin-top:8px; padding:12px;"></div>
+
+
+Then add this CSS rule in the same <style> section (near glassPanel rules):
+
+.glassSummary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.26);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.14);
+}
+
+D) Generate button should stand out more (without going black)
+
+Add this CSS rule (near the pool button rules):
+
+#generateBtn {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.34);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+}
+#generateBtn:hover {
+  background: rgba(255,255,255,0.22);
+}
+#generateBtn.active {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(255,255,255,0.55);
+  font-weight: 800;
+}
+
+
+Do not change pool button behaviour. Generate just gets a slightly stronger presence.
+
+E) Ensure dolphin element is always present and not clipped
+
+In the HTML where dolphin is defined:
+
+<span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1;">🐬</span>
+
+
+Replace with:
+
+<span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1; position:absolute; left:0; top:0; z-index:3; pointer-events:none;">🐬</span>
+
+
+Also change advancedRow to be a stable anchor band and not push content apart.
+
+Find:
+
+<div id="advancedRow" style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+
+
+Replace with:
+
+<div id="advancedRow" style="display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:12px; position:relative;">
+
+
+This prevents the dolphin being shoved out or clipped on small screens.
+
+2) ROUTE_HOME_UI_JS_DOM_R130
+
+Add a dolphin positioning function that anchors it under Generate on the same horizontal band as Advanced options. This fixes phone and desktop.
+
+Right after:
+
+const dolphinLoader = document.getElementById("dolphinLoader");
+
+
+Insert:
+
+function positionDolphinUnderGenerate() {
+  const form = document.getElementById("genForm");
+  const btn = document.getElementById("generateBtn");
+  const advRow = document.getElementById("advancedRow");
+  const d = document.getElementById("dolphinLoader");
+  if (!form || !btn || !advRow || !d) return;
+
+  const rForm = form.getBoundingClientRect();
+  const rBtn = btn.getBoundingClientRect();
+  const rAdv = advRow.getBoundingClientRect();
+
+  const centerX = (rBtn.left - rForm.left) + (rBtn.width / 2);
+  const bandY = (rAdv.top - rForm.top) + (rAdv.height / 2);
+
+  const x = Math.round(centerX - (d.offsetWidth / 2));
+  const y = Math.round(bandY - (d.offsetHeight / 2));
+
+  d.style.left = x + "px";
+  d.style.top = y + "px";
+}
+
+
+Then, at the end of the DOM wiring section (after the elements exist), call it and wire resize:
+
+positionDolphinUnderGenerate();
+setTimeout(positionDolphinUnderGenerate, 0);
+window.addEventListener("resize", positionDolphinUnderGenerate);
+
+3) ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+Make sure the dolphin is visible idle, spins only while generating, splash returns to dolphin, and Generate gets active class only while generating.
+
+At the start of submit handling (right when generation begins), ensure:
+
+generateBtn.classList.add("active");
+dolphinLoader.textContent = "🐬";
+dolphinLoader.classList.add("dolphinSpin");
+positionDolphinUnderGenerate();
+
+
+On every failure return path and in catch, before returning:
+
+dolphinLoader.classList.remove("dolphinSpin");
+dolphinLoader.textContent = "🐬";
+generateBtn.classList.remove("active");
+positionDolphinUnderGenerate();
+
+
+On success completion, do splash without moving:
+
+dolphinLoader.classList.remove("dolphinSpin");
+dolphinLoader.textContent = "💦";
+positionDolphinUnderGenerate();
+setTimeout(() => {
+  dolphinLoader.textContent = "🐬";
+  generateBtn.classList.remove("active");
+  positionDolphinUnderGenerate();
+}, 450);
+
+
+This should stop the “dolphin appears down below in the workout cards” confusion by keeping it pinned to the generator band.
+
+4) ROUTE_VIEWPORT_LAB_R175
+
+Make the colour picker movable by dragging the header. Also keep its position across reload.
+
+A) CSS
+
+In viewport lab <style>, add:
+
+#colorPicker {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+}
+#colorPicker .picker-header {
+  cursor: move;
+  user-select: none;
+}
+
+B) JS
+
+In viewport lab script, add:
+
+(function enableDraggableColorPicker() {
+  const picker = document.getElementById("colorPicker");
+  if (!picker) return;
+  const header = picker.querySelector(".picker-header");
+  if (!header) return;
+
+  // Restore saved position
+  try {
+    const saved = JSON.parse(localStorage.getItem("swg_picker_pos") || "null");
+    if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+      picker.style.left = saved.x + "px";
+      picker.style.top = saved.y + "px";
+      picker.style.right = "auto";
+    }
+  } catch {}
+
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+  let originLeft = 0;
+  let originTop = 0;
+
+  header.addEventListener("mousedown", (e) => {
+    dragging = true;
+    const rect = picker.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    originLeft = rect.left;
+    originTop = rect.top;
+
+    picker.style.left = originLeft + "px";
+    picker.style.top = originTop + "px";
+    picker.style.right = "auto";
+
+    e.preventDefault();
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const x = Math.max(8, originLeft + dx);
+    const y = Math.max(8, originTop + dy);
+    picker.style.left = x + "px";
+    picker.style.top = y + "px";
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    try {
+      const rect = picker.getBoundingClientRect();
+      localStorage.setItem("swg_picker_pos", JSON.stringify({ x: rect.left, y: rect.top }));
+    } catch {}
+  });
+})();
+
+
+End.

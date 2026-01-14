@@ -538,6 +538,27 @@ app.get("/", (req, res) => {
         position:relative;
         justify-content:flex-start !important;
       }
+
+      .glassSummary {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.26);
+        border-radius: 12px;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.14);
+      }
+
+      #generateBtn {
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.34);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+      }
+      #generateBtn:hover {
+        background: rgba(255,255,255,0.22);
+      }
+      #generateBtn.active {
+        background: rgba(255,255,255,0.92);
+        border-color: rgba(255,255,255,0.55);
+        font-weight: 800;
+      }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
@@ -650,7 +671,9 @@ app.get("/", (req, res) => {
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:10px;">
-                <h3 style="margin:0; font-size:22px; font-weight:900;"><span class="glassChip">Swim Gen</span></h3>
+                <h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
+  <span class="glassChip">Swim Gen</span>
+</h3>
                 <button id="bgCycleBtn" type="button" aria-label="Change background"
   style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:10px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
@@ -690,11 +713,11 @@ app.get("/", (req, res) => {
               </button>
             </div>
 
-            <div id="advancedRow" style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+            <div id="advancedRow" style="display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:12px; position:relative;">
               <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
                 ▶ Advanced options
               </button>
-              <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1;">🐬</span>
+              <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1; position:absolute; left:0; top:0; z-index:3; pointer-events:none;">🐬</span>
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:12px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
@@ -836,7 +859,7 @@ app.get("/", (req, res) => {
         <div id="cards" style="display:none;"></div>
 
         <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
-        <div id="footerBox" style="display:none; margin-top:8px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+        <div id="footerBox" class="glassSummary" style="display:none; margin-top:8px; padding:12px;"></div>
 
         <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
       </div>
@@ -869,15 +892,16 @@ app.get("/", (req, res) => {
         const rAdv = advRow.getBoundingClientRect();
 
         const centerX = (rBtn.left - rForm.left) + (rBtn.width / 2);
-        const topY = (rAdv.top - rForm.top) + ((rAdv.height - d.offsetHeight) / 2);
+        const bandY = (rAdv.top - rForm.top) + (rAdv.height / 2);
 
-        d.style.left = Math.round(centerX - (d.offsetWidth / 2)) + "px";
-        d.style.top = Math.round(topY) + "px";
+        const x = Math.round(centerX - (d.offsetWidth / 2));
+        const y = Math.round(bandY - (d.offsetHeight / 2));
+
+        d.style.left = x + "px";
+        d.style.top = y + "px";
       }
 
-      window.addEventListener("resize", () => {
-        positionDolphinUnderGenerate();
-      });
+      window.addEventListener("resize", positionDolphinUnderGenerate);
 
       const cards = document.getElementById("cards");
       const totalBox = document.getElementById("totalBox");
@@ -2377,6 +2401,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2406,6 +2431,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2416,6 +2442,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2429,6 +2456,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
@@ -2437,6 +2465,7 @@ app.get("/", (req, res) => {
           // Stop spinning, show splash, then return to dolphin
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "💦";
+          positionDolphinUnderGenerate();
           setTimeout(() => {
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
@@ -2519,6 +2548,7 @@ app.get("/", (req, res) => {
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "🐬";
           generateBtn.classList.remove("active");
+          positionDolphinUnderGenerate();
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }
@@ -2558,7 +2588,7 @@ app.get("/", (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Swim Gen</title>
 </head>
-<body style="padding:10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
+<body style="padding:5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #40c9e0 0%, #2db8d4 100%); min-height:100vh;">
 <div id="bgWrap">
   <div id="bgA" class="bgLayer" style="background-image: url('${randomBg}');"></div>
   <div id="bgB" class="bgLayer"></div>
@@ -2697,6 +2727,8 @@ app.get("/viewport-lab", (req, res) => {
       margin-bottom: 6px;
       font-weight: 700;
       font-size: 12px;
+      cursor: move;
+      user-select: none;
     }
     #colorPicker.collapsed .picker-content { display: none; }
     #colorPicker .zone-row {
@@ -2949,6 +2981,64 @@ app.get("/viewport-lab", (req, res) => {
     setupColorInput('colorHardBar', 'hexHardBar', '--zone-hard-bar');
     setupColorInput('colorFullgasBg', 'hexFullgasBg', '--zone-fullgas-bg');
     setupColorInput('colorFullgasBar', 'hexFullgasBar', '--zone-fullgas-bar');
+
+    // Draggable color picker
+    (function enableDraggableColorPicker() {
+      const picker = document.getElementById("colorPicker");
+      if (!picker) return;
+      const header = picker.querySelector(".picker-header");
+      if (!header) return;
+
+      // Restore saved position
+      try {
+        const saved = JSON.parse(localStorage.getItem("swg_picker_pos") || "null");
+        if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+          picker.style.left = saved.x + "px";
+          picker.style.top = saved.y + "px";
+          picker.style.right = "auto";
+        }
+      } catch {}
+
+      let dragging = false;
+      let startX = 0;
+      let startY = 0;
+      let originLeft = 0;
+      let originTop = 0;
+
+      header.addEventListener("mousedown", (e) => {
+        dragging = true;
+        const rect = picker.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        originLeft = rect.left;
+        originTop = rect.top;
+
+        picker.style.left = originLeft + "px";
+        picker.style.top = originTop + "px";
+        picker.style.right = "auto";
+
+        e.preventDefault();
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const x = Math.max(8, originLeft + dx);
+        const y = Math.max(8, originTop + dy);
+        picker.style.left = x + "px";
+        picker.style.top = y + "px";
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (!dragging) return;
+        dragging = false;
+        try {
+          const rect = picker.getBoundingClientRect();
+          localStorage.setItem("swg_picker_pos", JSON.stringify({ x: rect.left, y: rect.top }));
+        } catch {}
+      });
+    })();
   </script>
 </body>
 </html>`;

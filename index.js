@@ -232,6 +232,18 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const hasRerollCount = typeof rerollCount === 'number' && rerollCount > 0;
   const rerollNum = hasRerollCount ? rerollCount : seedA;
 
+  // TEMPLATE SELECTION - runs first, before any section-specific logic
+  // If a template fits, return it immediately
+  const sectionKey = normalizeSectionKey(label);
+  if (sectionKey) {
+    const minDist = SECTION_MIN_DIST[sectionKey];
+    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
+    const template = pickTemplate(sectionKey, effectiveTarget, seedA);
+    if (template) {
+      return template.body;
+    }
+  }
+
   const makeLine = (reps, dist, text, restSec) => {
     let suffix = "";
     if (hasThresholdPace && Number.isFinite(restSec) && restSec > 0) {
@@ -342,13 +354,6 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // WARM-UP: Simple easy swim with variety
   // Guard: warm-up must not contain hard effort keywords
   if (k.includes("warm")) {
-    // Try template first with minimum distance floor
-    const sectionKey = normalizeSectionKey(label);
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
-    if (template) return template.body;
-    
     const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
     const warmDesc = warmDescs[seedA % warmDescs.length];
     if (!isValidWarmupCoolLine(warmDesc)) {
@@ -366,13 +371,6 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   // BUILD: Build set with variety - clear progression keywords for gradient
   if (k.includes("build")) {
-    // Try template first with minimum distance floor
-    const sectionKey = normalizeSectionKey(label);
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
-    if (template) return template.body;
-    
     const buildSetDescs = [
       stroke + " build to strong", stroke + " descend 1-4", stroke + " build to fast",
       stroke + " negative split", stroke + " descend to hard", stroke + " build with last one sprint"
@@ -386,13 +384,6 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // DRILL: Named drill with nice display
   // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
   if (k.includes("drill")) {
-    // Try template first with minimum distance floor
-    const sectionKey = normalizeSectionKey(label);
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
-    if (template) return template.body;
-    
     const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, drill, 0);
     
@@ -411,13 +402,6 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Use rerollNum to CYCLE through effort levels deliberately
   // Guard: no "relaxed" or "easy" with short reps (25-50)
   if (k.includes("kick")) {
-    // Try template first with minimum distance floor
-    const sectionKey = normalizeSectionKey(label);
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
-    if (template) return template.body;
-    
     const finNote = hasFins ? " with fins" : "";
     const kickByEffort = {
       moderate: ["kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote, "flutter kick" + finNote],
@@ -464,13 +448,6 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // COOL-DOWN: Easy swim with variety
   // Guard: cool-down must not contain hard effort keywords
   if (k.includes("cool")) {
-    // Try template first with minimum distance floor
-    const sectionKey = normalizeSectionKey(label);
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = sectionKey ? pickTemplate(sectionKey, effectiveTarget, seedA) : null;
-    if (template) return template.body;
-    
     const coolDescs = ["easy choice", stroke + " easy", "easy swim", "choice loosen up", "relaxed swim"];
     const coolDesc = coolDescs[seedA % coolDescs.length];
     if (!isValidWarmupCoolLine(coolDesc)) {

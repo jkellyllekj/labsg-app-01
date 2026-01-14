@@ -228,6 +228,12 @@ Workout area:
   - Template selection uses effectiveTarget = max(target, minDist)
   - Excess distance implicitly shifts to main set
 
+- Fixed template execution order
+  - Template selection moved to top of buildOneSetBodyShared
+  - Runs immediately after variable setup, before any section logic
+  - If template fits, returns immediately (no fallthrough to fragment logic)
+  - Removed duplicate template checks from individual sections
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

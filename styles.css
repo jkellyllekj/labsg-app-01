@@ -535,3 +535,41 @@
       color: #666;
       width: 46px;
     }
+
+/* Phone stability: prevent S24 Plus style wrap caused by font scaling */
+@media (max-width: 460px) {
+  /* The grid that contains pool row + generate tile */
+  #controlsGrid {
+    gap: 8px;
+  }
+
+  /* Pool buttons row */
+  .poolRow {
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  /* Unit buttons */
+  .poolRow button {
+    padding: 6px 10px !important;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Generate tile */
+  .generateBox {
+    width: 100px;
+    min-width: 100px;
+    padding: 8px 10px;
+  }
+
+  .genLabel {
+    font-size: 13px;
+  }
+
+  .genDolphin {
+    font-size: 32px;
+  }
+}

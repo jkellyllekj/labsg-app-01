@@ -158,9 +158,13 @@ Workout area:
 
 ## Observed Failures
 
-- Workout structures sometimes implausible
-- Reroll logic occasionally fails
-- UI chips fail when output is not NxD parseable
+- Rest seconds still appear in free tier as a red 20s line. This must never render in free tier.
+- Reroll sometimes shows "Reroll failed to produce a replacement set." This warning is not acceptable. There must always be a replacement, at minimum a change in effort.
+- Home-end rule is inconsistent. Total distance is even-length, but individual set distances can still be odd-length totals (example 550m, 450m, 350m, and similar). Rule should be: every set ends at the same wall, so each set distance must be a multiple of 2 * poolLen.
+- Intensity colour is missing on first generation. Red (hard or fullgas) almost never appears unless rerolling individual sets. First generation should include at least one red set about 50 percent of the time. Mainly in Main or Kick, never in Warm up or Cool down.
+- Variety is still low. On repeated Generate, templates repeat quickly and large workouts sometimes fall back to generic swim blocks, so Drill and Kick stop looking like drills and kick.
+- Cool down often locks to "200 easy" too often. Need more plausible options like 250 and 300 in metres, and the yard equivalents.
+- Terminology: In this app a lap means one length, not down and back. Add a small help popup later.
 
 <!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
 
@@ -170,91 +174,11 @@ Workout area:
 
 ## Recent Fixes
 
-2026-01-13
-- Manual background cycle button fixed
-  - Root cause: backgroundImage used url(...) without quotes and broke on filenames with spaces and parentheses
-  - Fix: setLayerImage now uses url("...") quoting so CSS stays valid
+- Template based section generation was added and is now firing for many small and mid workouts, removing the worst 125m and 175m fragment sections.
+- Some sessions now look more coach plausible on first generate, but the issues in PS080 remain and must be fixed before further tier work.
 
-2026-01-13 to 2026-01-14
-- UI condensation and tier scaffolding started
-  - Removed the old top title card and moved controls into a single Swim Gen panel
-  - Added Ad placeholder banner
-  - Moved Generate onto the same row as pool buttons
-  - Added a small background icon button near the title
-
-2026-01-14
-- Glass style iteration added to Swim Gen panel
-  - Current look is clear glass style with border and transparency
-  - Readability varies by background and needs refinement
-
-2026-01-14
-- Dolphin animation stabilised
-  - Centralised dolphin animation into one helper
-  - Cancels older timers and tokenises runs to avoid overlap
-  - Works on repeated presses and rapid presses
-
-- Custom SwimGen dolphin icon set created and adopted
-  - Replaced emoji dolphin with custom dolphin images
-  - Added 6 assets: base plus 5 effort levels
-  - Assets stored under public/assets/dolphins/
-
-- CSS extraction started
-  - Moved most inline CSS out into styles.css
-  - Viewport Lab CSS is scoped to avoid bleeding into the main UI
-
-2026-01-14
-- Free-tier realism validation guards added
-  - Added validation helpers: isAllowedRepCount, endsAtHomeEnd, isValidWarmupCoolLine, isValidDrillLine, isValidKickLine, parseNxD, validateSetBody
-  - findBestFit now filters by allowed rep counts (2,3,4,5,6,8,10,12,16,20 for short reps; less for longer)
-  - Warm-up and cool-down guard against hard effort keywords
-  - Drill sets guard against odd/random rep counts (7, 9, 11, 13)
-  - Kick sets guard against "relaxed" or "easy" with short reps
-  - Set-level validation rerolls invalid sets up to 5 times before fallback
-  - No tier engine yet - just validation guards
-
-- Template-based section generation added to prevent fragmented sets
-  - SECTION_TEMPLATES object with warmup, build, drill, kick, cooldown templates
-  - pickTemplate(section, targetDistance, seed) selects templates that fit
-  - Each section tries template first, falls back to existing logic
-  - Prevents 125m/175m/225m fragments at small totals
-
-- Fixed template selection by normalizing section labels
-  - Added normalizeSectionKey(label) to convert "Warm up" -> "warmup", etc.
-  - Template selection now uses normalized key instead of raw label
-  - Templates now actually fire for matching sections
-
-- Added minimum section distance floors so templates can fire on small workouts
-  - SECTION_MIN_DIST: warmup 300, build/drill/kick/cooldown 200
-  - Template selection uses effectiveTarget = max(target, minDist)
-  - Excess distance implicitly shifts to main set
-
-- Fixed template execution order
-  - Template selection moved to top of buildOneSetBodyShared
-  - Runs immediately after variable setup, before any section logic
-  - If template fits, returns immediately (no fallthrough to fragment logic)
-  - Removed duplicate template checks from individual sections
-
-- Allocator now snaps section distances to pool multiples and even lengths
-  - Added snapSection(dist, poolLen) for even-length snapping
-  - Added applySectionMinimums(sets, total, poolLen) to enforce minimums
-  - Minimums: warmup 300, build/drill/kick/cooldown 200
-  - Excess distance shifts to main set
-  - Prevents 125-225 fragments and allows templates to validate
-  - Template selection now uses real targetDistance (allocator ensures clean values)
-
-- Template variety and red injection (Jan 14)
-  - Templates now vary per Generate click via runSeed
-  - Template picker selects among all fitting templates with shuffle
-  - Per-section home end enforced for 25m and 50m pools
-  - Expanded templates: 11 warmup, 8 build, 8 drill, 8 kick, 8 cooldown, 10 main
-  - Occasional red injected (~20% probability) if missing, never in warmup/cooldown
-  - Rollback safe point: Jan 14 around 18:00, before tier work
-
-- Added missing fnv1a32 hash helper used for template randomisation
-
-- Red (full gas) now injected at workout level with ~50% probability when absent, limited to Main or Kick
-
-- Disabled rest seconds display for free tier by gating restSecondsFor behind opts.allowRest
+Rollback note:
+- Safe rollback checkpoint exists from about 2026-01-14 around 18:00, labelled by Jess as the May checkpoint. Use this if the logic work goes haywire.
 
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
@@ -309,15 +233,15 @@ Testing note:
 
 ## Next Single Step
 
-Pick one only. Logic only.
+Stop all new feature work. Do one control fix.
 
-Validation guards are now in place. Next:
-- Test generated workouts for coach plausibility
-- Review rep count distributions
-- Review effort level distributions
-- Identify remaining implausible patterns
+Free tier must never display rest seconds and reroll must never fail.
 
-Stop after testing and wait for Jess manual review of generated workouts.
+Implement:
+- Strip any standalone rest line like "20s" from all set bodies before rendering.
+- Ensure the reroll endpoint always returns a valid replacement set, with a guaranteed effort change fallback, and never returns null.
+
+Keep UI frozen.
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS120__ -->
 

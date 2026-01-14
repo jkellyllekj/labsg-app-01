@@ -1,0 +1,61 @@
+START PROJECT STATE UPDATE FOR NEXT CHAT 2026-01-14
+
+File: project-state.md
+
+Replace these three blocks exactly, no other edits:
+
+PS_OBSERVED_FAILURES_PS080
+
+PS_RECENT_FIXES_PS090
+
+PS_NEXT_SINGLE_STEP_PS120
+
+Paste this content into each block.
+
+Block PS_OBSERVED_FAILURES_PS080 replace with:
+
+Observed failures to fix
+
+Rest seconds still appear in free tier as a red 20s line. This must never render in free tier.
+
+Reroll sometimes shows Reroll failed to produce a replacement set. This warning is not acceptable. There must always be a replacement, at minimum a change in effort.
+
+Home-end rule is inconsistent. Total distance is even-length, but individual set distances can still be odd-length totals (example 550m, 450m, 350m, and similar). Rule should be: every set ends at the same wall, so each set distance must be a multiple of 2 * poolLen.
+
+Intensity colour is missing on first generation. Red (hard or fullgas) almost never appears unless rerolling individual sets. First generation should include at least one red set about 50 percent of the time. Mainly in Main or Kick, never in Warm up or Cool down.
+
+Variety is still low. On repeated Generate, templates repeat quickly and large workouts sometimes fall back to generic swim blocks, so Drill and Kick stop looking like drills and kick.
+
+Cool down often locks to 200 easy too often. Need more plausible options like 250 and 300 in metres, and the yard equivalents.
+
+Terminology: In this app a lap means one length, not down and back. Add a small help popup later.
+
+Block PS_RECENT_FIXES_PS090 replace with:
+
+Recent fixes
+
+Template based section generation was added and is now firing for many small and mid workouts, removing the worst 125m and 175m fragment sections.
+
+Some sessions now look more coach plausible on first generate, but the issues in PS080 remain and must be fixed before further tier work.
+
+Rollback note:
+
+Safe rollback checkpoint exists from about 2026-01-14 around 18:00, labelled by Jess as the May checkpoint. Use this if the logic work goes haywire.
+
+Block PS_NEXT_SINGLE_STEP_PS120 replace with:
+
+Next single step
+
+Stop all new feature work. Do one control fix.
+
+Free tier must never display rest seconds and reroll must never fail.
+
+Implement:
+
+Strip any standalone rest line like 20s from all set bodies before rendering.
+
+Ensure the reroll endpoint always returns a valid replacement set, with a guaranteed effort change fallback, and never returns null.
+
+Keep UI frozen.
+
+END PROJECT STATE UPDATE FOR NEXT CHAT 2026-01-14

@@ -250,6 +250,8 @@ Workout area:
   - Occasional red injected (~20% probability) if missing, never in warmup/cooldown
   - Rollback safe point: Jan 14 around 18:00, before tier work
 
+- Added missing fnv1a32 hash helper used for template randomisation
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

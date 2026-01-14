@@ -1,0 +1,77 @@
+You are right to call this out. The code that is actually running is still the old version.
+
+I can see in the current index.js that renderEmojiIntensityStrip() still contains:
+
+margin-top:12px
+
+container overflow:hidden
+
+each tile is flex:1; padding:8px 4px; text-align:center;
+
+So your “aspect-ratio + flex” version did not land in the real function that is being used to render the footer. 
+
+index
+
+Also, your styles.css still has .effortIcon at 50px with margin: 0 auto, not 62px with margin: 0. 
+
+styles
+
+That explains why it still looks identical.
+
+Do this exact fix
+1) Replace the strip builder inside renderEmojiIntensityStrip() in index.js
+
+File: index.js 
+
+index
+
+Inside function renderEmojiIntensityStrip() {, find the block that starts:
+
+let strip = '<div style=\\"margin-top:12px;\\">';
+strip += '<div style=\\"display:flex; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+
+
+…and ends with:
+
+strip += '</div></div>';
+return strip;
+
+
+Replace that whole block with this:
+
+let strip = '<div style=\\"margin-top:8px;\\">';
+
+// Outer scroll wrapper. Only scrolls if it needs to.
+strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;\\">';
+
+// Inner strip fills available width on big phones.
+strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:100%; min-width:360px; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+
+for (let i = 0; i < 5; i++) {
+  const isActive = (i + 1) <= level;
+  const opacity = isActive ? '1' : '0.4';
+
+  strip += '<div style=\\"flex:1 1 0; aspect-ratio:1 / 1; box-sizing:border-box; padding:2px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
+  strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
+  strip += '</div>';
+}
+
+strip += '</div></div></div>';
+return strip;
+
+2) Update .effortIcon in styles.css
+
+File: styles.css 
+
+styles
+
+Replace the current .effortIcon rule with:
+
+.effortIcon {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin: 0;
+  filter: none !important;
+}

@@ -1,0 +1,174 @@
+A) Splash must NOT rotate, ever
+
+Right now splash is rotating because it is inheriting either:
+
+the dolphin spin class, or
+
+the same animation restart logic, or
+
+a transform that includes rotate.
+
+Agent instructions
+
+Files: styles.css and index.js
+Smallest change.
+
+In styles.css, force splash to never animate:
+
+.splash {
+  animation: none !important;
+}
+
+
+Also force splash transform to never include rotate. Set the default:
+
+.splash {
+  transform: scale(0.75) rotate(-130deg);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+
+In index.js, in the dolphin helper, make sure any “force animation restart” function is applied only to the dolphin element, not splash.
+
+If you have code like restartAnim(dolphinEl); restartAnim(splashEl); remove the splash call.
+
+If you set el.style.animation = ... do not do that for splash at all.
+
+In the “show splash” moment, set transform with rotate fixed:
+
+splashEl.style.opacity = "1";
+splashEl.style.transform = "scale(0.75) rotate(-130deg)";
+requestAnimationFrame(() => {
+  splashEl.style.transform = "scale(1) rotate(-130deg)";
+});
+
+
+That eliminates spin and locks angle.
+
+B) Splash must be visible BEFORE the page slides down
+
+Right now the scroll happens at the same moment splash appears, so you never see it.
+
+Agent instructions
+
+File: index.js
+
+Find where you trigger the scroll or reveal of the generated set.
+
+Change it so the order is:
+
+dolphin loop finishes
+
+dolphin fades out (0.2s)
+
+splash fades/grows in (0.2s)
+
+wait 150ms so splash is clearly visible
+
+then smooth scroll down
+
+then after generation display update, shrink dolphin back
+
+Implementation pattern:
+
+Move scroll call into the splash shown callback, but delay it.
+
+Example:
+
+onSplashShown: () => {
+  setTimeout(() => {
+    scrollGeneratedIntoViewSmooth();
+  }, 150);
+}
+
+
+If you also reveal the generated section via opacity, trigger that at the same time as scroll, not earlier.
+
+C) After generation completes, Generate dolphin must return to big idle size
+
+You said it becomes small after generation. That means the code is swapping to a “small dolphin” class or using the generic class.
+
+Agent instructions
+
+File: index.js
+
+Wherever you reset the Generate button dolphin at the end of the animation, ensure it always ends with the big class:
+
+If you are using:
+
+dolphinIcon for normal
+
+dolphinIcon--generate for big
+
+Then at reset:
+
+dolphinEl.classList.add("dolphinIcon--generate");
+
+
+Also ensure no code later replaces the HTML with the small class. Search for the Generate dolphin render and confirm it uses dolphinIcon--generate.
+
+D) Make dolphins 25 percent bigger everywhere again, INCLUDING generate dolphin
+
+You are right: increasing icon size can push the Generate tile bigger if padding stays the same.
+
+Agent instructions
+
+File: styles.css
+
+Increase the base dolphin size variable by 25 percent.
+If current is 40px, set to 50px.
+If current is 32px, set to 40px.
+
+Example:
+
+:root {
+  --dolphin-size: 50px;           /* +25% from 40 */
+  --dolphin-size-generate: 68px;  /* +25% from 54-ish, adjust from your current */
+}
+
+
+Reduce padding inside the Generate tile so it does not grow.
+Find the Generate tile container selector and reduce padding.
+
+Example:
+
+.generateTile {
+  padding: 8px;   /* reduce from 12 or 14 */
+}
+
+
+If the dolphin sits inside another inner wrapper, reduce that padding too.
+
+Goal: dolphin grows, tile stays roughly same footprint.
+
+E) Remove halos plan, revert threshold/full gas back to blue
+
+If halos are not showing, it is either the filter was not applied to the right selector, or got overridden.
+But you prefer reverting them back to blue anyway.
+
+Agent instructions
+
+Replace the two asset files with the blue versions:
+
+Recreate dolphin-threshold.png and dolphin-fullgas.png by using the same set but without the warm tint.
+If you still have the earlier “blue” set, just overwrite those two PNGs in:
+public/assets/dolphins/
+
+Delete any halo CSS you tried earlier, or leave it but set to none:
+
+.effortIcon { filter: none; }
+
+One extra important detail
+
+The splash is currently appearing “the moment the set jumps”. That means your scroll/reveal is still tied to the generation completion event.
+The fix is to tie scroll to splash visible, not generation completion.
+
+If you want the cleanest test after agent changes, ask them to temporarily add:
+
+console.log("splash shown");
+console.log("scroll now");
+
+
+Then remove after confirming order.
+
+Send me one screenshot or short clip after these edits and we will lock it.

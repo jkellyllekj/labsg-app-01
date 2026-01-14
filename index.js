@@ -2007,23 +2007,25 @@ app.get("/", (req, res) => {
               el.innerHTML = "💦";
               el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
               el.style.opacity = "0";
-              el.style.transform = "scale(0.75) rotate(-130deg)";
+              el.style.transform = "scale(0.75)";
               void el.offsetWidth;
               el.style.opacity = "1";
-              el.style.transform = "scale(1.08) rotate(-130deg)";
+              el.style.transform = "scale(1.08)";
             }
 
-            // Trigger scroll/reveal callback NOW that splash is visible
-            if (typeof onSplashShown === "function") {
-              try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
-            }
+            // Trigger scroll/reveal callback after splash is clearly visible
+            __dolphinAnimTimers.push(setTimeout(() => {
+              if (typeof onSplashShown === "function") {
+                try { onSplashShown(); } catch (e) { console.error("onSplashShown error:", e); }
+              }
+            }, 150));
 
             // Settle splash scale back to 1.0 quickly (overshoot effect)
             __dolphinAnimTimers.push(setTimeout(() => {
               if (token !== __dolphinAnimToken) return;
               for (const el of all) {
                 el.style.transition = "transform 120ms ease-out";
-                el.style.transform = "scale(1) rotate(-130deg)";
+                el.style.transform = "scale(1)";
               }
             }, FADE_MS + 20));
 
@@ -2034,14 +2036,17 @@ app.get("/", (req, res) => {
               for (const el of all) {
                 el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
                 el.style.opacity = "0";
-                el.style.transform = "scale(0.9) rotate(-130deg)";
+                el.style.transform = "scale(0.9)";
               }
 
               __dolphinAnimTimers.push(setTimeout(() => {
                 if (token !== __dolphinAnimToken) return;
 
-                for (const el of all) {
-                  el.innerHTML = '<img class="dolphinIcon" src="/assets/dolphins/dolphin-base.png" alt="">';
+                for (let i = 0; i < all.length; i++) {
+                  const el = all[i];
+                  const isMain = (i === 0);
+                  const imgClass = isMain ? "dolphinIcon dolphinIcon--generate" : "dolphinIcon";
+                  el.innerHTML = '<img class="' + imgClass + '" src="/assets/dolphins/dolphin-base.png" alt="">';
                   el.style.transition = "opacity 200ms linear";
                   el.style.opacity = "0";
                   el.style.transform = "rotate(0deg) scale(1)";

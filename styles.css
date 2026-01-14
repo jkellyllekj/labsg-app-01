@@ -23,7 +23,15 @@
       }
       .dolphinSpin {
         display: inline-block;
-        animation: dolphinSpin 1000ms linear infinite;
+        animation: dolphinSpin 800ms linear infinite;
+      }
+      /* Effort bar icons */
+      .effortIcon {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
       }
       /* Glass chip for text legibility */
       .glassChip {

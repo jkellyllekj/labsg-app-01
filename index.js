@@ -381,7 +381,7 @@ app.get("/", (req, res) => {
   <span class="glassChip readChip">Swim Gen</span>
 </h3>
                 <button id="regenBtn" type="button" aria-label="Regenerate" class="iconBtnBare iconLg">
-  <span id="regenDolphin" style="display:inline-block;">🐬</span>
+  <span id="regenDolphin" style="display:inline-block;"><img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:32px;height:32px;object-fit:contain;"></span>
 </button>
                 <button id="bgCycleBtn" type="button" aria-label="Change background" class="iconBtnBare iconSm">🖼️</button>
               </div>
@@ -427,7 +427,7 @@ app.get("/", (req, res) => {
               <div id="generateStack">
                 <button id="generateBtn" type="submit" class="generateBox">
                   <div class="genLabel">Generate</div>
-                  <div id="dolphinLoader" class="genDolphin">🐬</div>
+                  <div id="dolphinLoader" class="genDolphin"><img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:48px;height:48px;object-fit:contain;"></div>
                 </button>
               </div>
             </div>
@@ -568,7 +568,7 @@ app.get("/", (req, res) => {
 
         <div id="workoutNameDisplay" style="display:none; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;">
           <div class="workoutTitleRow">
-            <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtnBare iconSm">🐬</button>
+            <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtnBare iconSm"><img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:28px;height:28px;object-fit:contain;"></button>
             <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtnSilhouette iconSm">🖼️</button>
             <span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span>
           </div>
@@ -1522,8 +1522,15 @@ app.get("/", (req, res) => {
         // Map average to 1-5 scale for display
         const level = Math.min(5, Math.max(1, Math.round(avgIntensity)));
         
-        // 5 faces from easy to hard - matching CardGym style
-        const faces = ['\\u{1F634}', '\\u{2615}', '\\u{1F44D}', '\\u{1F4AA}', '\\u{1F525}'];
+        // 5 dolphin icons from easy to hard
+        const dolphinIcons = [
+          '/assets/dolphins/dolphin-easy.png',
+          '/assets/dolphins/dolphin-moderate.png',
+          '/assets/dolphins/dolphin-strong.png',
+          '/assets/dolphins/dolphin-threshold.png',
+          '/assets/dolphins/dolphin-fullgas.png'
+        ];
+        const iconAlts = ['Easy', 'Moderate', 'Strong', 'Threshold', 'Full Gas'];
         
         // Gradient background colors matching CardGym: blue -> green -> yellow -> orange -> red
         const bgColors = ['#b9f0fd', '#cfffc0', '#fcf3d5', '#ffc374', '#fe5050'];
@@ -1535,7 +1542,7 @@ app.get("/", (req, res) => {
           const isActive = (i + 1) <= level;
           const opacity = isActive ? '1' : '0.4';
           strip += '<div style=\\"flex:1; padding:8px 4px; background:' + bgColors[i] + '; text-align:center;\\">';
-          strip += '<span style=\\"font-size:28px; opacity:' + opacity + ';\\">' + faces[i] + '</span>';
+          strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
           strip += '</div>';
         }
         
@@ -1740,7 +1747,7 @@ app.get("/", (req, res) => {
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
               '" style="padding:0; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease; line-height:1;" title="Reroll this set">' +
-              '<span class="reroll-dolphin setDolphin">🐬</span>' +
+              '<span class="reroll-dolphin setDolphin"><img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:24px;height:24px;object-fit:contain;"></span>' +
             "</button>"
           );
           if (Number.isFinite(setDist)) {
@@ -1953,7 +1960,7 @@ app.get("/", (req, res) => {
 
         // Ensure baseline state
         for (const el of all) {
-          if (!el.textContent || !String(el.textContent).trim()) el.textContent = "🐬";
+          if (!el.innerHTML || !String(el.innerHTML).trim()) el.innerHTML = '<img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:32px;height:32px;object-fit:contain;">';
           el.dataset.spinStartedAt = String(Date.now());
           __forceRestartSpin(el);
         }
@@ -1997,7 +2004,7 @@ app.get("/", (req, res) => {
             if (token !== __dolphinAnimToken) return;
 
             for (const el of all) {
-              el.textContent = "💦";
+              el.innerHTML = "💦";
               el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
               el.style.opacity = "0";
               el.style.transform = "scale(0.75)";
@@ -2034,7 +2041,7 @@ app.get("/", (req, res) => {
                 if (token !== __dolphinAnimToken) return;
 
                 for (const el of all) {
-                  el.textContent = "🐬";
+                  el.innerHTML = '<img src="/assets/dolphins/dolphin-base.png" alt="dolphin" style="width:32px;height:32px;object-fit:contain;">';
                   el.style.transition = "opacity 200ms linear";
                   el.style.opacity = "0";
                   el.style.transform = "rotate(0deg) scale(1)";

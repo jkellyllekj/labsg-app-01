@@ -1,0 +1,120 @@
+UI only. index.js only. Smallest reversible changes. Do not touch workout generation logic or background cycling logic.
+
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_DOM_R130 (only if needed for viewport link wiring or custom pool input event)
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163 (only if needed for custom pool input behaviour)
+
+1) Put the Viewport Lab link inside the Ad placeholder
+
+In the home HTML, find the adBanner div. Replace its inner content with a link.
+
+Example:
+
+<div id="adBanner" style="...">
+  <a href="/viewport-lab" style="color:inherit; text-decoration:underline; font-weight:600;">Viewport Lab</a>
+</div>
+
+
+Leave the adBanner styling alone.
+
+2) Move the 1500 display up as a right side title, above the slider
+
+Goal:
+
+1500 sits top right like a title, above the slider line.
+
+Slider line runs across underneath it.
+
+1500 can be bold.
+
+In the Swim Gen panel HTML, move the 1500 pill so it is in the same header row as Swim Gen, aligned right.
+
+Replace the current header row layout with:
+
+Left: Swim Gen title and bg icon
+
+Right: 1500 pill
+
+Then place the slider row below spanning full width.
+
+Also keep the 1500 pill text as only 1500.
+
+3) Make all “white buttons and chips” 75 percent transparent
+
+You said:
+White elements should be 75 percent transparent, meaning white background at about rgba(255,255,255,0.75).
+
+Implement this by setting a single CSS variable and reusing it everywhere.
+
+Add near the top of the home CSS:
+
+:root {
+  --white75: rgba(255,255,255,0.75);
+  --whiteBorder: rgba(255,255,255,0.55);
+}
+
+
+Then update all white chips and buttons in:
+
+Swim Gen panel
+
+Generate button
+
+Advanced options chip
+
+1500 pill
+
+Summary capsules
+
+So any place currently using rgba(255,255,255,0.92) or similar becomes var(--white75), and borders use var(--whiteBorder).
+
+Do not change the selected glow rings.
+
+4) Summary panel: remove the word Summary and match capsule style
+
+Requirements:
+
+Remove the word “Summary”.
+
+The Pool and Total lengths capsules should look exactly like the capsule buttons in the generator panel.
+
+No surrounding container around those capsules beyond the summary card itself.
+
+Font and radius match.
+
+Implementation:
+
+When rendering the summary HTML, do not include a heading “Summary”.
+
+Render only the capsules row and the emoji bar.
+
+Also ensure those capsules use the same CSS class as the top chips, for example readChip or whiteChip, with the same border radius and font weight.
+
+5) Custom pool length behaviour must override the tier buttons automatically
+
+You said:
+No custom button needed.
+Typing a number into the custom pool length input should override the pool buttons (25m, 50m, 25yd).
+
+Restore this behaviour.
+
+Find the custom pool length input element in Advanced options.
+Add an input event listener:
+
+If the field has a valid positive number, set the selected pool mode to custom.
+
+Clear the active class from the three pool buttons.
+
+Update whatever internal variable is used for pool length so generation uses the custom value.
+
+If the field is cleared, revert to the last selected pool button.
+
+This is not workout generation logic. It is just restoring the UI selection logic that already existed.
+
+Also ensure the custom input is clickable. If any overlay or z index is blocking it, remove that.
+
+End.

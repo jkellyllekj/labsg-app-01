@@ -366,6 +366,9 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
+        /* 75% white for chips and buttons */
+        --white75: rgba(255,255,255,0.75);
+        --whiteBorder: rgba(255,255,255,0.55);
         /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
         /* CardGym pastel colors */
         --zone-easy-bg: #b9f0fd;
@@ -456,8 +459,8 @@ app.get("/", (req, res) => {
         display:inline-block;
         padding:6px 10px;
         border-radius: 8px;
-        background: rgba(255,255,255,0.92);
-        border: 1px solid rgba(255,255,255,0.55);
+        background: var(--white75);
+        border: 1px solid var(--whiteBorder);
         color:#0b0b0b;
         box-shadow: 0 6px 16px rgba(0,0,0,0.10);
       }
@@ -471,8 +474,8 @@ app.get("/", (req, res) => {
       /* Unified white button style for pool and generate */
       #controlsGrid button,
       .poolRow button {
-        background: rgba(255,255,255,0.92);
-        border: 1px solid rgba(255,255,255,0.55);
+        background: var(--white75);
+        border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 700;
         box-shadow: 0 6px 16px rgba(0,0,0,0.10);
@@ -515,8 +518,8 @@ app.get("/", (req, res) => {
 
       /* Generate button box with dolphin inside */
       .generateBox {
-        background: rgba(255,255,255,0.78);
-        border: 1px solid rgba(255,255,255,0.55);
+        background: var(--white75);
+        border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 800;
         border-radius: 10px;
@@ -553,8 +556,8 @@ app.get("/", (req, res) => {
 
       /* Readable white glass chip */
       .readChip {
-        background: rgba(255,255,255,0.78);
-        border: 1px solid rgba(255,255,255,0.55);
+        background: var(--white75);
+        border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         box-shadow: 0 8px 18px rgba(0,0,0,0.12);
       }
@@ -700,7 +703,9 @@ app.get("/", (req, res) => {
         }
       }
     </style>
-    <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
+    <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">
+      <a href="/viewport-lab" style="color:inherit; text-decoration:underline; font-weight:600;">Viewport Lab</a>
+    </div>
 
     <div style="max-width:520px;">
       <form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:16px;">
@@ -714,10 +719,12 @@ app.get("/", (req, res) => {
                 <button id="bgCycleBtn" type="button" aria-label="Change background" class="readChip"
   style="border-radius:6px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
-              <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
+              <span class="glassChip readChip" style="white-space:nowrap; border-radius:8px; padding:6px 12px;">
+                <strong id="distanceLabel">1500</strong>
+              </span>
             </div>
 
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div style="display:flex; align-items:center;">
               <input
                 id="distanceSlider"
                 type="range"
@@ -728,9 +735,6 @@ app.get("/", (req, res) => {
                 class="distance-slider"
                 style="flex:1;"
               />
-              <span class="glassChip readChip" style="white-space:nowrap; border-radius:8px; padding:6px 12px;">
-                <strong id="distanceLabel">1500</strong>
-              </span>
             </div>
 
             <input type="hidden" name="distance" id="distanceHidden" value="1500" />
@@ -775,10 +779,9 @@ app.get("/", (req, res) => {
                     min="10"
                     max="400"
                     placeholder="e.g. 30"
-                    disabled
                     style="width: 90px; padding:6px 8px; border-radius:8px; border:1px solid #ccc;"
                   />
-                  <select name="poolLengthUnit" id="poolLengthUnit" disabled style="padding:6px 8px; border-radius:8px; border:1px solid #ccc;">
+                  <select name="poolLengthUnit" id="poolLengthUnit" style="padding:6px 8px; border-radius:8px; border:1px solid #ccc;">
                     <option value="meters">meters</option>
                     <option value="yards">yards</option>
                   </select>
@@ -1817,11 +1820,10 @@ app.get("/", (req, res) => {
         }
 
         const f = [];
-        f.push("<div style=\\"font-weight:700; margin-bottom:6px;\\">Summary</div>");
         f.push("<div style=\\"display:flex; flex-wrap:wrap; gap:10px;\\">");
 
         for (const c of deduped) {
-          f.push("<div style=\\"padding:6px 10px; border:1px solid #eee; border-radius:999px; background:#fafafa;\\">" + safeHtml(c) + "</div>");
+          f.push("<div class=\\"readChip\\" style=\\"padding:6px 10px; border-radius:8px; font-weight:700;\\">" + safeHtml(c) + "</div>");
         }
 
         f.push("</div>");
@@ -2292,8 +2294,6 @@ app.get("/", (req, res) => {
         poolHidden.value = poolValue;
 
         const isCustom = poolValue === "custom";
-        customLen.disabled = !isCustom;
-        customUnit.disabled = !isCustom;
 
         if (isCustom) {
           advancedWrap.style.display = "block";
@@ -2325,6 +2325,42 @@ app.get("/", (req, res) => {
       distanceSlider.addEventListener("input", (e) => {
         setDistance(e.target.value);
       });
+
+      // Track last selected pool button for reversion
+      let lastPoolBtn = "25m";
+
+      // Custom pool length input: auto-select custom mode when user types a value
+      customLen.addEventListener("input", () => {
+        const val = customLen.value.trim();
+        if (val && !isNaN(Number(val)) && Number(val) > 0) {
+          // Valid number entered: switch to custom pool mode
+          poolHidden.value = "custom";
+          // Clear active class from tier buttons
+          for (const btn of poolButtons.querySelectorAll("button[data-pool]")) {
+            btn.classList.remove("active");
+          }
+          // Expand advanced options if not already open
+          if (advancedWrap.style.display === "none") {
+            advancedWrap.style.display = "block";
+            if (advancedChip) {
+              advancedChip.innerHTML = "▼ Advanced options";
+              advancedChip.classList.add("whiteChipActive");
+            }
+          }
+        } else {
+          // Cleared or invalid: revert to last selected pool button
+          // This restores both the hidden value and button active state
+          setActivePool(lastPoolBtn);
+        }
+      });
+
+      // Update lastPoolBtn when user clicks a pool button (capture phase to run before setActivePool)
+      poolButtons.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-pool]");
+        if (btn) {
+          lastPoolBtn = btn.getAttribute("data-pool");
+        }
+      }, true);
 
       toggleAdvanced.addEventListener("click", () => {
         const open = advancedWrap.style.display !== "none";

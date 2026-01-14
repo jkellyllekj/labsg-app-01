@@ -1,0 +1,112 @@
+File path
+
+project-state.md
+
+Replace block
+
+PS_CURRENT_PHASE_PS020
+
+With this exact content
+## Current Phase
+
+v1 Logic and tier engine build
+
+Purpose:
+- Lock the current UI and stop UI iteration for now
+- Make workouts coach plausible and consistent
+- Introduce tiers and constraints so outputs are structured and reliable
+- Keep the app minimal and stable in Replit
+
+Non goals:
+- No UI redesigns
+- No refactors for cleanliness
+- No architectural changes
+
+Replace block
+
+PS_FROZEN_PS030
+
+With this exact content
+## Frozen
+
+- index.js is the only runtime file
+- styles.css is used for extracted CSS and is served by index.js
+- Two layer background crossfade system (bgA and bgB)
+- Background randomises on page load
+- Workout cards render full width layout (no extra outer panel around the sets)
+- Current Swim Gen top panel layout and control placements are locked for now
+- Effort strip behaviour is locked for now, even if imperfect on some phones
+
+Replace block
+
+PS_ALLOWED_PS040
+
+With this exact content
+## Allowed
+
+Primary work now:
+- Workout generation logic changes only
+- Tier model and constraints
+- Output formatting so parsing is reliable
+- Reroll reliability improvements
+
+UI work:
+- Only tiny UI fixes that are strictly required to support logic work
+- Park all other UI polish until after the tier engine is stable
+
+Change size rule:
+- One bounded change at a time
+- Touch as few blocks as possible
+
+Replace block
+
+PS_CURRENT_KNOWN_UI_ISSUES_PS100
+
+With this exact content
+## Current Known UI Issues
+
+UI is parked. Do not spend time here unless it blocks logic work.
+
+Dolphin and splash animation
+- Splash resting angle is still not correct in all contexts
+  - Desired: fixed resting angle rotated left about 130 degrees
+  - Splash must never spin
+- Dolphin fade out and splash fade in should be a true crossfade
+  - Desired: both happen at the same time over 0.2 seconds
+- Reveal and scroll timing still feels slightly off on some devices
+  - Desired: splash is visible before any smooth scroll begins
+
+Effort bar icons
+- Effort dolphins still feel cut off or tight on some phones
+- Threshold and Full Gas sometimes appear faded again
+  - Desired for now: both remain blue, no warm tint
+
+Layout polish parked
+- Set card dolphin and metres alignment is noted but not urgent yet
+  - Desired: dolphin aligns with set title line
+  - Desired: metres aligns with the set detail line
+
+Replace block
+
+PS_NEXT_SINGLE_STEP_PS120
+
+With this exact content
+## Next Single Step
+
+Pick one only. Logic only.
+
+Define the tier engine and output contract:
+- Write a concrete tier model (tiers, goals, constraints, allowed set types)
+- Define a strict output schema that UI can always parse
+- Add a validation step that rejects or repairs bad outputs
+- Update buildWorkout and buildOneSetBodyShared to obey tier constraints
+
+Stop after this single pass and wait for Jess manual review of generated workouts.
+
+Also change the header date (manual edit, not a marker block)
+
+At the top of project-state.md, update:
+
+Last updated: 2026-01-14
+
+Keep the same date if you want, or change to reflect the moment you commit the file. Either is fine, but this update is real work so I would keep 2026-01-14 and commit immediately.

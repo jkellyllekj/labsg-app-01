@@ -44,17 +44,18 @@ If anything here is unclear or stale: STOP and update this file first.
 
 ## Current Phase
 
-v1 Build plus UI validity hardening
+v1 Logic and tier engine build
 
 Purpose:
-- Keep a minimal working app running in Replit
-- Generate plausible swim workouts via OpenAI
-- Stabilise UI behaviours and layout before adding new features
+- Lock the current UI and stop UI iteration for now
+- Make workouts coach plausible and consistent
+- Introduce tiers and constraints so outputs are structured and reliable
+- Keep the app minimal and stable in Replit
 
 Non goals:
+- No UI redesigns
 - No refactors for cleanliness
 - No architectural changes
-- No new feature work beyond the agreed UI tier scaffolding
 
 <!-- __END_PS_CURRENT_PHASE_PS020__ -->
 
@@ -64,10 +65,13 @@ Non goals:
 
 ## Frozen
 
-- index.js is the only runtime JS file (styles.css is allowed)
+- index.js is the only runtime file
+- styles.css is used for extracted CSS and is served by index.js
 - Two layer background crossfade system (bgA and bgB)
 - Background randomises on page load
-- Workout cards full width layout (no extra outer panel around the sets)
+- Workout cards render full width layout (no extra outer panel around the sets)
+- Current Swim Gen top panel layout and control placements are locked for now
+- Effort strip behaviour is locked for now, even if imperfect on some phones
 
 <!-- __END_PS_FROZEN_PS030__ -->
 
@@ -77,9 +81,19 @@ Non goals:
 
 ## Allowed
 
-- Small, bounded UI fixes (layout, styling, spacing)
-- One function or one UI section at a time
-- Defensive fixes that preserve current behaviour
+Primary work now:
+- Workout generation logic changes only
+- Tier model and constraints
+- Output formatting so parsing is reliable
+- Reroll reliability improvements
+
+UI work:
+- Only tiny UI fixes that are strictly required to support logic work
+- Park all other UI polish until after the tier engine is stable
+
+Change size rule:
+- One bounded change at a time
+- Touch as few blocks as possible
 
 <!-- __END_PS_ALLOWED_PS040__ -->
 
@@ -196,32 +210,26 @@ Workout area:
 
 ## Current Known UI Issues
 
+UI is parked. Do not spend time here unless it blocks logic work.
+
 Dolphin and splash animation
-- Splash appears at the wrong resting angle
+- Splash resting angle is still not correct in all contexts
   - Desired: fixed resting angle rotated left about 130 degrees
   - Splash must never spin
-- Splash is not visible because scroll or reveal happens too early
-  - Desired: splash becomes visible first, then smooth scroll happens
-- Dolphin fade out and splash fade in are currently sequential
-  - Desired: crossfade at the same time over 0.2 seconds
-
-Generate dolphin sizing regression
-- Dolphin sometimes returns to small size after generation
-  - Desired: generate dolphin remains large idle after completion
+- Dolphin fade out and splash fade in should be a true crossfade
+  - Desired: both happen at the same time over 0.2 seconds
+- Reveal and scroll timing still feels slightly off on some devices
+  - Desired: splash is visible before any smooth scroll begins
 
 Effort bar icons
-- Effort dolphins still read too small on mobile
-  - Increase icon size by another 25 percent
-  - Coffee cup and Z must be legible at small sizes
-- Threshold and Full Gas dolphins look faded on red backgrounds
-  - Desired for now: revert them to blue and rely on facial expression
-  - Remove warm tint from those two assets
+- Effort dolphins still feel cut off or tight on some phones
+- Threshold and Full Gas sometimes appear faded again
+  - Desired for now: both remain blue, no warm tint
 
 Layout polish parked
 - Set card dolphin and metres alignment is noted but not urgent yet
   - Desired: dolphin aligns with set title line
   - Desired: metres aligns with the set detail line
-  - May be revisited once sets contain longer instructions
 
 <!-- __END_PS_CURRENT_KNOWN_UI_ISSUES_PS100__ -->
 
@@ -247,18 +255,15 @@ Testing note:
 
 ## Next Single Step
 
-Pick one only. UI only.
+Pick one only. Logic only.
 
-Fix splash and icon presentation:
-- Lock splash to a fixed resting angle rotated left about 130 degrees
-- Ensure splash never spins
-- Crossfade dolphin out and splash in at the same time over 0.2 seconds
-- Delay scroll or reveal so splash is visible before the page moves
-- Keep generate dolphin large at rest after completion
-- Effort bar icons: increase size by another 25 percent
-- Threshold and Full Gas: revert to blue assets with no warm tint
+Define the tier engine and output contract:
+- Write a concrete tier model (tiers, goals, constraints, allowed set types)
+- Define a strict output schema that UI can always parse
+- Add a validation step that rejects or repairs bad outputs
+- Update buildWorkout and buildOneSetBodyShared to obey tier constraints
 
-Stop after this single pass and wait for Jess manual testing feedback.
+Stop after this single pass and wait for Jess manual review of generated workouts.
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS120__ -->
 

@@ -1,0 +1,194 @@
+Message to Replit
+
+Task: Swim Gen panel polish. Invert selected button styles, reposition and resize dolphin, and change frosted panel to clear glass. index.js only. Minimal changes.
+
+A) Invert selected styling for pool buttons and Generate button
+
+Find the CSS rules that style the active pool button. It will be one of these patterns:
+
+.poolBtn.active { ... }
+
+#poolButtons button.active { ... }
+
+.isSelected { ... }
+
+Replace the active and default styles with this logic:
+
+Default buttons: clear, normal weight
+
+Active button: white, bold
+
+Paste these rules, adjusted to match your actual selectors:
+
+/* Default pool buttons, unselected */
+#poolButtons button,
+#poolButtonsRow button {
+  background: transparent;
+  border: 2px solid rgba(0,0,0,0.18);
+  color: #111;
+  font-weight: 500;
+}
+
+/* Selected pool button */
+#poolButtons button.active {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(0,0,0,0.22);
+  color: #111;
+  font-weight: 800;
+}
+
+
+Now apply the same idea to the Generate button.
+
+Find the Generate button styling and ensure:
+
+Default: clear, normal
+
+While generating or pressed: white and bold
+
+If there is an isGenerating class or disabled state, use that. Add:
+
+#generateBtn {
+  background: transparent;
+  border: 2px solid rgba(0,0,0,0.18);
+  color: #111;
+  font-weight: 500;
+}
+
+#generateBtn.isActive,
+#generateBtn:active,
+#generateBtn[disabled] {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(0,0,0,0.22);
+  color: #111;
+  font-weight: 800;
+}
+
+
+If your JS currently applies active to the selected pool button, keep that. We only change CSS meaning.
+
+B) Dolphin placement and size
+
+Current problem:
+
+Dolphin is tiny
+
+Dolphin is anchored next to Advanced options
+
+It is not already present in the correct area
+
+We want:
+
+Dolphin always visible, larger
+
+Positioned in the empty space under Generate, centred under the Generate button area
+
+Spins only during generating, splashes once at finish
+
+Do this:
+
+In the Swim Gen panel HTML, locate the row containing the pool buttons and Generate button. Immediately after that row, insert a dedicated dolphin spot container:
+
+<div id="dolphinSpot" style="position:relative; height:46px; margin-top:6px;">
+  <span id="dolphinLoader" style="position:absolute; right:18px; top:2px; font-size:34px; line-height:1;">🐬</span>
+</div>
+
+
+This keeps the dolphin always on screen and places it in that empty area under Generate. The right:18px can be nudged to visually centre under the Generate button.
+
+Remove the old dolphin span that is currently sitting next to Advanced options, so it does not duplicate.
+
+Keep the spin and splash behaviour, but do not hide the dolphin anymore.
+
+Find the JS that currently does:
+
+set dolphin text
+
+add class dolphinSpin
+
+clear it later
+
+Change behaviour:
+
+Idle state: dolphin shows 🐬 with no spin class
+
+During generating: add spin class
+
+Finish: remove spin class, briefly show 💦, then return to 🐬
+
+Minimal JS behaviour:
+
+On start:
+
+dolphin.textContent = "🐬"
+
+dolphin.classList.add("dolphinSpin")
+
+On finish:
+
+dolphin.classList.remove("dolphinSpin")
+
+dolphin.textContent = "💦"
+
+after 250ms set back to 🐬
+
+Add or keep this CSS:
+
+@keyframes dolphinSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.dolphinSpin { display:inline-block; animation: dolphinSpin 700ms linear infinite; }
+
+C) Change the Swim Gen panel from frosted to clear glass
+
+Current problem:
+
+It looks frosted because of blur and a tinted fill
+
+We want:
+
+Clear glass look: fully transparent interior
+
+Visible glass edge and subtle reflection
+
+No blur
+
+Find the main Swim Gen panel wrapper element. It has the background, border, radius, shadow.
+
+Set it to:
+
+background: transparent;
+
+remove blur filters
+
+keep border and add a reflection overlay using a pseudo element
+
+Add this CSS for a class, for example .glassPanel, then apply that class to the Swim Gen wrapper:
+
+.glassPanel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 22px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Reflection highlight */
+.glassPanel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.28) 0%,
+    rgba(255,255,255,0.10) 18%,
+    rgba(255,255,255,0.00) 45%);
+  pointer-events: none;
+}
+
+
+Important:
+
+Remove any backdrop-filter: blur(...) from the Swim Gen panel wrapper.
+
+Do not add padding or outer gutters.
+
+If the wrapper is inline styled, either move to a class or keep inline background as transparent and keep the border. The reflection requires CSS.

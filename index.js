@@ -444,6 +444,52 @@ app.get("/", (req, res) => {
         display: inline-block;
         animation: dolphinSpin 700ms linear infinite;
       }
+      /* Glass panel with reflection */
+      .glassPanel {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.45);
+        border-radius: 22px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+        position: relative;
+        overflow: hidden;
+      }
+      .glassPanel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg,
+          rgba(255,255,255,0.28) 0%,
+          rgba(255,255,255,0.10) 18%,
+          rgba(255,255,255,0.00) 45%);
+        pointer-events: none;
+      }
+      /* Pool buttons default */
+      #poolButtons button {
+        background: transparent;
+        border: 2px solid rgba(0,0,0,0.18);
+        color: #111;
+        font-weight: 500;
+      }
+      /* Pool button selected */
+      #poolButtons button.active {
+        background: rgba(255,255,255,0.95);
+        border-color: rgba(0,0,0,0.22);
+        color: #111;
+        font-weight: 800;
+      }
+      /* Generate button */
+      #generateBtn {
+        background: transparent;
+        border: 2px solid rgba(0,0,0,0.18);
+        color: #111;
+        font-weight: 500;
+      }
+      #generateBtn.isActive {
+        background: rgba(255,255,255,0.95);
+        border-color: rgba(0,0,0,0.22);
+        color: #111;
+        font-weight: 800;
+      }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
@@ -551,7 +597,7 @@ app.get("/", (req, res) => {
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
-      <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.30); border-radius:16px; background:rgba(255,255,255,0.35); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 10px 30px rgba(0,0,0,0.18);">
+      <form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:20px;">
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -583,20 +629,23 @@ app.get("/", (req, res) => {
 
             <div id="poolButtonsRow" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" data-pool="25m" style="background:rgba(0,0,0,0.08); color:#111; border:2px solid rgba(0,0,0,0.18); padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
-                <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
-                <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+                <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+                <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+                <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
               </div>
-              <button type="submit" style="padding:6px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.35); color:#111; cursor:pointer;">
+              <button id="generateBtn" type="submit" style="padding:6px 14px; border-radius:8px; cursor:pointer;">
                 Generate
               </button>
+            </div>
+
+            <div id="dolphinSpot" style="position:relative; height:46px; margin-top:6px;">
+              <span id="dolphinLoader" style="position:absolute; right:18px; top:2px; font-size:34px; line-height:1;">🐬</span>
             </div>
 
             <div style="margin-top:12px;">
               <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
                 ▶ Advanced options
               </button>
-              <span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:10px;"></span>
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
@@ -2140,13 +2189,11 @@ app.get("/", (req, res) => {
 
         for (const btn of poolButtons.querySelectorAll("button[data-pool]")) {
           const isActive = btn.getAttribute("data-pool") === poolValue;
-          btn.style.fontWeight = isActive ? "600" : "400";
-          btn.style.border = isActive ? "2px solid rgba(0,0,0,0.18)" : "2px solid #ccc";
-          btn.style.borderRadius = "8px";
-          btn.style.padding = "6px 14px";
-          btn.style.background = isActive ? "rgba(0,0,0,0.08)" : "#fff";
-          btn.style.color = "#111";
-          btn.style.cursor = "pointer";
+          if (isActive) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
         }
       }
 
@@ -2251,7 +2298,7 @@ app.get("/", (req, res) => {
         if (isCustom) {
           if (!payload.customPoolLength) {
             dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "";
+            dolphinLoader.textContent = "🐬";
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2279,7 +2326,7 @@ app.get("/", (req, res) => {
 
           if (!res.ok) {
             dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "";
+            dolphinLoader.textContent = "🐬";
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2288,7 +2335,7 @@ app.get("/", (req, res) => {
 
           if (!data || data.ok !== true) {
             dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "";
+            dolphinLoader.textContent = "🐬";
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2300,17 +2347,17 @@ app.get("/", (req, res) => {
 
           if (!workoutText) {
             dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "";
+            dolphinLoader.textContent = "🐬";
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
 
-          // Stop spinning, show splash, then clear
+          // Stop spinning, show splash, then return to dolphin
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "💦";
-          await new Promise(r => setTimeout(r, 300));
-          dolphinLoader.textContent = "";
+          await new Promise(r => setTimeout(r, 250));
+          dolphinLoader.textContent = "🐬";
           statusPill.textContent = "";
 
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
@@ -2386,7 +2433,7 @@ app.get("/", (req, res) => {
           copyBtn.dataset.copyText = workoutText;
         } catch (err) {
           dolphinLoader.classList.remove("dolphinSpin");
-          dolphinLoader.textContent = "";
+          dolphinLoader.textContent = "🐬";
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }

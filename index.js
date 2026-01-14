@@ -366,9 +366,9 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        /* 75% white for chips and buttons */
-        --white75: rgba(255,255,255,0.75);
-        --whiteBorder: rgba(255,255,255,0.55);
+        /* 50% white for chips and buttons */
+        --white50: rgba(255,255,255,0.50);
+        --whiteBorder: rgba(255,255,255,0.45);
         /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
         /* CardGym pastel colors */
         --zone-easy-bg: #b9f0fd;
@@ -459,7 +459,7 @@ app.get("/", (req, res) => {
         display:inline-block;
         padding:6px 10px;
         border-radius: 8px;
-        background: var(--white75);
+        background: var(--white50);
         border: 1px solid var(--whiteBorder);
         color:#0b0b0b;
         box-shadow: 0 6px 16px rgba(0,0,0,0.10);
@@ -474,7 +474,7 @@ app.get("/", (req, res) => {
       /* Unified white button style for pool and generate */
       #controlsGrid button,
       .poolRow button {
-        background: var(--white75);
+        background: var(--white50);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 700;
@@ -518,7 +518,7 @@ app.get("/", (req, res) => {
 
       /* Generate button box with dolphin inside */
       .generateBox {
-        background: var(--white75);
+        background: var(--white50);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 800;
@@ -556,7 +556,7 @@ app.get("/", (req, res) => {
 
       /* Readable white glass chip */
       .readChip {
-        background: var(--white75);
+        background: var(--white50);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         box-shadow: 0 8px 18px rgba(0,0,0,0.12);

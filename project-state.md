@@ -64,7 +64,7 @@ Non goals:
 
 ## Frozen
 
-- index.js is the only runtime file
+- index.js is the only runtime JS file (styles.css is allowed)
 - Two layer background crossfade system (bgA and bgB)
 - Background randomises on page load
 - Workout cards full width layout (no extra outer panel around the sets)
@@ -90,6 +90,7 @@ Non goals:
 ## Active Files
 
 - index.js - sole runtime and UI logic
+- styles.css - external stylesheet
 - project-state.md - authoritative state
 - WORKING-METHOD-REPLIT.md - working rules
 

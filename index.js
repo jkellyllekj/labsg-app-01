@@ -749,6 +749,26 @@ app.get("/", (req, res) => {
       }
       .iconSm { font-size: 22px; }
       .iconLg { font-size: 26px; }
+      /* Pure silhouette icon button */
+      .iconBtnSilhouette {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        outline: none !important;
+        border-radius: 0 !important;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .iconBtnSilhouette:focus,
+      .iconBtnSilhouette:active {
+        background: transparent !important;
+        box-shadow: none !important;
+      }
     </style>
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">
       <a href="/viewport-lab" style="color:inherit; text-decoration:underline; font-weight:600;">Viewport Lab</a>
@@ -952,7 +972,7 @@ app.get("/", (req, res) => {
         <div id="workoutNameDisplay" style="display:none; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;">
           <div class="workoutTitleRow">
             <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtnBare iconSm">🐬</button>
-            <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtnChip iconSm">🖼️</button>
+            <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtnSilhouette iconSm">🖼️</button>
             <span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span>
           </div>
         </div>

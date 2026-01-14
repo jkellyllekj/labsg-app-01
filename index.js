@@ -548,6 +548,7 @@ app.get("/", (req, res) => {
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Gen</h3>
+              <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">V</a>
             </div>
 
             <div style="display:flex; align-items:center; gap:12px;">
@@ -572,14 +573,11 @@ app.get("/", (req, res) => {
           <div class="form-col">
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
-            <div id="poolButtons" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
-                <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
-                <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
-                <button type="button" data-pool="custom" id="customPoolBtn" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 10px; border-radius:8px; cursor:pointer;" aria-label="Custom pool length">...</button>
-              </div>
-              <span id="dolphinLoader" style="display:inline-block; min-width:34px; text-align:right;"></span>
+            <div id="poolButtons" style="display:flex; align-items:center; gap:10px;">
+              <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+              <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+              <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+              <span id="dolphinLoader" style="display:inline-block; margin-left:10px;"></span>
             </div>
 
             <div style="margin-top:12px;">
@@ -721,9 +719,9 @@ app.get("/", (req, res) => {
       </form>
     </div>
 
-    <div style="max-width:500px; box-sizing:border-box;">
+    <div style="max-width:520px; box-sizing:border-box;">
 
-      <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
+      <div id="resultWrap" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.5); border-radius:18px; border:1px solid rgba(255,255,255,0.35); box-shadow:0 10px 28px rgba(0,0,0,0.18);">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><div style="display:inline-flex; align-items:center; gap:6px;"><button id="bgCycleBtn" class="bgCycleBtn" type="button" aria-label="Change background" title="Change background"><svg viewBox="0 0 24 24" class="bgCycleIcon" aria-hidden="true"><path d="M6 13a6 6 0 0 0 10.2 4.2l1.3 1.3A8 8 0 0 1 4 13h2z"/><path d="M18 11a6 6 0 0 0-10.2-4.2L6.5 5.5A8 8 0 0 1 20 11h-2z"/><path d="M7 6v4H3M17 18v-4h4"/></svg></button><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div></div>

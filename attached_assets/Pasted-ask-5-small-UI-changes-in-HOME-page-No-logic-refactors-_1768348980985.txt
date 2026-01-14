@@ -1,0 +1,80 @@
+ask: 5 small UI changes in HOME page. No logic refactors. Edit index.js only.
+
+File: index.js
+All edits are inside the template string in HOME_HTML within __START_ROUTE_HOME_UI_HTML_R110__.
+
+Change 1, remove the Custom button from the main pool button row
+
+Find the pool buttons block that contains these four buttons in a row:
+
+data-pool="25m"
+
+data-pool="50m"
+
+data-pool="25yd"
+
+data-pool="custom" (the one that currently shows ...)
+
+Delete the entire custom button element only, the one with:
+
+data-pool="custom"
+
+
+After deletion, the main row should only show 25m, 50m, 25yd.
+
+Do not remove any hidden inputs. Do not remove custom pool input inside Advanced options.
+
+Change 2, move dolphin into the pool button row and shift it slightly left
+
+In the same pool buttons container, append this immediately after the three buttons:
+
+<span id="dolphinLoader" style="display:inline-block; margin-left:10px;"></span>
+
+
+This places dolphin in the blank space after the buttons, not hard aligned to the far right.
+
+Change 3, remove the old dolphin location near the Generate button
+
+Find this exact line near the Generate button row:
+
+<span id="dolphinLoader" style="display:none; vertical-align:middle; margin-right:30px;"></span>
+
+
+Delete that line.
+
+Change 4, add a tiny Viewport link as a subtle V in the top right of the input card
+
+In the top header area of the input card, where the title Swim Gen is rendered, add this link on the far right of that header row:
+
+<a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">V</a>
+
+
+If the header row is not currently a flex row, wrap the title and this link in a flex container so the V can sit on the right.
+
+Change 5, make the generated output area look like a proper card, with shadow and 50 percent transparency
+
+Find the opening div for results, it starts like this:
+
+<div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none;">
+
+
+Replace only the style string so it becomes:
+
+<div id="resultWrap" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.5); border-radius:18px; border:1px solid rgba(255,255,255,0.35); box-shadow:0 10px 28px rgba(0,0,0,0.18);">
+
+
+This gives it a shadow and 50 percent transparent background.
+
+Bonus, keep output width matching the input card
+
+If results wrapper width does not match the input card, change the results wrapper outer container from:
+
+<div style="max-width:500px; box-sizing:border-box;">
+
+
+to:
+
+<div style="max-width:520px; box-sizing:border-box;">
+
+
+Do not change logic. Do not add logging. Do not touch other blocks.

@@ -1546,11 +1546,8 @@ app.get("/", (req, res) => {
         strip += '<div class=\\"effortStrip\\">';
         
         for (let i = 0; i < 5; i++) {
-          const isActive = (i + 1) <= level;
-          const opacity = isActive ? '1' : '0.4';
-          
           strip += '<div class=\\"effortTile\\" style=\\"background:' + bgColors[i] + ';\\">';
-          strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
+          strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\">';
           strip += '</div>';
         }
         

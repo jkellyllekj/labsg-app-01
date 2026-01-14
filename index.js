@@ -376,15 +376,16 @@ app.get("/", (req, res) => {
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-              <div style="display:flex; align-items:center; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;">
                 <h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
-  <span class="glassChip readChip">Swim Gen</span>
-</h3>
-                <button id="regenBtn" type="button" aria-label="Regenerate" class="iconBtnBare iconLg">
-  <span id="regenDolphin" style="display:inline-block;"><img class="dolphinIcon" src="/assets/dolphins/dolphin-base.png" alt=""></span>
-</button>
+                  <span class="glassChip readChip">Swim Gen</span>
+                </h3>
+              </div>
+
+              <div style="flex:1; display:flex; justify-content:center;">
                 <button id="bgCycleBtn" type="button" aria-label="Change background" class="iconBtnBare iconSm">🖼️</button>
               </div>
+
               <span class="glassChip readChip" style="white-space:nowrap; border-radius:8px; padding:6px 12px;">
                 <strong id="distanceLabel">1500</strong>
               </span>

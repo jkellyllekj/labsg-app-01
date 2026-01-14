@@ -436,6 +436,14 @@ app.get("/", (req, res) => {
       .splash-out.splash-active {
         animation: splash-exit 0.5s ease-out forwards;
       }
+      @keyframes dolphinSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .dolphinSpin {
+        display: inline-block;
+        animation: dolphinSpin 700ms linear infinite;
+      }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
@@ -543,7 +551,7 @@ app.get("/", (req, res) => {
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
-      <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.5); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
+      <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.30); border-radius:16px; background:rgba(255,255,255,0.35); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 10px 30px rgba(0,0,0,0.18);">
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -573,16 +581,22 @@ app.get("/", (req, res) => {
           <div class="form-col">
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
-            <div id="poolButtons" style="display:flex; align-items:center; gap:10px;">
-              <button type="button" data-pool="25m" style="background:rgba(0,0,0,0.08); color:#111; border:2px solid rgba(0,0,0,0.18); padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
-              <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
-              <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+            <div id="poolButtonsRow" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" data-pool="25m" style="background:rgba(0,0,0,0.08); color:#111; border:2px solid rgba(0,0,0,0.18); padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+                <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
+                <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+              </div>
+              <button type="submit" style="padding:6px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.35); color:#111; cursor:pointer;">
+                Generate
+              </button>
             </div>
 
             <div style="margin-top:12px;">
               <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
                 ▶ Advanced options
               </button>
+              <span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:10px;"></span>
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
@@ -706,10 +720,6 @@ app.get("/", (req, res) => {
 
         <div style="margin-top:14px; display:flex; align-items:flex-end; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
-              Generate
-            </button>
-            <span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:12px;"></span>
             <button id="copyBtn" type="button" style="display:none; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
               Copy
             </button>
@@ -719,9 +729,9 @@ app.get("/", (req, res) => {
       </form>
     </div>
 
-    <div style="max-width:520px; box-sizing:border-box;">
+    <div style="max-width:520px; box-sizing:border-box; padding:0;">
 
-      <div id="resultWrap" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.5); border-radius:18px; border:1px solid rgba(255,255,255,0.35); box-shadow:0 10px 28px rgba(0,0,0,0.18);">
+      <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none; box-shadow:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
         <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><div style="display:inline-flex; align-items:center; gap:6px;"><button id="bgCycleBtn" class="bgCycleBtn" type="button" aria-label="Change background" title="Change background"><svg viewBox="0 0 24 24" class="bgCycleIcon" aria-hidden="true"><path d="M6 13a6 6 0 0 0 10.2 4.2l1.3 1.3A8 8 0 0 1 4 13h2z"/><path d="M18 11a6 6 0 0 0-10.2-4.2L6.5 5.5A8 8 0 0 1 20 11h-2z"/><path d="M7 6v4H3M17 18v-4h4"/></svg></button><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div></div>
@@ -2230,23 +2240,19 @@ app.get("/", (req, res) => {
         // Reset min-height after clearing
         cards.style.minHeight = "";
 
-        // Show dolphin inline after "Generating..." - no entrance splash, just takes off
-        dolphinLoader.innerHTML = '<div class="loader-wrapper"><span class="dolphin-loop">🐬</span><span class="splash-out">💦</span></div>';
-        dolphinLoader.style.display = "inline-block";
-        statusPill.textContent = "Generating...";
-        const loaderStartTime = Date.now();
-        const loaderWrapper = dolphinLoader.querySelector(".loader-wrapper");
-        const dolphinSpanEl = loaderWrapper ? loaderWrapper.querySelector(".dolphin-loop") : null;
-        const splashOutEl = loaderWrapper ? loaderWrapper.querySelector(".splash-out") : null;
+        // Show spinning dolphin next to Advanced options
+        dolphinLoader.textContent = "🐬";
+        dolphinLoader.classList.add("dolphinSpin");
+        statusPill.textContent = "";
 
         const payload = formToPayload();
 
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
           if (!payload.customPoolLength) {
-            dolphinLoader.innerHTML = "";
-            dolphinLoader.style.display = "none";
-            statusPill.innerHTML = "";
+            dolphinLoader.classList.remove("dolphinSpin");
+            dolphinLoader.textContent = "";
+            statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
           }
@@ -2272,18 +2278,18 @@ app.get("/", (req, res) => {
           }
 
           if (!res.ok) {
-            dolphinLoader.innerHTML = "";
-            dolphinLoader.style.display = "none";
-            statusPill.innerHTML = "";
+            dolphinLoader.classList.remove("dolphinSpin");
+            dolphinLoader.textContent = "";
+            statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
             return;
           }
 
           if (!data || data.ok !== true) {
-            dolphinLoader.innerHTML = "";
-            dolphinLoader.style.display = "none";
-            statusPill.innerHTML = "";
+            dolphinLoader.classList.remove("dolphinSpin");
+            dolphinLoader.textContent = "";
+            statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
             return;
@@ -2293,48 +2299,19 @@ app.get("/", (req, res) => {
           const workoutName = String(data.workoutName || "").trim();
 
           if (!workoutText) {
-            dolphinLoader.innerHTML = "";
-            dolphinLoader.style.display = "none";
-            statusPill.innerHTML = "";
+            dolphinLoader.classList.remove("dolphinSpin");
+            dolphinLoader.textContent = "";
+            statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
 
-          // Wait for dolphin to complete current loop cycle (3s per cycle)
-          // This ensures the dolphin animation ends at its natural resting position (100% keyframe)
-          const elapsed = Date.now() - loaderStartTime;
-          const cycleTime = 3000; // Updated to match new animation duration
-          const timeInCurrentCycle = elapsed % cycleTime;
-          // Calculate exact time until cycle lands at 100% keyframe
-          const timeUntilCycleEnd = timeInCurrentCycle === 0 ? cycleTime : (cycleTime - timeInCurrentCycle);
-          // Ensure at least one full cycle completes
-          const exactDelay = elapsed < cycleTime ? (cycleTime - elapsed) : timeUntilCycleEnd;
-          
-          // Wait exactly until cycle end to hit landing point
-          if (exactDelay > 0) {
-            await new Promise(r => setTimeout(r, exactDelay));
-          }
-
-          // IMMEDIATELY pause animation at landing point before it starts new arc
-          if (dolphinSpanEl) {
-            dolphinSpanEl.style.animationPlayState = 'paused';
-          }
-
-          // Exit sequence: hide dolphin immediately, show splash at base (dolphin diving under)
-          if (dolphinSpanEl) {
-            dolphinSpanEl.style.display = 'none';
-          }
-          if (splashOutEl) {
-            splashOutEl.classList.add('splash-active');
-          }
-          
-          // Wait for splash animation to complete (0.5s)
-          await new Promise(r => setTimeout(r, 500));
-          
-          // Clear loader and status
-          dolphinLoader.innerHTML = "";
-          dolphinLoader.style.display = "none";
-          statusPill.innerHTML = "";
+          // Stop spinning, show splash, then clear
+          dolphinLoader.classList.remove("dolphinSpin");
+          dolphinLoader.textContent = "💦";
+          await new Promise(r => setTimeout(r, 300));
+          dolphinLoader.textContent = "";
+          statusPill.textContent = "";
 
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
           const nameDisplayEl = document.getElementById("workoutNameDisplay");
@@ -2408,9 +2385,9 @@ app.get("/", (req, res) => {
           copyBtn.disabled = false;
           copyBtn.dataset.copyText = workoutText;
         } catch (err) {
-          dolphinLoader.innerHTML = "";
-          dolphinLoader.style.display = "none";
-          statusPill.innerHTML = "";
+          dolphinLoader.classList.remove("dolphinSpin");
+          dolphinLoader.textContent = "";
+          statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }
       });

@@ -1,0 +1,150 @@
+Task: Remove the extra results container, restore full width set cards, keep Swim Gen panel frosted, fix dolphin alignment, remove “Generating…” text, and lighten Generate button. index.js only. Minimal diffs.
+File: index.js
+ Edits are in __START_ROUTE_HOME_UI_HTML_R110__ and the related CSS in the same route.
+Change 1, remove the extra panel below the Swim Gen panel (results outer wrapper)
+Find the results wrapper div that currently has padding, border, background or rounded corners, something like:
+<div id="resultWrap" style="... padding:14px; background:rgba(...); border-radius:...; border:...; box-shadow:...;">
+
+Replace its style so it becomes effectively invisible and does not consume width or add side gutters:
+<div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none; box-shadow:none;">
+
+Do not change the inner set cards. This removes the new container panel entirely.
+Change 2, ensure the set cards area is full width like before
+There is an outer results container below the input card that currently limits width or adds side padding, something like:
+<div style="max-width:520px; box-sizing:border-box;">
+
+Change that outer container to:
+<div style="max-width:520px; box-sizing:border-box; padding:0;">
+
+And make sure there is no additional wrapper adding left or right padding around the set cards list.
+Goal: set cards go to the same width they used to, without a big translucent panel behind them.
+Change 3, remove the “Generating…” text and keep dolphin on the same baseline as the Generate button
+Find the element that prints “Generating…” (likely a span or div). It will contain the literal text:
+Generating...
+
+Delete that element entirely.
+Now ensure dolphin is placed on the Generate row, immediately after the Generate button:
+<span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:12px;"></span>
+
+Important: the dolphin must not be in the slider row or pool button row.
+This keeps its start height and splash position consistent.
+Change 4, lighten the Generate button style, do not use solid black
+Find the Generate button inline style. It currently renders black.
+Change its colours to a frosted pill style:
+background: rgba(255,255,255,0.35)
+
+
+border: 1px solid rgba(255,255,255,0.45)
+
+
+text: #111
+
+
+If it has box shadow, keep it subtle.
+Example replacement style string for the Generate button:
+background: rgba(255,255,255,0.35);
+border: 1px solid rgba(255,255,255,0.45);
+color: #111;
+
+Change 5, keep the Swim Gen input card frosted, but make it feel like glass
+On the main input card wrapper (the one containing Swim Gen, slider, pool buttons, advanced options, generate button), set:
+background: rgba(255,255,255,0.35);
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+border: 1px solid rgba(255,255,255,0.30);
+box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+
+Do not increase padding or add side margins.
+This keeps the good frosted look but reads more like glass.
+
+Notes so you do not over edit
+Do not add any container around the sets.
+
+
+Do not change the set card layout or spacing.
+
+
+Do not change generation logic.
+
+
+Only move dolphin and remove generating text.
+
+
+Keep VO link as it is.
+
+
+
+
+
+Message to Replit
+Task: Put Generate on same row as pool buttons and change dolphin behaviour to a simple spinner anchored next to Advanced options. Remove separate Generate row. index.js only. Minimal changes.
+File: index.js
+ Edits are in __START_ROUTE_HOME_UI_HTML_R110__ and the small dolphin animation helper JS in the same route.
+1) Move Generate onto the pool button row
+Find the pool buttons row block that contains the three buttons:
+25m
+
+
+50m
+
+
+25yd
+
+
+Append the Generate button as the fourth item on the same row, with the same height as the buttons.
+Example end state in HTML:
+<div id="poolButtonsRow" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+  <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button type="button" data-pool="25m" ...>25m</button>
+    <button type="button" data-pool="50m" ...>50m</button>
+    <button type="button" data-pool="25yd" ...>25yd</button>
+  </div>
+
+  <button id="generateBtn" type="button" style="padding:6px 14px; border-radius:8px; cursor:pointer;">
+    Generate
+  </button>
+</div>
+
+Do not leave the old separate Generate row below. Delete it.
+2) Dolphin placement: put dolphin to the right of Advanced options label
+In the Advanced options line, place a small span immediately after the text:
+<span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:10px;"></span>
+
+This is the permanent anchor position for the dolphin.
+3) Dolphin behaviour change: stop jump animation, use spin + splash near anchor
+Find the JS that currently animates the dolphin jump and splash. It likely sets the dolphin’s position relative to its container and applies a jump path.
+Replace that behaviour with a simple loader animation:
+When generation starts:
+
+
+Set #dolphinLoader content to a rotating dolphin emoji (or small inline element) and keep it in place.
+
+
+When generation ends:
+
+
+Briefly show a splash emoji once, then clear.
+
+
+Pseudo behaviour:
+start: 🐬 with CSS rotation class
+
+
+finish: swap to 💦 for 300ms then clear
+
+
+Implement with a tiny CSS rule:
+@keyframes dolphinSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.dolphinSpin { display:inline-block; animation: dolphinSpin 700ms linear infinite; }
+
+And minimal JS:
+start: dolphinLoader.textContent = "🐬"; dolphinLoader.classList.add("dolphinSpin");
+
+
+end: remove spin class, set textContent to "💦" for 300ms, then clear.
+
+
+Do not attempt to compute positions. No absolute positioning. The anchor should never move.
+4) Remove “Generating…” text if it still exists
+Delete the element containing “Generating…”.
+

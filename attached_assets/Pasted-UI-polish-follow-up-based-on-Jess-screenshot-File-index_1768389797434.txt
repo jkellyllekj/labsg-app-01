@@ -1,0 +1,242 @@
+UI polish follow up, based on Jess screenshot.
+
+File: index.js
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_DOM_R130
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+Do not touch OpenAI, workout logic, or background cycling logic.
+
+1) ROUTE_HOME_UI_HTML_R110
+A) Make all top controls white by default, selected state is glow only
+
+Change pool buttons and generate button styling so they all look like the current 25m button, meaning white background and black text in both selected and unselected states.
+
+Replace the current pool and generate CSS with this:
+
+/* Unified white button style for pool and generate */
+#poolButtonsRow button {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #0b0b0b;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+}
+
+/* Selected is a glow ring, not a background change */
+#poolButtonsRow button.active {
+  box-shadow:
+    0 6px 16px rgba(0,0,0,0.10),
+    0 0 0 3px rgba(255,215,0,0.55);
+}
+
+
+Make Advanced options readable the same way. Wrap its text in a white chip and give it a glow when open.
+
+In the HTML for the Advanced options button, replace the button inner contents with:
+
+<span class="whiteChip">▶ Advanced options</span>
+
+
+Add these CSS rules:
+
+.whiteChip {
+  display:inline-block;
+  padding:6px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.55);
+  color:#0b0b0b;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+}
+
+.whiteChipActive {
+  box-shadow:
+    0 6px 16px rgba(0,0,0,0.10),
+    0 0 0 3px rgba(64,201,224,0.50);
+}
+
+
+When advanced is expanded, toggle whiteChipActive on that span in JS, see section 3.
+
+B) Make Generate button larger and more square, spanning down to Advanced row
+
+Restructure the generator controls so Generate is a taller button that reaches down to the Advanced band. Dolphin lives under it.
+
+Replace the existing poolButtonsRow and advancedRow HTML with this layout:
+
+<div id="controlsGrid">
+  <div id="leftControls">
+    <div id="poolButtons" class="poolRow">
+      <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25m</button>
+      <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:7px; cursor:pointer;">50m</button>
+      <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25yd</button>
+    </div>
+
+    <div id="advancedRow" style="display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:10px; position:relative;">
+      <button type="button" id="toggleAdvanced" style="background:transparent; border:none; text-align:left; font-size:16px; opacity:0.95; display:flex; align-items:center; gap:8px; cursor:pointer; padding:0; font-weight:700;">
+        <span id="advancedChip" class="whiteChip">▶ Advanced options</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="generateStack">
+    <button id="generateBtn" type="submit" class="generateBig">
+      Generate
+    </button>
+    <span id="dolphinLoader" class="dolphinIdle">🐬</span>
+  </div>
+</div>
+
+
+Add CSS:
+
+#controlsGrid {
+  display:grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+  align-items: start;
+}
+
+.poolRow {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* Make the pool buttons slightly tighter vertically */
+.poolRow button {
+  padding-top:5px !important;
+  padding-bottom:5px !important;
+}
+
+.generateBig {
+  width: 100%;
+  min-height: 92px;
+  border-radius: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#generateStack {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap: 8px;
+}
+
+/* Dolphin always visible, centered under Generate */
+.dolphinIdle {
+  display:inline-block;
+  font-size:40px;
+  line-height:1;
+  pointer-events:none;
+}
+
+
+This removes the old right aligned dolphin placement and prevents it from drifting into the cards area.
+
+C) Reduce radius by about 2px everywhere requested
+
+Apply these radius reductions:
+
+.glassPanel radius minus 2px
+
+.glassChip radius minus 2px
+
+#bgCycleBtn border radius minus 2px
+
+The 1500 pill radius minus 2px
+
+Set cards radius minus 2px
+
+Summary container radius minus 2px
+
+Make these edits in CSS where those rules exist. Do not change layout otherwise.
+
+D) Make the glass border look thicker with depth, without tinting the panel
+
+Update .glassPanel to add an inset highlight and a subtle inner edge.
+
+Replace .glassPanel with:
+
+.glassPanel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.42);
+  border-radius: 18px;
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.40),
+    inset 0 -1px 0 rgba(0,0,0,0.10);
+  position: relative;
+  overflow: hidden;
+}
+
+
+Do the same style idea for set cards and summary, but lighter. Add a shared class if easiest, but keep minimal.
+
+E) Summary should be white and glassy, and remove the word Summary
+
+If the summary header text is produced in JS, remove the literal word "Summary" from the rendered HTML and keep only the pill chips like Pool and Total lengths.
+
+Also make the summary container use the same glass depth border and a smaller radius.
+
+2) ROUTE_HOME_UI_JS_DOM_R130
+
+Remove the dolphin absolute positioning logic if it exists. It should now be static under Generate.
+
+Delete or disable positionDolphinUnderGenerate if it was added earlier. The dolphin is now in the DOM under the Generate button, so we do not need bounding box math.
+
+3) ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+A) Dolphin behaviour
+
+Idle state, dolphin visible, no spin class.
+Generating state, dolphin spins counter clockwise at 1500ms.
+Completion, quick splash, then back to dolphin. No movement.
+
+Use these exact transitions:
+
+On start of generating:
+
+generateBtn.classList.add("active");
+dolphinLoader.textContent = "🐬";
+dolphinLoader.classList.add("dolphinSpin");
+
+
+On failure returns and catch:
+
+dolphinLoader.classList.remove("dolphinSpin");
+dolphinLoader.textContent = "🐬";
+generateBtn.classList.remove("active");
+
+
+On success completion:
+
+dolphinLoader.classList.remove("dolphinSpin");
+dolphinLoader.textContent = "💦";
+setTimeout(() => {
+  dolphinLoader.textContent = "🐬";
+  generateBtn.classList.remove("active");
+}, 450);
+
+B) Advanced options glow
+
+When advanced opens, add whiteChipActive to #advancedChip. When it closes, remove it. Also update the arrow symbol if it already does that.
+
+Example:
+
+const advChip = document.getElementById("advancedChip");
+if (advChip) advChip.classList.add("whiteChipActive");
+
+
+And remove on close.
+
+C) Generate button active ring
+
+Keep the same glow ring behaviour as pool buttons. If Generate uses .active it will get the same ring. That is fine.

@@ -379,63 +379,6 @@ app.get("/", (req, res) => {
         --zone-fullgas-bg: #fe0000;
         --zone-fullgas-bar: #cc0000;
       }
-      /* Dolphin animation - single loop that goes higher and lands at end */
-      @keyframes dolphin-loop {
-        0% { transform: translateY(0) rotate(0deg) scale(1); }
-        6% { transform: translateY(-12px) rotate(-22deg) scale(1.03); }
-        12% { transform: translateY(-26px) rotate(-50deg) scale(1.06); }
-        20% { transform: translateY(-42px) rotate(-85deg) scale(1.1); }
-        28% { transform: translateY(-52px) rotate(-115deg) scale(1.12); }
-        38% { transform: translateY(-56px) rotate(-155deg) scale(1.12); }
-        48% { transform: translateY(-52px) rotate(-190deg) scale(1.1); }
-        58% { transform: translateY(-44px) rotate(-225deg) scale(1.08); }
-        68% { transform: translateY(-32px) rotate(-265deg) scale(1.05); }
-        78% { transform: translateY(-18px) rotate(-305deg) scale(1.03); }
-        88% { transform: translateY(-6px) rotate(-340deg) scale(1.01); }
-        100% { transform: translateY(0) rotate(-360deg) scale(1); }
-      }
-      .loader-wrapper {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 70px;
-        vertical-align: bottom;
-        pointer-events: none;
-      }
-      .loader-wrapper .dolphin-loop {
-        position: absolute;
-        bottom: 30px;
-        left: calc(40% - 10px);
-        transform: translateX(-50%);
-        font-size: 42px;
-        animation: dolphin-loop 3s linear infinite;
-        filter: drop-shadow(0 4px 8px rgba(0,100,150,0.35));
-      }
-      @keyframes dolphin-fadeout {
-        from { opacity: 1; }
-        to { opacity: 0; }
-      }
-      .dolphin-fading {
-        animation: dolphin-fadeout 0.35s ease-out forwards;
-      }
-      /* Splash animation - exit only (at base where dolphin lands), rotated so drops point UP */
-      .loader-wrapper .splash-out {
-        position: absolute;
-        bottom: 30px;
-        left: calc(40% + 20px);
-        transform: translateX(-50%) rotate(-144deg) scale(0);
-        opacity: 0;
-        pointer-events: none;
-        font-size: 28px;
-      }
-      @keyframes splash-exit {
-        0% { transform: translateX(-50%) rotate(-144deg) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) rotate(-144deg) scale(1.5); opacity: 1; }
-        100% { transform: translateX(-50%) rotate(-144deg) scale(2); opacity: 0; }
-      }
-      .splash-out.splash-active {
-        animation: splash-exit 0.5s ease-out forwards;
-      }
       @keyframes dolphinSpin {
         from { transform: rotate(0deg); }
         to { transform: rotate(-360deg); }
@@ -448,7 +391,7 @@ app.get("/", (req, res) => {
       .glassChip {
         display: inline-block;
         padding: 4px 10px;
-        border-radius: 10px;
+        border-radius: 8px;
         background: rgba(255,255,255,0.18);
         border: 1px solid rgba(255,255,255,0.24);
         box-shadow: 0 6px 16px rgba(0,0,0,0.12);
@@ -458,12 +401,15 @@ app.get("/", (req, res) => {
         background: rgba(255,255,255,0.38);
         border-color: rgba(255,255,255,0.40);
       }
-      /* Glass panel with reflection */
+      /* Glass panel with reflection and depth borders */
       .glassPanel {
         background: transparent;
-        border: 1px solid rgba(255,255,255,0.40);
-        border-radius: 20px;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+        border: 1px solid rgba(255,255,255,0.42);
+        border-radius: 18px;
+        box-shadow:
+          0 12px 32px rgba(0,0,0,0.18),
+          inset 0 1px 0 rgba(255,255,255,0.40),
+          inset 0 -1px 0 rgba(0,0,0,0.10);
         position: relative;
         overflow: hidden;
       }
@@ -494,7 +440,7 @@ app.get("/", (req, res) => {
       .textChipLite {
         display:inline-block;
         padding:2px 8px;
-        border-radius:10px;
+        border-radius:8px;
         background: rgba(255,255,255,0.14);
         border: 1px solid rgba(255,255,255,0.20);
       }
@@ -505,60 +451,99 @@ app.get("/", (req, res) => {
         color: #0b0b0b;
       }
 
-      /* Unselected is softer and translucent */
-      #poolButtonsRow button {
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.22);
-        color: #0b0b0b;
-        font-weight: 600;
-      }
-
-      /* Selected is white and bold */
-      #poolButtonsRow button.active {
+      /* White chip for buttons and advanced toggle */
+      .whiteChip {
+        display:inline-block;
+        padding:6px 10px;
+        border-radius: 8px;
         background: rgba(255,255,255,0.92);
-        border-color: rgba(255,255,255,0.55);
-        color: #0b0b0b;
-        font-weight: 800;
+        border: 1px solid rgba(255,255,255,0.55);
+        color:#0b0b0b;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
       }
 
-      /* Dolphin anchoring */
-      #dolphinLoader {
+      .whiteChipActive {
+        box-shadow:
+          0 6px 16px rgba(0,0,0,0.10),
+          0 0 0 3px rgba(64,201,224,0.50);
+      }
+
+      /* Unified white button style for pool and generate */
+      #controlsGrid button,
+      .poolRow button {
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(255,255,255,0.55);
+        color: #0b0b0b;
+        font-weight: 700;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+      }
+
+      /* Selected is a glow ring, not a background change */
+      #controlsGrid button.active,
+      .poolRow button.active {
+        box-shadow:
+          0 6px 16px rgba(0,0,0,0.10),
+          0 0 0 3px rgba(255,215,0,0.55);
+      }
+
+      /* Controls grid layout */
+      #controlsGrid {
+        display:grid;
+        grid-template-columns: 1fr 140px;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .poolRow {
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+      }
+
+      /* Make the pool buttons slightly tighter vertically */
+      .poolRow button {
+        padding-top:5px !important;
+        padding-bottom:5px !important;
+      }
+
+      .generateBig {
+        width: 100%;
+        min-height: 92px;
+        border-radius: 8px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      #generateStack {
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:flex-start;
+        gap: 8px;
+      }
+
+      /* Dolphin always visible, centered under Generate */
+      .dolphinIdle {
         display:inline-block;
         font-size:40px;
         line-height:1;
-        position:absolute;
-        left:0;
-        top:0;
-        transform: translate(0,0);
         pointer-events:none;
-      }
-
-      /* Keep Advanced row layout stable */
-      #advancedRow {
-        position:relative;
-        justify-content:flex-start !important;
       }
 
       .glassSummary {
         background: transparent;
-        border: 1px solid rgba(255,255,255,0.26);
-        border-radius: 12px;
-        box-shadow: 0 10px 26px rgba(0,0,0,0.14);
+        border: 1px solid rgba(255,255,255,0.42);
+        border-radius: 10px;
+        box-shadow:
+          0 10px 26px rgba(0,0,0,0.14),
+          inset 0 1px 0 rgba(255,255,255,0.30),
+          inset 0 -1px 0 rgba(0,0,0,0.08);
       }
 
-      #generateBtn {
-        background: rgba(255,255,255,0.18);
-        border: 1px solid rgba(255,255,255,0.34);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
-      }
-      #generateBtn:hover {
-        background: rgba(255,255,255,0.22);
-      }
-      #generateBtn.active {
-        background: rgba(255,255,255,0.92);
-        border-color: rgba(255,255,255,0.55);
-        font-weight: 800;
-      }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
@@ -613,7 +598,7 @@ app.get("/", (req, res) => {
       .bgCycleBtn {
         width: 34px;
         height: 28px;
-        border-radius: 8px;
+        border-radius: 6px;
         border: 1px solid rgba(0,0,0,0.18);
         background: rgba(255,255,255,0.18);
         backdrop-filter: blur(4px);
@@ -657,13 +642,32 @@ app.get("/", (req, res) => {
         width: 100%;
         max-width: 100%;
       }
+      /* Set cards with depth border */
+      .setCard {
+        border-radius: 8px;
+        box-shadow:
+          0 4px 12px rgba(0,0,0,0.10),
+          inset 0 1px 0 rgba(255,255,255,0.25),
+          inset 0 -1px 0 rgba(0,0,0,0.06);
+      }
       @media (max-width: 680px) {
         .advanced-grid {
           grid-template-columns: 1fr !important;
         }
+        #controlsGrid {
+          grid-template-columns: 1fr;
+        }
+        #generateStack {
+          flex-direction: row;
+          justify-content: flex-start;
+        }
+        .generateBig {
+          min-height: auto;
+          padding: 10px 20px;
+        }
       }
     </style>
-    <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
+    <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
       <form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:16px;">
@@ -675,7 +679,7 @@ app.get("/", (req, res) => {
   <span class="glassChip">Swim Gen</span>
 </h3>
                 <button id="bgCycleBtn" type="button" aria-label="Change background"
-  style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:10px; padding:4px 8px; cursor:pointer;">🖼️</button>
+  style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:8px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
               <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
             </div>
@@ -691,7 +695,7 @@ app.get("/", (req, res) => {
                 class="distance-slider"
                 style="flex:1;"
               />
-              <span class="glassChip" style="white-space:nowrap;">
+              <span class="glassChip" style="white-space:nowrap; border-radius:8px;">
                 <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
               </span>
             </div>
@@ -702,25 +706,30 @@ app.get("/", (req, res) => {
           <div class="form-col">
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
-            <div id="poolButtonsRow" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25m</button>
-                <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:7px; cursor:pointer;">50m</button>
-                <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25yd</button>
+            <div id="controlsGrid">
+              <div id="leftControls">
+                <div id="poolButtons" class="poolRow">
+                  <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:5px; cursor:pointer;">25m</button>
+                  <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:5px; cursor:pointer;">50m</button>
+                  <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:5px; cursor:pointer;">25yd</button>
+                </div>
+
+                <div id="advancedRow" style="display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:10px; position:relative;">
+                  <button type="button" id="toggleAdvanced" style="background:transparent; border:none; text-align:left; font-size:16px; opacity:0.95; display:flex; align-items:center; gap:8px; cursor:pointer; padding:0; font-weight:700;">
+                    <span id="advancedChip" class="whiteChip">▶ Advanced options</span>
+                  </button>
+                </div>
               </div>
-              <button id="generateBtn" type="submit" style="padding:6px 14px; border-radius:7px; cursor:pointer;">
-                Generate
-              </button>
+
+              <div id="generateStack">
+                <button id="generateBtn" type="submit" class="generateBig">
+                  Generate
+                </button>
+                <span id="dolphinLoader" class="dolphinIdle">🐬</span>
+              </div>
             </div>
 
-            <div id="advancedRow" style="display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:12px; position:relative;">
-              <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
-                ▶ Advanced options
-              </button>
-              <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1; position:absolute; left:0; top:0; z-index:3; pointer-events:none;">🐬</span>
-            </div>
-
-            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:12px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:10px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
               <div style="margin-bottom:14px;">
                 <label style="display:block; font-weight:600; margin-bottom:4px;">
                   Custom pool length
@@ -734,9 +743,9 @@ app.get("/", (req, res) => {
                     max="400"
                     placeholder="e.g. 30"
                     disabled
-                    style="width: 90px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
+                    style="width: 90px; padding:6px 8px; border-radius:8px; border:1px solid #ccc;"
                   />
-                  <select name="poolLengthUnit" id="poolLengthUnit" disabled style="padding:6px 8px; border-radius:10px; border:1px solid #ccc;">
+                  <select name="poolLengthUnit" id="poolLengthUnit" disabled style="padding:6px 8px; border-radius:8px; border:1px solid #ccc;">
                     <option value="meters">meters</option>
                     <option value="yards">yards</option>
                   </select>
@@ -753,7 +762,7 @@ app.get("/", (req, res) => {
                   id="thresholdPace"
                   type="text"
                   placeholder="e.g. 1:30"
-                  style="width: 120px; padding:6px 8px; border-radius:10px; border:1px solid #ccc;"
+                  style="width: 120px; padding:6px 8px; border-radius:8px; border:1px solid #ccc;"
                 />
                 <div style="margin-top:4px; font-size:11px; color:#888;">
                   Estimates times per set and total
@@ -806,7 +815,7 @@ app.get("/", (req, res) => {
               <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
                   <div style="font-weight:700; margin-bottom:6px; color:#222;">Focus area</div>
-                  <select name="focus" id="focus" style="padding:8px 10px; border-radius:10px; border:1px solid #bbb; width:100%; font-size:14px;">
+                  <select name="focus" id="focus" style="padding:8px 10px; border-radius:8px; border:1px solid #bbb; width:100%; font-size:14px;">
                     <option value="allround">All round</option>
                     <option value="endurance">Endurance</option>
                     <option value="threshold">Threshold</option>
@@ -816,7 +825,7 @@ app.get("/", (req, res) => {
                 </div>
                 <div>
                   <div style="font-weight:700; margin-bottom:6px; color:#222;">Rest preference</div>
-                  <select name="restPref" id="restPref" style="padding:8px 10px; border-radius:10px; border:1px solid #bbb; width:100%; font-size:14px;">
+                  <select name="restPref" id="restPref" style="padding:8px 10px; border-radius:8px; border:1px solid #bbb; width:100%; font-size:14px;">
                     <option value="balanced">Balanced</option>
                     <option value="short">Short rest</option>
                     <option value="moderate">Moderate rest</option>
@@ -832,7 +841,7 @@ app.get("/", (req, res) => {
                   id="notes"
                   rows="3"
                   placeholder="e.g. I cannot do breaststroke kick, I want to work on freestyle sprinting, shoulder is sore"
-                  style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #bbb; border-radius:10px; resize:vertical; font-size:14px;"
+                  style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #bbb; border-radius:8px; resize:vertical; font-size:14px;"
                 ></textarea>
               </div>
             </div>
@@ -841,7 +850,7 @@ app.get("/", (req, res) => {
 
         <div style="margin-top:14px; display:flex; align-items:flex-end; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <button id="copyBtn" type="button" style="display:none; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
+            <button id="copyBtn" type="button" style="display:none; padding:8px 12px; border-radius:8px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
               Copy
             </button>
             <span id="statusPill" style="font-size:13px; color:#555;"></span>
@@ -853,15 +862,15 @@ app.get("/", (req, res) => {
     <div style="max-width:520px; box-sizing:border-box; padding:0;">
 
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none; box-shadow:none;">
-        <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
+        <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:8px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
-        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="footerBox" class="glassSummary" style="display:none; margin-top:8px; padding:12px;"></div>
 
-        <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:10px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
+        <pre id="raw" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:8px; border:1px solid #e7e7e7; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:13px; line-height:1.35;"></pre>
       </div>
     </div>
   `;
@@ -879,29 +888,6 @@ app.get("/", (req, res) => {
       const errorBox = document.getElementById("errorBox");
       const statusPill = document.getElementById("statusPill");
       const dolphinLoader = document.getElementById("dolphinLoader");
-
-      function positionDolphinUnderGenerate() {
-        const form = document.getElementById("genForm");
-        const btn = document.getElementById("generateBtn");
-        const advRow = document.getElementById("advancedRow");
-        const d = document.getElementById("dolphinLoader");
-        if (!form || !btn || !advRow || !d) return;
-
-        const rForm = form.getBoundingClientRect();
-        const rBtn = btn.getBoundingClientRect();
-        const rAdv = advRow.getBoundingClientRect();
-
-        const centerX = (rBtn.left - rForm.left) + (rBtn.width / 2);
-        const bandY = (rAdv.top - rForm.top) + (rAdv.height / 2);
-
-        const x = Math.round(centerX - (d.offsetWidth / 2));
-        const y = Math.round(bandY - (d.offsetHeight / 2));
-
-        d.style.left = x + "px";
-        d.style.top = y + "px";
-      }
-
-      window.addEventListener("resize", positionDolphinUnderGenerate);
 
       const cards = document.getElementById("cards");
       const totalBox = document.getElementById("totalBox");
@@ -925,9 +911,7 @@ app.get("/", (req, res) => {
       const toggleAdvanced = document.getElementById("toggleAdvanced");
       const advancedWrap = document.getElementById("advancedWrap");
       const generateBtn = document.getElementById("generateBtn");
-
-      positionDolphinUnderGenerate();
-      setTimeout(positionDolphinUnderGenerate, 0);
+      const advancedChip = document.getElementById("advancedChip");
   `;
   /* __END_ROUTE_HOME_UI_JS_DOM_R130__ */
 
@@ -2280,7 +2264,10 @@ app.get("/", (req, res) => {
 
         if (isCustom) {
           advancedWrap.style.display = "block";
-          toggleAdvanced.textContent = "▼ Advanced options";
+          if (advancedChip) {
+            advancedChip.innerHTML = "▼ Advanced options";
+            advancedChip.classList.add("whiteChipActive");
+          }
         } else {
           customLen.value = "";
           customUnit.value = "meters";
@@ -2310,10 +2297,16 @@ app.get("/", (req, res) => {
         const open = advancedWrap.style.display !== "none";
         if (open) {
           advancedWrap.style.display = "none";
-          toggleAdvanced.textContent = "▶ Advanced options";
+          if (advancedChip) {
+            advancedChip.innerHTML = "▶ Advanced options";
+            advancedChip.classList.remove("whiteChipActive");
+          }
         } else {
           advancedWrap.style.display = "block";
-          toggleAdvanced.textContent = "▼ Advanced options";
+          if (advancedChip) {
+            advancedChip.innerHTML = "▼ Advanced options";
+            advancedChip.classList.add("whiteChipActive");
+          }
         }
       });
 
@@ -2386,11 +2379,10 @@ app.get("/", (req, res) => {
         // Reset min-height after clearing
         cards.style.minHeight = "";
 
-        // Show spinning dolphin next to Advanced options
+        // Show spinning dolphin
         dolphinLoader.textContent = "🐬";
         dolphinLoader.classList.add("dolphinSpin");
         generateBtn.classList.add("active");
-        positionDolphinUnderGenerate();
         statusPill.textContent = "";
 
         const payload = formToPayload();
@@ -2401,7 +2393,6 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
-            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2431,7 +2422,6 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
-            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2442,7 +2432,6 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
-            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2456,7 +2445,6 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
-            positionDolphinUnderGenerate();
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
@@ -2465,11 +2453,9 @@ app.get("/", (req, res) => {
           // Stop spinning, show splash, then return to dolphin
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "💦";
-          positionDolphinUnderGenerate();
           setTimeout(() => {
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
-            positionDolphinUnderGenerate();
           }, 450);
           statusPill.textContent = "";
 
@@ -2548,7 +2534,6 @@ app.get("/", (req, res) => {
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "🐬";
           generateBtn.classList.remove("active");
-          positionDolphinUnderGenerate();
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }

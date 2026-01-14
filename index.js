@@ -2438,7 +2438,7 @@ app.get("/viewport-lab", (req, res) => {
   <title>Swim Workout Generator - Viewport Lab</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body id="viewportLab">
   <a class="back" href="/">Back to Generator</a>
   <h1>Viewport Lab</h1>
   <p>Test the Swim Workout Generator across multiple screen sizes. Use sliders to adjust widths. Drag frames to reorder.</p>

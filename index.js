@@ -728,15 +728,27 @@ app.get("/", (req, res) => {
         gap:10px;
         justify-content:flex-end;
       }
-      .iconBtn {
+      /* Unboxed icon style (no background) */
+      .iconBtnBare {
         background: transparent;
-        border:none;
-        padding:0;
-        cursor:pointer;
-        font-size:22px;
-        line-height:1;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        line-height: 1;
         text-shadow: 0 6px 14px rgba(0,0,0,0.20);
       }
+      /* Boxed icon style (chip background) */
+      .iconBtnChip {
+        background: var(--white35);
+        border: 1px solid var(--whiteBorder);
+        border-radius: 10px;
+        padding: 6px 8px;
+        cursor: pointer;
+        line-height: 1;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+      }
+      .iconSm { font-size: 22px; }
+      .iconLg { font-size: 26px; }
     </style>
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">
       <a href="/viewport-lab" style="color:inherit; text-decoration:underline; font-weight:600;">Viewport Lab</a>
@@ -751,11 +763,10 @@ app.get("/", (req, res) => {
                 <h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
   <span class="glassChip readChip">Swim Gen</span>
 </h3>
-                <button id="regenBtn" type="button" aria-label="Regenerate" style="background:transparent; border:none; padding:0; cursor:pointer; line-height:1;">
-  <span id="regenDolphin" style="display:inline-block; font-size:26px;">🐬</span>
+                <button id="regenBtn" type="button" aria-label="Regenerate" class="iconBtnBare iconLg">
+  <span id="regenDolphin" style="display:inline-block;">🐬</span>
 </button>
-                <button id="bgCycleBtn" type="button" aria-label="Change background" class="readChip"
-  style="border-radius:6px; padding:4px 8px; cursor:pointer;">🖼️</button>
+                <button id="bgCycleBtn" type="button" aria-label="Change background" class="iconBtnBare iconSm">🖼️</button>
               </div>
               <span class="glassChip readChip" style="white-space:nowrap; border-radius:8px; padding:6px 12px;">
                 <strong id="distanceLabel">1500</strong>
@@ -940,8 +951,8 @@ app.get("/", (req, res) => {
 
         <div id="workoutNameDisplay" style="display:none; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;">
           <div class="workoutTitleRow">
-            <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtn">🐬</button>
-            <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtn">🖼️</button>
+            <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtnBare iconSm">🐬</button>
+            <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtnChip iconSm">🖼️</button>
             <span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span>
           </div>
         </div>

@@ -1,0 +1,120 @@
+START — TEMPLATE STEP (FREE TIER REALISM)
+
+Context:
+- UI is frozen
+- Pool-length math is correct
+- Validation guards already exist
+- Current problem: workouts look fragmented and coach-implausible, especially at small totals
+- Goal: clean, intentional section blocks using templates
+- Scope: Free tier only
+
+Rules:
+- Modify buildOneSetBodyShared only
+- Do NOT change distance allocation logic
+- Do NOT change UI, CSS, or effort color system
+- Do NOT introduce tiers or AI calls
+- Do NOT refactor unrelated code
+
+TASK:
+
+1) Add section templates
+
+Add this near the top of index.js (or just above buildOneSetBodyShared):
+
+```js
+const SECTION_TEMPLATES = {
+  warmup: [
+    { body: "300 easy", dist: 300 },
+    { body: "400 easy", dist: 400 },
+    { body: "4x100 easy", dist: 400 },
+    { body: "8x50 easy", dist: 400 },
+    { body: "200 easy\n4x50 build", dist: 400 }
+  ],
+  build: [
+    { body: "4x50 build", dist: 200 },
+    { body: "6x50 build", dist: 300 },
+    { body: "2x100 negative split", dist: 200 }
+  ],
+  drill: [
+    { body: "6x50 drill choice", dist: 300 },
+    { body: "8x25 drill choice", dist: 200 },
+    { body: "6x50 drill down swim back", dist: 300 }
+  ],
+  kick: [
+    { body: "6x50 kick descend", dist: 300 },
+    { body: "4x100 kick strong", dist: 400 },
+    { body: "8x25 kick fast", dist: 200 }
+  ],
+  cooldown: [
+    { body: "200 easy", dist: 200 },
+    { body: "300 easy", dist: 300 },
+    { body: "4x100 loosen", dist: 400 }
+  ]
+};
+Add template picker helper
+
+js
+Copy code
+function pickTemplate(section, targetDistance) {
+  const list = SECTION_TEMPLATES[section];
+  if (!list) return null;
+  const fits = list.filter(t => t.dist <= targetDistance);
+  if (!fits.length) return null;
+  return fits[Math.floor(Math.random() * fits.length)];
+}
+Use templates inside buildOneSetBodyShared
+
+At the TOP of each section branch (warmup, build, drill, kick, cooldown):
+
+js
+Copy code
+const template = pickTemplate(labelKey, targetDistance);
+if (template) {
+  return template.body;
+}
+Where labelKey maps as:
+
+"Warm up" → "warmup"
+
+"Build" → "build"
+
+"Drill" → "drill"
+
+"Kick" → "kick"
+
+"Cool down" → "cooldown"
+
+Enforce hard rules
+
+No leftover fragments like "1x25" in warmup, build, drill, kick, or cooldown
+
+Cooldown must be single-line
+
+Drill sets must explicitly say "drill"
+
+Kick sets must not be "easy" or "relaxed"
+
+Warmup must not include hard / threshold / sprint / full gas
+
+If no template fits or validation fails:
+
+Fall back to existing safeSimpleSetBody
+
+Do NOT invent new patterns
+
+Expected outcome:
+
+1500m workouts no longer look broken
+
+No 125m / 175m / 225m sections
+
+Drills and kick look intentional
+
+Overall structure resembles real masters workouts
+
+After completion:
+
+Update project-state.md with a brief note:
+"Template-based section generation added to prevent fragmented sets."
+
+END — TEMPLATE STEP

@@ -212,6 +212,12 @@ Workout area:
   - Set-level validation rerolls invalid sets up to 5 times before fallback
   - No tier engine yet - just validation guards
 
+- Template-based section generation added to prevent fragmented sets
+  - SECTION_TEMPLATES object with warmup, build, drill, kick, cooldown templates
+  - pickTemplate(section, targetDistance, seed) selects templates that fit
+  - Each section tries template first, falls back to existing logic
+  - Prevents 125m/175m/225m fragments at small totals
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

@@ -1,0 +1,176 @@
+Task: Keep clear glass panel but improve text legibility, fix dolphin position and spin direction, move background button to title row with a picture icon, and reduce outer margins by ~10px. index.js only. Minimal changes.
+
+1) Text legibility on glass panel: add “frost chips” behind text and controls
+
+Current issue: clear glass looks great but text disappears on dark backgrounds.
+
+Fix: keep panel background transparent, but give key text areas a subtle frosted pill background.
+
+In the Swim Gen panel HTML:
+
+A) Wrap the title text Swim Gen in a span and add class glassChip.
+
+Example:
+
+<h3 ...><span class="glassChip">Swim Gen</span></h3>
+
+
+B) Wrap the distance label 1500 (m or yd) in a span with class glassChip.
+
+Example:
+
+<div ...><span class="glassChip"><strong id="distanceLabel">1500</strong> <span>(m or yd)</span></span></div>
+
+
+C) Apply the same glassChip class to the pool buttons and Generate button in their default state.
+
+Add this CSS:
+
+.glassChip {
+  display:inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+}
+
+.glassChipStrong {
+  background: rgba(255,255,255,0.38);
+  border-color: rgba(255,255,255,0.40);
+}
+
+
+Then adjust button CSS so unselected buttons look slightly frosted, selected is fully white:
+
+/* default buttons */
+#poolButtonsRow button {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.30);
+  color: #111;
+  font-weight: 600;
+}
+
+/* selected button */
+#poolButtonsRow button.active {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(255,255,255,0.55);
+  color: #111;
+  font-weight: 800;
+}
+
+
+Also bump title weight slightly:
+
+#homePanelTitle { font-weight: 900; }
+
+
+If you do not have an id, apply it to the h3 in the Swim Gen panel.
+
+2) Dolphin: move to Advanced options line, lower it, spin counter clockwise slower, splash at same spot
+
+A) Place the dolphin span on the same line as Advanced options, at the right side of that row.
+
+Advanced options row should be a flex row:
+
+<div id="advancedRow" style="display:flex; align-items:center; justify-content:space-between;">
+  <div>▶ Advanced options</div>
+  <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1;">🐬</span>
+</div>
+
+
+Remove the dolphin from anywhere else. There must only be one dolphinLoader.
+
+B) Spin direction and speed
+
+Replace the spin keyframes with counter clockwise and slower:
+
+@keyframes dolphinSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.dolphinSpin {
+  display:inline-block;
+  animation: dolphinSpin 1500ms linear infinite;
+}
+
+
+C) Splash appears in place
+
+In the finish logic, do not move positions. Just swap text content to 💦 for 250ms then return to 🐬.
+
+3) Background button: move next to “Swim Gen” and use a picture icon
+
+A) Remove the background button from wherever it currently lives (it appears below the panel currently).
+
+B) Put it next to the title on the title row, immediately right of “Swim Gen”.
+
+Use a picture icon. If no icon library is available, use the unicode framed picture:
+
+🖼️
+
+Example HTML:
+
+<div style="display:flex; align-items:center; justify-content:space-between;">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <h3 style="margin:0;"><span class="glassChip">Swim Gen</span></h3>
+
+    <button id="bgCycleBtn" type="button"
+      aria-label="Change background"
+      style="background: rgba(255,255,255,0.20); border:1px solid rgba(255,255,255,0.28); border-radius:12px; padding:4px 8px; cursor:pointer;">
+      🖼️
+    </button>
+  </div>
+
+  <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
+</div>
+
+
+Important: The click handler already exists and should keep working.
+
+4) Reduce outer margins around panels by about 10px
+
+Find the outer container that sets the page side padding. It will look like:
+
+padding: 32px; or similar on the main wrapper.
+
+Reduce it by 10px. Example:
+
+32px becomes 22px
+
+28px becomes 18px
+
+24px becomes 14px
+
+Do this consistently for:
+
+the top ad placeholder container
+
+the Swim Gen panel container
+
+the results list container
+
+Goal: reclaim horizontal real estate on phones.
+
+5) Keep the glass reflection and slightly increase the twinkle
+
+Keep your current glass overlay, but slightly increase reflection strength:
+
+In the ::before gradient, raise the first stop alpha a bit:
+
+from 0.28 to 0.34
+
+Do not add more blur.
+
+Summary of what this achieves
+
+Glass panel stays clear, but text and buttons become readable on both dark and bright backgrounds due to subtle frosted chips.
+
+Dolphin is lower, aligned to Advanced options, spins counter clockwise slower, splashes in place.
+
+Background icon moves to where it belongs, right next to Swim Gen, and works without generating.
+
+Side gutters shrink so phone layouts feel less cramped.
+
+Reflection is a touch stronger so the glass still “pops”.

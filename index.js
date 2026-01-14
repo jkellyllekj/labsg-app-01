@@ -438,11 +438,24 @@ app.get("/", (req, res) => {
       }
       @keyframes dolphinSpin {
         from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        to { transform: rotate(-360deg); }
       }
       .dolphinSpin {
         display: inline-block;
-        animation: dolphinSpin 700ms linear infinite;
+        animation: dolphinSpin 1500ms linear infinite;
+      }
+      /* Glass chip for text legibility */
+      .glassChip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.22);
+        border: 1px solid rgba(255,255,255,0.28);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+      }
+      .glassChipStrong {
+        background: rgba(255,255,255,0.38);
+        border-color: rgba(255,255,255,0.40);
       }
       /* Glass panel with reflection */
       .glassPanel {
@@ -458,35 +471,22 @@ app.get("/", (req, res) => {
         position: absolute;
         inset: 0;
         background: linear-gradient(135deg,
-          rgba(255,255,255,0.28) 0%,
+          rgba(255,255,255,0.34) 0%,
           rgba(255,255,255,0.10) 18%,
           rgba(255,255,255,0.00) 45%);
         pointer-events: none;
       }
       /* Pool buttons default */
-      #poolButtons button {
-        background: transparent;
-        border: 2px solid rgba(0,0,0,0.18);
+      #poolButtonsRow button {
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.30);
         color: #111;
-        font-weight: 500;
+        font-weight: 600;
       }
       /* Pool button selected */
-      #poolButtons button.active {
-        background: rgba(255,255,255,0.95);
-        border-color: rgba(0,0,0,0.22);
-        color: #111;
-        font-weight: 800;
-      }
-      /* Generate button */
-      #generateBtn {
-        background: transparent;
-        border: 2px solid rgba(0,0,0,0.18);
-        color: #111;
-        font-weight: 500;
-      }
-      #generateBtn.isActive {
-        background: rgba(255,255,255,0.95);
-        border-color: rgba(0,0,0,0.22);
+      #poolButtonsRow button.active {
+        background: rgba(255,255,255,0.92);
+        border-color: rgba(255,255,255,0.55);
         color: #111;
         font-weight: 800;
       }
@@ -601,7 +601,10 @@ app.get("/", (req, res) => {
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-              <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Gen</h3>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <h3 style="margin:0; font-size:22px; font-weight:900;"><span class="glassChip">Swim Gen</span></h3>
+                <button id="bgCycleBtn" type="button" aria-label="Change background" style="background:rgba(255,255,255,0.20); border:1px solid rgba(255,255,255,0.28); border-radius:12px; padding:4px 8px; cursor:pointer;">🖼️</button>
+              </div>
               <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
             </div>
 
@@ -616,9 +619,9 @@ app.get("/", (req, res) => {
                 class="distance-slider"
                 style="flex:1;"
               />
-              <div style="white-space:nowrap;">
+              <span class="glassChip" style="white-space:nowrap;">
                 <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
-              </div>
+              </span>
             </div>
 
             <input type="hidden" name="distance" id="distanceHidden" value="1500" />
@@ -638,14 +641,11 @@ app.get("/", (req, res) => {
               </button>
             </div>
 
-            <div id="dolphinSpot" style="position:relative; height:46px; margin-top:6px;">
-              <span id="dolphinLoader" style="position:absolute; right:18px; top:2px; font-size:34px; line-height:1;">🐬</span>
-            </div>
-
-            <div style="margin-top:12px;">
+            <div id="advancedRow" style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
               <button type="button" id="toggleAdvanced" style="border:0; background:transparent; color:#111; cursor:pointer; padding:0; font-weight:600;">
                 ▶ Advanced options
               </button>
+              <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1;">🐬</span>
             </div>
 
             <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
@@ -783,7 +783,7 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none; box-shadow:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:10px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><div style="display:inline-flex; align-items:center; gap:6px;"><button id="bgCycleBtn" class="bgCycleBtn" type="button" aria-label="Change background" title="Change background"><svg viewBox="0 0 24 24" class="bgCycleIcon" aria-hidden="true"><path d="M6 13a6 6 0 0 0 10.2 4.2l1.3 1.3A8 8 0 0 1 4 13h2z"/><path d="M18 11a6 6 0 0 0-10.2-4.2L6.5 5.5A8 8 0 0 1 20 11h-2z"/><path d="M7 6v4H3M17 18v-4h4"/></svg></button><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div></div>
+        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
         <div id="cards" style="display:none;"></div>
 
         <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:6px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>

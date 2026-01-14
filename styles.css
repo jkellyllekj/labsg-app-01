@@ -4,6 +4,9 @@
         /* 35% white for chips and buttons */
         --white35: rgba(255,255,255,0.35);
         --whiteBorder: rgba(255,255,255,0.42);
+        /* Dolphin icon sizes */
+        --dolphin-size: 40px;
+        --dolphin-size-generate: 54px;
         /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
         /* CardGym pastel colors */
         --zone-easy-bg: #b9f0fd;
@@ -19,16 +22,28 @@
       }
       @keyframes dolphinSpin {
         from { transform: rotate(0deg); }
-        to { transform: rotate(-360deg); }
+        to { transform: rotate(360deg); }
       }
       .dolphinSpin {
         display: inline-block;
         animation: dolphinSpin 800ms linear infinite;
       }
+      /* Dolphin icon sizing */
+      .dolphinIcon {
+        width: var(--dolphin-size);
+        height: var(--dolphin-size);
+        object-fit: contain;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .dolphinIcon--generate {
+        width: var(--dolphin-size-generate);
+        height: var(--dolphin-size-generate);
+      }
       /* Effort bar icons */
       .effortIcon {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         object-fit: contain;
         display: block;
         margin: 0 auto;

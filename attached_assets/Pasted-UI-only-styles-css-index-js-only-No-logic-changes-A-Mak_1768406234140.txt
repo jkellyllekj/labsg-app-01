@@ -1,0 +1,104 @@
+UI only. styles.css + index.js only. No logic changes.
+
+A) Make dolphin icons bigger everywhere
+
+We want:
+
+All dolphins +25%
+
+Generate button dolphin +35% (relative to current)
+
+Step A1. Add CSS variables and standard dolphin class sizes
+
+In styles.css, add near the top (or near other globals):
+
+:root {
+  --dolphin-size: 32px;          /* base size, adjust to match your current */
+  --dolphin-size-generate: 43px; /* ~35% larger than 32 */
+}
+
+
+Now add these classes:
+
+.dolphinIcon {
+  width: var(--dolphin-size);
+  height: var(--dolphin-size);
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dolphinIcon--generate {
+  width: var(--dolphin-size-generate);
+  height: var(--dolphin-size-generate);
+}
+
+Step A2. Apply these classes to all dolphin <img> elements
+
+In index.js, find everywhere you render dolphin images and ensure the <img> includes:
+
+Normal dolphins:
+
+<img class="dolphinIcon" src="/assets/dolphins/dolphin-base.png" alt="">
+
+
+Generate button dolphin:
+
+<img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="">
+
+
+If you already have a dolphin class name, keep it and add dolphinIcon as a second class.
+
+Step A3. Effort bar icons
+
+If you already added .effortIcon, increase it by 25% too. Example:
+
+If it was 32px, set to 40px. If it was 28px, set to 35px.
+
+B) Spin the other way everywhere
+
+We want the dolphin spin direction reversed for:
+
+Generate button
+
+Regen dolphins
+
+Any set card regen dolphin
+
+Step B1. Find the code that applies the dolphin spin
+
+In index.js, locate the helper that restarts/forces the dolphin animation. It likely sets something like:
+
+el.style.animation = "spin 1s linear"
+
+or adds a class like .spin / .dolphinSpin
+
+or uses a keyframes name
+
+Step B2. Reverse direction in CSS
+
+In styles.css, find the keyframes used for dolphin spin. It will look like:
+
+@keyframes dolphinSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+Change it to:
+
+@keyframes dolphinSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+
+That single change flips direction globally without touching timing or logic.
+
+Step B3. If spin is done via inline style instead
+
+If you see inline rotate(360deg) values in JS, flip them to rotate(-360deg).
+
+Do not change splash behaviour.
+
+Acceptance test

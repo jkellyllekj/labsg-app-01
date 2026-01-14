@@ -1,4 +1,3 @@
-/* __START_FILE_INDEX_JS_R000__ */
 /**
  * Swim Workout Generator v1
  * Node + Express single-file app
@@ -12,19 +11,13 @@
  * - Optional threshold pace enables time estimates.
  */
 
-/* __START_IMPORTS_R010__ */
 const express = require("express");
-/* __END_IMPORTS_R010__ */
-
-/* __START_APP_SETUP_R020__ */
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(express.static("public"));
-/* __END_APP_SETUP_R020__ */
-
-/* __START_SHARED_FUNCTIONS_R030__ */
+app.use(express.static("."));
 function snapToPoolMultipleShared(dist, poolLen) {
   const d = Number(dist);
   if (!Number.isFinite(d) || d <= 0) return 0;
@@ -358,418 +351,9 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   if (!fit) return makeLine(1, target, stroke + " swim", 0);
   return makeLine(fit.reps, fit.dist, mainDesc, restFor(fit.dist, effortForRest));
 }
-/* __END_SHARED_FUNCTIONS_R030__ */
-
-/* __START_ROUTE_HOME_UI_R100__ */
 app.get("/", (req, res) => {
-  /* __START_ROUTE_HOME_UI_HTML_R110__ */
   const HOME_HTML = `
-    <style>
-      :root {
-        /* 35% white for chips and buttons */
-        --white35: rgba(255,255,255,0.35);
-        --whiteBorder: rgba(255,255,255,0.42);
-        /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
-        /* CardGym pastel colors */
-        --zone-easy-bg: #b9f0fd;
-        --zone-easy-bar: #7ac8db;
-        --zone-moderate-bg: #cfffc0;
-        --zone-moderate-bar: #8fcc80;
-        --zone-strong-bg: #fcf3d5;
-        --zone-strong-bar: #d4c9a0;
-        --zone-hard-bg: #ffc374;
-        --zone-hard-bar: #cc9a4a;
-        --zone-fullgas-bg: #fe0000;
-        --zone-fullgas-bar: #cc0000;
-      }
-      @keyframes dolphinSpin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(-360deg); }
-      }
-      .dolphinSpin {
-        display: inline-block;
-        animation: dolphinSpin 1000ms linear infinite;
-      }
-      /* Glass chip for text legibility */
-      .glassChip {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 8px;
-        background: rgba(255,255,255,0.18);
-        border: 1px solid rgba(255,255,255,0.24);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        color: #111;
-      }
-      .glassChipStrong {
-        background: rgba(255,255,255,0.38);
-        border-color: rgba(255,255,255,0.40);
-      }
-      /* Glass panel with reflection and depth borders */
-      .glassPanel {
-        background: transparent;
-        border: 1px solid rgba(255,255,255,0.42);
-        border-radius: 18px;
-        box-shadow:
-          0 12px 32px rgba(0,0,0,0.18),
-          inset 0 1px 0 rgba(255,255,255,0.40),
-          inset 0 -1px 0 rgba(0,0,0,0.10);
-        position: relative;
-        overflow: hidden;
-      }
-      .glassPanel::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg,
-          rgba(255,255,255,0.34) 0%,
-          rgba(255,255,255,0.10) 18%,
-          rgba(255,255,255,0.00) 45%);
-        pointer-events: none;
-      }
-      /* Readable text on any background, without panel tint */
-      .glassTextReadable,
-      .glassPanel h3,
-      .glassPanel label,
-      .glassPanel button,
-      .glassPanel input,
-      .glassPanel a,
-      #toggleAdvanced {
-        text-shadow:
-          0 1px 2px rgba(0,0,0,0.35),
-          0 0 1px rgba(255,255,255,0.35);
-      }
-
-      /* Small chip only behind critical text, not whole panel */
-      .textChipLite {
-        display:inline-block;
-        padding:2px 8px;
-        border-radius:8px;
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.20);
-      }
-
-      /* Slightly soften all inline text color */
-      .glassPanel,
-      .glassPanel * {
-        color: #0b0b0b;
-      }
-
-      /* White chip for buttons and advanced toggle */
-      .whiteChip {
-        display:inline-block;
-        padding:6px 10px;
-        border-radius: 8px;
-        background: var(--white35);
-        border: 1px solid var(--whiteBorder);
-        color:#0b0b0b;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
-      }
-
-      .whiteChipActive {
-        box-shadow:
-          0 6px 16px rgba(0,0,0,0.10),
-          0 0 0 3px rgba(64,201,224,0.50);
-      }
-
-      /* Unified white button style for pool and generate */
-      #controlsGrid button,
-      .poolRow button {
-        background: var(--white35);
-        border: 1px solid var(--whiteBorder);
-        color: #0b0b0b;
-        font-weight: 700;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
-      }
-
-      /* Selected is a glow ring, not a background change */
-      #controlsGrid button.active,
-      .poolRow button.active {
-        box-shadow:
-          0 6px 16px rgba(0,0,0,0.10),
-          0 0 0 3px rgba(255,215,0,0.55);
-      }
-
-      /* Controls grid stays 2 columns even on small screens */
-      #controlsGrid {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-        align-items: start;
-      }
-
-      /* Generate column width should hug content */
-      #generateStack {
-        width: auto;
-        min-width: 110px;
-      }
-
-      /* Pool buttons should not force wrap into weird shapes */
-      .poolRow {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      /* Make the pool buttons slightly tighter vertically */
-      .poolRow button {
-        padding-top:5px !important;
-        padding-bottom:5px !important;
-      }
-
-      /* Generate button box with dolphin inside */
-      .generateBox {
-        background: var(--white35);
-        border: 1px solid var(--whiteBorder);
-        color: #0b0b0b;
-        font-weight: 800;
-        border-radius: 10px;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
-        padding: 10px 12px;
-        width: auto;
-        min-width: 110px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 10px;
-        cursor: pointer;
-      }
-
-      .genLabel {
-        line-height: 1;
-        font-size: 15px;
-      }
-
-      .genDolphin {
-        display: inline-block;
-        font-size: 40px;
-        line-height: 1;
-        pointer-events: none;
-      }
-
-      /* Generate active: glow ring not background change */
-      .generateBox.active {
-        box-shadow:
-          0 10px 24px rgba(0,0,0,0.14),
-          0 0 0 3px rgba(64,201,224,0.55);
-      }
-
-      /* Readable white glass chip */
-      .readChip {
-        background: var(--white35);
-        border: 1px solid var(--whiteBorder);
-        color: #0b0b0b;
-        box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-      }
-
-      /* Advanced wrap pointer events and styling */
-      #advancedWrap input,
-      #advancedWrap select,
-      #advancedWrap button,
-      #advancedWrap label {
-        pointer-events: auto;
-      }
-      #advancedWrap {
-        position: relative;
-        z-index: 2;
-        background: transparent;
-        border: 1px solid rgba(255,255,255,0.26);
-        border-radius: 12px;
-        box-shadow: 0 10px 26px rgba(0,0,0,0.12);
-      }
-      #advancedWrap * {
-        text-shadow: 0 1px 2px rgba(0,0,0,0.28);
-      }
-
-      .glassSummary {
-        background: transparent;
-        border: 1px solid rgba(255,255,255,0.42);
-        border-radius: 10px;
-        box-shadow:
-          0 10px 26px rgba(0,0,0,0.14),
-          inset 0 1px 0 rgba(255,255,255,0.30),
-          inset 0 -1px 0 rgba(0,0,0,0.08);
-      }
-
-      @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(16px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .workout-fade-in {
-        animation: fade-in-up 0.7s ease-out forwards;
-      }
-      @keyframes fade-out-down {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(16px); }
-      }
-      .workout-fade-out {
-        animation: fade-out-down 0.7s ease-in forwards;
-      }
-      @keyframes reroll-spin {
-        0% { transform: rotate(0deg); }
-        25% { transform: rotate(-90deg); }
-        50% { transform: rotate(-180deg); }
-        75% { transform: rotate(-270deg); }
-        100% { transform: rotate(-360deg); }
-      }
-      .reroll-dolphin {
-        display: inline-block;
-        font-size: 28px;
-        filter: none !important;
-        opacity: 1 !important;
-      }
-      .reroll-dolphin.spinning {
-        animation: reroll-spin 1.25s ease-in-out;
-        filter: none !important;
-        opacity: 1 !important;
-      }
-      button[data-reroll-set] {
-        opacity: 1 !important;
-        filter: none !important;
-      }
-      button[data-reroll-set]:active,
-      button[data-reroll-set]:focus,
-      button[data-reroll-set]:focus-visible {
-        opacity: 1 !important;
-        filter: none !important;
-        outline: none;
-      }
-      .form-row {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-      .form-col {
-        width: 100%;
-      }
-      .bgCycleBtn {
-        width: 34px;
-        height: 28px;
-        border-radius: 6px;
-        border: 1px solid rgba(0,0,0,0.18);
-        background: rgba(255,255,255,0.18);
-        backdrop-filter: blur(4px);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-      }
-      .bgCycleBtn:hover { background: rgba(255,255,255,0.28); }
-      .bgCycleBtn:disabled { opacity: 0.5; cursor: default; }
-      .bgCycleIcon {
-        width: 18px;
-        height: 18px;
-        fill: none;
-        stroke: rgba(0,0,0,0.75);
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      #bgWrap {
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        pointer-events: none;
-      }
-      .bgLayer {
-        position: absolute;
-        inset: 0;
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0;
-        transition: opacity 260ms ease;
-        will-change: opacity;
-      }
-      .bgLayer.isActive {
-        opacity: 1;
-      }
-      .distance-slider {
-        width: 100%;
-        max-width: 100%;
-      }
-      /* Set cards with depth border */
-      .setCard {
-        border-radius: 8px;
-        box-shadow:
-          0 4px 12px rgba(0,0,0,0.10),
-          inset 0 1px 0 rgba(255,255,255,0.25),
-          inset 0 -1px 0 rgba(0,0,0,0.06);
-      }
-      @media (max-width: 680px) {
-        .advanced-grid {
-          grid-template-columns: 1fr !important;
-        }
-      }
-      .setHeaderRow {
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-      }
-      .setRightCol {
-        display:flex;
-        flex-direction:column;
-        align-items:flex-end;
-        justify-content:flex-start;
-        gap:10px;
-      }
-      .setRightCol .setDolphin {
-        font-size:22px;
-        line-height:1;
-      }
-      .setRightCol .setMeters {
-        font-weight:700;
-      }
-      .workoutTitleRow {
-        display:flex;
-        align-items:center;
-        gap:10px;
-        justify-content:flex-end;
-      }
-      /* Unboxed icon style (no background) */
-      .iconBtnBare {
-        background: transparent;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        line-height: 1;
-        text-shadow: 0 6px 14px rgba(0,0,0,0.20);
-      }
-      /* Boxed icon style (chip background) */
-      .iconBtnChip {
-        background: var(--white35);
-        border: 1px solid var(--whiteBorder);
-        border-radius: 10px;
-        padding: 6px 8px;
-        cursor: pointer;
-        line-height: 1;
-        box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-      }
-      .iconSm { font-size: 22px; }
-      .iconLg { font-size: 26px; }
-      /* Pure silhouette icon button */
-      .iconBtnSilhouette {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        outline: none !important;
-        border-radius: 0 !important;
-        line-height: 1;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .iconBtnSilhouette:focus,
-      .iconBtnSilhouette:active {
-        background: transparent !important;
-        box-shadow: none !important;
-      }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">
       <a href="/viewport-lab" style="color:inherit; text-decoration:underline; font-weight:600;">Viewport Lab</a>
     </div>
@@ -985,15 +569,9 @@ app.get("/", (req, res) => {
       </div>
     </div>
   `;
-  /* __END_ROUTE_HOME_UI_HTML_R110__ */
-
-  /* __START_ROUTE_HOME_UI_JS_OPEN_R120__ */
   const HOME_JS_OPEN = `
     <script>
   `;
-  /* __END_ROUTE_HOME_UI_JS_OPEN_R120__ */
-
-  /* __START_ROUTE_HOME_UI_JS_DOM_R130__ */
   const HOME_JS_DOM = `
       const form = document.getElementById("genForm");
       const errorBox = document.getElementById("errorBox");
@@ -1024,9 +602,6 @@ app.get("/", (req, res) => {
       const generateBtn = document.getElementById("generateBtn");
       const advancedChip = document.getElementById("advancedChip");
   `;
-  /* __END_ROUTE_HOME_UI_JS_DOM_R130__ */
-
-  /* __START_ROUTE_HOME_UI_JS_HELPERS_R140__ */
   const HOME_JS_HELPERS = `
       function snap100(n) {
         const x = Number(n);
@@ -1238,9 +813,6 @@ app.get("/", (req, res) => {
       initBackgroundLayers();
       wireBackgroundCycleButton();
   `;
-  /* __END_ROUTE_HOME_UI_JS_HELPERS_R140__ */
-
-  /* __START_ROUTE_HOME_UI_JS_PARSERS_R150__ */
   const HOME_JS_PARSERS = `
       function splitWorkout(workoutText) {
         const lines = String(workoutText || "").split(/\\r?\\n/);
@@ -1279,10 +851,6 @@ app.get("/", (req, res) => {
         return { label: null, body: trimmed };
       }
   `;
-  /* __END_ROUTE_HOME_UI_JS_PARSERS_R150__ */
-
-  /* __START_ROUTE_HOME_UI_JS_RENDER_R160__ */
-  /* __START_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
   const HOME_JS_RENDER_CORE = `
       function clearUI() {
         errorBox.style.display = "none";
@@ -1962,9 +1530,6 @@ app.get("/", (req, res) => {
         return strip;
       }
   `;
-  /* __END_ROUTE_HOME_UI_JS_RENDER_CORE_R161__ */
-
-  /* __START_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
   const HOME_JS_RENDER_CARDS = `
       // Persistent Map to track reroll counts per set index (survives innerHTML replacement)
       const rerollCountMap = new Map();
@@ -2343,9 +1908,6 @@ app.get("/", (req, res) => {
         return true;
       }
   `;
-  /* __END_ROUTE_HOME_UI_JS_RENDER_CARDS_R162__ */
-
-  /* __START_ROUTE_HOME_UI_JS_RENDER_GLUE_R163__ */
   const HOME_JS_RENDER_GLUE = `
       function renderAll(payload, workoutText) {
         captureSummary(payload, workoutText);
@@ -2353,12 +1915,7 @@ app.get("/", (req, res) => {
         return ok;
       }
   `;
-  /* __END_ROUTE_HOME_UI_JS_RENDER_GLUE_R163__ */
-
   const HOME_JS_RENDER = HOME_JS_RENDER_CORE + HOME_JS_RENDER_CARDS + HOME_JS_RENDER_GLUE;
-  /* __END_ROUTE_HOME_UI_JS_RENDER_R160__ */
-
-  /* __START_ROUTE_HOME_UI_JS_EVENTS_R170__ */
   const HOME_JS_EVENTS = `
       function setActivePool(poolValue) {
         poolHidden.value = poolValue;
@@ -2715,15 +2272,9 @@ app.get("/", (req, res) => {
       });
 
   `;
-  /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */
-
-  /* __START_ROUTE_HOME_UI_JS_CLOSE_R190__ */
   const HOME_JS_CLOSE = `
     </script>
   `;
-  /* __END_ROUTE_HOME_UI_JS_CLOSE_R190__ */
-
-  /* __START_ROUTE_HOME_UI_SEND_R195__ */
   const backgroundImages = [
     "/backgrounds/Page-002 (Large)_result.webp",
     "/backgrounds/Page-004 (Large)_result.webp",
@@ -2766,11 +2317,7 @@ ${HOME_JS_CLOSE}
 
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.send(fullHtml);
-  /* __END_ROUTE_HOME_UI_SEND_R195__ */
-});
-/* __END_ROUTE_HOME_UI_R100__ */
-
-/* __START_ROUTE_VIEWPORT_LAB_R175__ */
+  });
 app.get("/viewport-lab", (req, res) => {
   const VIEWPORT_LAB_HTML = `<!doctype html>
 <html lang="en">
@@ -2778,147 +2325,7 @@ app.get("/viewport-lab", (req, res) => {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Swim Workout Generator - Viewport Lab</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f8f9fa; }
-    h1 { margin: 0 0 8px; font-size: 20px; }
-    p  { margin: 0 0 14px; opacity: .75; max-width: 980px; }
-    h2 { margin: 18px 0 10px; font-size: 13px; opacity: .85; font-weight: 650; }
-    a.back { font-size: 13px; color: #666; text-decoration: underline; }
-
-    .row {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      margin: 10px 0 16px;
-    }
-
-    .row-pair {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      flex-wrap: nowrap;
-      align-items: flex-start;
-      margin: 10px 0 16px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .row-wide {
-      display: flex;
-      justify-content: center;
-      margin: 10px 0 16px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .frame {
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-      width: var(--w, 390px);
-      max-width: 100%;
-      flex: 0 0 auto;
-    }
-
-    .bar {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding: 8px 10px;
-      font-size: 12px;
-      opacity:.88;
-      border-bottom:1px solid rgba(0,0,0,.08);
-      background: #fff;
-      gap: 10px;
-      user-select: none;
-      cursor: grab;
-    }
-    .bar:active { cursor: grabbing; }
-
-    .meta { display:flex; align-items:center; gap: 8px; min-width: 0; }
-    .name { font-weight: 750; letter-spacing: 0.1px; }
-
-    .tag {
-      padding: 2px 8px;
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 999px;
-      font-size: 11px;
-      opacity: .75;
-      white-space: nowrap;
-    }
-
-    .controls { display:flex; align-items:center; gap: 8px; white-space: nowrap; opacity: .95; }
-    .controls input[type="range"] { width: 120px; }
-    .controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
-
-    iframe {
-      width: 100%;
-      height: var(--h, 760px);
-      border: 0;
-      display: block;
-      background: #e5edf5;
-    }
-
-    .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
-
-    #colorPicker {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 8px 10px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      z-index: 9999;
-      font-size: 11px;
-      max-width: 240px;
-    }
-    #colorPicker.collapsed { padding: 6px 10px; }
-    #colorPicker .picker-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: move;
-      user-select: none;
-    }
-    #colorPicker.collapsed .picker-content { display: none; }
-    #colorPicker .zone-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 5px;
-      padding: 4px 6px;
-      border-radius: 5px;
-    }
-    #colorPicker .zone-label {
-      width: 60px;
-      font-weight: 600;
-      font-size: 11px;
-    }
-    #colorPicker input[type="color"] {
-      width: 26px;
-      height: 20px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      cursor: pointer;
-      padding: 0;
-    }
-    #colorPicker .hex-display {
-      font-family: monospace;
-      font-size: 9px;
-      color: #666;
-      width: 46px;
-    }
-  </style>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <a class="back" href="/">Back to Generator</a>
@@ -3206,9 +2613,6 @@ app.get("/viewport-lab", (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.send(VIEWPORT_LAB_HTML);
 });
-/* __END_ROUTE_VIEWPORT_LAB_R175__ */
-
-/* __START_ROUTE_REROLL_SET_R180__ */
 app.post("/reroll-set", (req, res) => {
   try {
     const body = req.body || {};
@@ -3765,9 +3169,6 @@ app.post("/reroll-set", (req, res) => {
     }
   }
 });
-/* __END_ROUTE_REROLL_SET_R180__ */
-
-/* __START_ROUTE_GENERATE_WORKOUT_R200__ */
 app.post("/generate-workout", (req, res) => {
   try {
     const body = req.body || {};
@@ -4442,13 +3843,6 @@ app.post("/generate-workout", (req, res) => {
     }
   }
 });
-/* __END_ROUTE_GENERATE_WORKOUT_R200__ */
-
-
-/* __START_SERVER_LISTEN_R900__ */
 app.listen(PORT, '0.0.0.0', () => {
   console.log("Server running on port " + String(PORT));
 });
-/* __END_SERVER_LISTEN_R900__ */
-
-/* __END_FILE_INDEX_JS_R000__ */

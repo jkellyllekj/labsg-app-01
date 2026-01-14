@@ -1746,8 +1746,8 @@ app.get("/", (req, res) => {
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
-              '" style="padding:0; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease; line-height:1;" title="Reroll this set">' +
-              '<span class="reroll-dolphin setDolphin"><img class="dolphinIcon" src="/assets/dolphins/dolphin-base.png" alt=""></span>' +
+              '" style="padding:0; border-radius:8px; border:none; background:transparent; cursor:pointer; line-height:1;" title="Reroll this set">' +
+              '<span class="reroll-dolphin setDolphin"><img class="dolphinIcon setDolphinSpinTarget" src="/assets/dolphins/dolphin-base.png" alt=""></span>' +
             "</button>"
           );
           if (Number.isFinite(setDist)) {
@@ -1790,9 +1790,9 @@ app.get("/", (req, res) => {
             if (btn.dataset.busy === "1") return;
             btn.dataset.busy = "1";
             btn.blur();
-            const dolphinSpan = btn.querySelector('.reroll-dolphin');
-            if (dolphinSpan) {
-              dolphinSpan.classList.add('spinning');
+            const spinTarget = btn.querySelector('.setDolphinSpinTarget');
+            if (spinTarget) {
+              spinTarget.classList.add('spinning');
             }
 
             try {
@@ -1911,13 +1911,11 @@ app.get("/", (req, res) => {
               renderError("Reroll failed", [String(e && e.message ? e.message : e)]);
             } finally {
               // Wait for the full 1.25s spin animation to complete before removing class
-              const ds = btn.querySelector('.reroll-dolphin');
+              const spinTarget = btn.querySelector('.setDolphinSpinTarget');
               await new Promise(r => setTimeout(r, 1250));
               btn.dataset.busy = "0";
-              if (ds) {
-                ds.classList.remove('spinning');
-                ds.style.filter = 'none';
-                ds.style.removeProperty('filter');
+              if (spinTarget) {
+                spinTarget.classList.remove('spinning');
               }
             }
           });

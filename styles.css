@@ -274,13 +274,15 @@
       .reroll-dolphin {
         display: inline-block;
         font-size: 28px;
-        filter: none !important;
-        opacity: 1 !important;
       }
-      .reroll-dolphin.spinning {
-        animation: reroll-spin 1.25s ease-in-out;
-        filter: none !important;
-        opacity: 1 !important;
+      /* Set card dolphin spin target - GPU optimized */
+      .setDolphinSpinTarget {
+        will-change: transform;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+      }
+      .setDolphinSpinTarget.spinning {
+        animation: reroll-spin 1.25s linear;
       }
       button[data-reroll-set] {
         opacity: 1 !important;

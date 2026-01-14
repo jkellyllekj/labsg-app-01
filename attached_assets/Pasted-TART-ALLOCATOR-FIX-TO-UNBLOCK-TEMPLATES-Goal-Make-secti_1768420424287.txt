@@ -1,0 +1,72 @@
+TART: ALLOCATOR FIX TO UNBLOCK TEMPLATES
+
+Goal: Make section distances coach plausible so templates can actually pass validation. Do not change UI. Do not change buildWorkout percentage weights yet. This is a control flow and distance snapping fix only.
+
+File: index.js
+
+In buildWorkout, after the initial section distance allocation (warm up, build, drill, kick, main, cool down), add a post processing step that forces each non main section to land on clean distances that end at the home end.
+
+Rules:
+
+Every section distance must be a multiple of poolLen.
+
+Every section must end at home end: (sectionDistance / poolLen) must be an even integer.
+
+Enforce minimum distances so we never get 125, 175, 225 style sections:
+
+warm up min 300
+
+build min 200
+
+drill min 200
+
+kick min 200
+
+cool down min 200
+
+If a section is below its minimum, round it up to the minimum.
+
+If rounding up increases total distance, subtract the same amount from Main only.
+
+After adjustment, re apply the multiple of poolLen and even lengths rule to Main as well.
+
+Implementation guidance:
+
+Add a helper like snapSection(dist, poolLen) that returns the nearest distance that is:
+
+multiple of poolLen
+
+even number of lengths
+Use rounding to nearest, with a bias to round up for warm up and cool down.
+
+Add a helper applySectionMinimums(sections, total, poolLen) that:
+
+snaps all sections
+
+applies mins to non main
+
+shifts difference into main
+
+snaps main last
+
+Keep the rest of the generator unchanged.
+
+Remove the SECTION_MIN_DIST effectiveTarget floor logic inside buildOneSetBodyShared template selection. We do not want templates trying to fit a bigger distance than the actual target, because validation will reject it.
+
+Templates should be selected using the real targetDistance only.
+
+Once allocator is fixed, targetDistance will be clean and templates will start firing naturally.
+
+Update project-state.md with a short note:
+"Allocator now snaps section distances to pool multiples and even lengths, with minimums for non main sections. This prevents 125 to 225 fragments and allows templates to validate."
+
+After applying, restart server and test:
+
+1500 in 25m
+
+1500 in 25yd
+
+2600 in 25m
+Expected visible change: warm up should be 300 or 400, not 225. Build, drill, kick, cool down should be 200 or 300 or 400, not 125 or 175. Templates like 300 easy, 4x100 easy, 8x50 easy should start appearing.
+
+END: ALLOCATOR FIX TO UNBLOCK TEMPLATES

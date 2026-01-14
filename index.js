@@ -211,6 +211,52 @@ const SECTION_MIN_DIST = {
   cooldown: 200
 };
 
+// Snap distance to nearest pool multiple with even lengths (ends at home end)
+function snapSection(dist, poolLen) {
+  if (dist <= 0) return 0;
+  const lengths = Math.round(dist / poolLen);
+  const evenLengths = lengths % 2 === 0 ? lengths : lengths + 1;
+  return Math.max(evenLengths * poolLen, poolLen * 2);
+}
+
+// Apply minimum distances to non-main sections, shift excess to main
+function applySectionMinimums(sets, total, poolLen) {
+  let adjustment = 0;
+  
+  for (const s of sets) {
+    const key = normalizeSectionKey(s.label);
+    const minDist = SECTION_MIN_DIST[key] || 0;
+    
+    // Skip main sets
+    if (String(s.label).toLowerCase().includes("main")) continue;
+    
+    // Snap to even lengths
+    let snapped = snapSection(s.dist, poolLen);
+    
+    // Apply minimum
+    if (minDist > 0 && snapped < minDist) {
+      const needed = snapSection(minDist, poolLen);
+      adjustment += needed - snapped;
+      snapped = needed;
+    }
+    
+    s.dist = snapped;
+  }
+  
+  // Subtract adjustment from main set(s)
+  const mainSets = sets.filter(s => String(s.label).toLowerCase().includes("main"));
+  if (mainSets.length > 0 && adjustment > 0) {
+    // Distribute adjustment across main sets proportionally
+    const mainTotal = mainSets.reduce((sum, s) => sum + s.dist, 0);
+    for (const m of mainSets) {
+      const share = Math.round((m.dist / mainTotal) * adjustment);
+      m.dist = snapSection(m.dist - share, poolLen);
+    }
+  }
+  
+  return sets;
+}
+
 // ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
 function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) {
   const base = poolLen;
@@ -234,11 +280,10 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   // TEMPLATE SELECTION - runs first, before any section-specific logic
   // If a template fits, return it immediately
+  // Use real targetDistance only (allocator now ensures clean distances)
   const sectionKey = normalizeSectionKey(label);
   if (sectionKey) {
-    const minDist = SECTION_MIN_DIST[sectionKey];
-    const effectiveTarget = minDist ? Math.max(target, minDist) : target;
-    const template = pickTemplate(sectionKey, effectiveTarget, seedA);
+    const template = pickTemplate(sectionKey, target, seedA);
     if (template) {
       return template.body;
     }
@@ -4074,6 +4119,9 @@ app.post("/generate-workout", (req, res) => {
     }
 
     sets.push({ label: "Cool down", dist: coolTarget });
+
+    // Post-process: snap all sections to even lengths and apply minimums
+    applySectionMinimums(sets, total, base);
 
     const lines = [];
     

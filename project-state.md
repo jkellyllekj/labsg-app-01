@@ -234,6 +234,14 @@ Workout area:
   - If template fits, returns immediately (no fallthrough to fragment logic)
   - Removed duplicate template checks from individual sections
 
+- Allocator now snaps section distances to pool multiples and even lengths
+  - Added snapSection(dist, poolLen) for even-length snapping
+  - Added applySectionMinimums(sets, total, poolLen) to enforce minimums
+  - Minimums: warmup 300, build/drill/kick/cooldown 200
+  - Excess distance shifts to main set
+  - Prevents 125-225 fragments and allows templates to validate
+  - Template selection now uses real targetDistance (allocator ensures clean values)
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

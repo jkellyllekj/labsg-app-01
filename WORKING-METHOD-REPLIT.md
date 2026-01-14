@@ -15,6 +15,15 @@ GitHub is the source of truth for code history and rollback.
 
 Replit is the workspace where the Agent edits and runs code.
 
+
+## Context decay control
+
+- After the main files are loaded into the chat (PROJECT_STATE.md, WORKING-METHOD-REPLIT.md, and the current runtime file such as index.js), the assistant must NOT rewrite or re-output the entire runtime file for small changes.
+- Instead, the assistant must provide precise, targeted edit instructions for the Replit Agent: file path, the exact block or function to change, and the exact replacement snippet.
+- Only output full-file replacements when explicitly requested, or when adding first-time block markers to a file that has none, or when a change is so large that a partial edit would be riskier.
+- This avoids context decay and reduces wasted Replit Agent usage costs.
+
+
 Chat is for planning, reasoning, review, and decisions.
 
 The Agent is an execution tool, not the primary thinker.

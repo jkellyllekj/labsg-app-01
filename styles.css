@@ -1,4 +1,5 @@
-/* ===== extracted from inline <style> block #1 ===== */
+/* Extracted from index.js template <style> blocks */
+
 :root {
         /* 35% white for chips and buttons */
         --white35: rgba(255,255,255,0.35);
@@ -404,15 +405,14 @@
         box-shadow: none !important;
       }
 
+/* Viewport Lab scoped styles */
 
-/* ===== extracted from inline <style> block #2 ===== */
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f8f9fa; }
-    h1 { margin: 0 0 8px; font-size: 20px; }
-    p  { margin: 0 0 14px; opacity: .75; max-width: 980px; }
-    h2 { margin: 18px 0 10px; font-size: 13px; opacity: .85; font-weight: 650; }
-    a.back { font-size: 13px; color: #666; text-decoration: underline; }
-
-    .row {
+#viewportLab body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f8f9fa; }
+#viewportLab h1 { margin: 0 0 8px; font-size: 20px; }
+#viewportLab p { margin: 0 0 14px; opacity: .75; max-width: 980px; }
+#viewportLab h2 { margin: 18px 0 10px; font-size: 13px; opacity: .85; font-weight: 650; }
+#viewportLab a.back { font-size: 13px; color: #666; text-decoration: underline; }
+#viewportLab .row {
       display: flex;
       justify-content: center;
       gap: 18px;
@@ -420,8 +420,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       align-items: flex-start;
       margin: 10px 0 16px;
     }
-
-    .row-pair {
+#viewportLab .row-pair {
       display: flex;
       justify-content: center;
       gap: 18px;
@@ -432,8 +431,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       padding-bottom: 10px;
       -webkit-overflow-scrolling: touch;
     }
-
-    .row-wide {
+#viewportLab .row-wide {
       display: flex;
       justify-content: center;
       margin: 10px 0 16px;
@@ -441,8 +439,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       padding-bottom: 10px;
       -webkit-overflow-scrolling: touch;
     }
-
-    .frame {
+#viewportLab .frame {
       border: 1px solid rgba(0,0,0,.12);
       border-radius: 12px;
       overflow: hidden;
@@ -451,8 +448,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       max-width: 100%;
       flex: 0 0 auto;
     }
-
-    .bar {
+#viewportLab .bar {
       display:flex;
       justify-content:space-between;
       align-items:center;
@@ -465,12 +461,10 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       user-select: none;
       cursor: grab;
     }
-    .bar:active { cursor: grabbing; }
-
-    .meta { display:flex; align-items:center; gap: 8px; min-width: 0; }
-    .name { font-weight: 750; letter-spacing: 0.1px; }
-
-    .tag {
+#viewportLab .bar:active { cursor: grabbing; }
+#viewportLab .meta { display:flex; align-items:center; gap: 8px; min-width: 0; }
+#viewportLab .name { font-weight: 750; letter-spacing: 0.1px; }
+#viewportLab .tag {
       padding: 2px 8px;
       border: 1px solid rgba(0,0,0,.12);
       border-radius: 999px;
@@ -478,22 +472,18 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       opacity: .75;
       white-space: nowrap;
     }
-
-    .controls { display:flex; align-items:center; gap: 8px; white-space: nowrap; opacity: .95; }
-    .controls input[type="range"] { width: 120px; }
-    .controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
-
-    iframe {
+#viewportLab .controls { display:flex; align-items:center; gap: 8px; white-space: nowrap; opacity: .95; }
+#viewportLab .controls input[type="range"] { width: 120px; }
+#viewportLab .controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+#viewportLab iframe {
       width: 100%;
       height: var(--h, 760px);
       border: 0;
       display: block;
       background: #e5edf5;
     }
-
-    .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
-
-    #colorPicker {
+#viewportLab .hint { font-size: 12px; opacity: .7; margin-top: -6px; }
+#viewportLab #colorPicker {
       position: fixed;
       top: 16px;
       right: 16px;
@@ -506,8 +496,8 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       font-size: 11px;
       max-width: 240px;
     }
-    #colorPicker.collapsed { padding: 6px 10px; }
-    #colorPicker .picker-header {
+#viewportLab #colorPicker.collapsed { padding: 6px 10px; }
+#viewportLab #colorPicker .picker-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -517,8 +507,8 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       cursor: move;
       user-select: none;
     }
-    #colorPicker.collapsed .picker-content { display: none; }
-    #colorPicker .zone-row {
+#viewportLab #colorPicker.collapsed .picker-content { display: none; }
+#viewportLab #colorPicker .zone-row {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -526,12 +516,12 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       padding: 4px 6px;
       border-radius: 5px;
     }
-    #colorPicker .zone-label {
+#viewportLab #colorPicker .zone-label {
       width: 60px;
       font-weight: 600;
       font-size: 11px;
     }
-    #colorPicker input[type="color"] {
+#viewportLab #colorPicker input[type="color"] {
       width: 26px;
       height: 20px;
       border: 1px solid #ccc;
@@ -539,7 +529,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; marg
       cursor: pointer;
       padding: 0;
     }
-    #colorPicker .hex-display {
+#viewportLab #colorPicker .hex-display {
       font-family: monospace;
       font-size: 9px;
       color: #666;

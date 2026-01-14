@@ -12,12 +12,25 @@
  */
 
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(express.static("public"));
-app.use(express.static("."));
+
+app.get("/styles.css", (req, res) => {
+  const cssPath = path.join(__dirname, "styles.css");
+  try {
+    const css = fs.readFileSync(cssPath, "utf8");
+    res.setHeader("Content-Type", "text/css; charset=utf-8");
+    res.send(css);
+  } catch (e) {
+    res.status(404).send("/* styles.css not found */");
+  }
+});
+
 function snapToPoolMultipleShared(dist, poolLen) {
   const d = Number(dist);
   if (!Number.isFinite(d) || d <= 0) return 0;
@@ -1909,6 +1922,139 @@ app.get("/", (req, res) => {
       }
   `;
   const HOME_JS_RENDER_GLUE = `
+      // Dolphin animation stabilisation
+      // - single helper path for all generator dolphins
+      // - cancels overlapping timers
+      // - forces CSS animation restart
+      // - tokenises runs to prevent overlap
+      let __dolphinAnimToken = 0;
+      let __dolphinAnimTimers = [];
+
+      function __clearDolphinAnimTimers() {
+        for (const t of __dolphinAnimTimers) clearTimeout(t);
+        __dolphinAnimTimers = [];
+      }
+
+      function __forceRestartSpin(el) {
+        if (!el) return;
+        el.classList.remove("dolphinSpin");
+        // Force reflow so the CSS animation restarts reliably
+        void el.offsetWidth;
+        el.classList.add("dolphinSpin");
+      }
+
+      function dolphinAnimBegin(mainEl, extraEls, activeBtn) {
+        __dolphinAnimToken += 1;
+        const token = __dolphinAnimToken;
+
+        __clearDolphinAnimTimers();
+
+        const all = [mainEl].concat(Array.isArray(extraEls) ? extraEls : []).filter(Boolean);
+
+        // Ensure baseline state
+        for (const el of all) {
+          if (!el.textContent || !String(el.textContent).trim()) el.textContent = "🐬";
+          el.dataset.spinStartedAt = String(Date.now());
+          __forceRestartSpin(el);
+        }
+
+        if (activeBtn) activeBtn.classList.add("active");
+        return token;
+      }
+
+      function dolphinAnimFinish(mainEl, extraEls, activeBtn) {
+        const token = __dolphinAnimToken;
+        const all = [mainEl].concat(Array.isArray(extraEls) ? extraEls : []).filter(Boolean);
+
+        const SPIN_MS = 1000;          // one full loop
+        const FADE_MS = 200;           // cross-fade chunk
+        const SPLASH_HOLD_MS = 1000;   // keep splash visible
+        const IDLE_FADEIN_MS = 200;    // dolphin fade back in
+
+        const started = Number(mainEl && mainEl.dataset ? (mainEl.dataset.spinStartedAt || "0") : "0");
+        const elapsed = started ? (Date.now() - started) : SPIN_MS;
+        const wait = Math.max(0, SPIN_MS - elapsed);
+
+        __clearDolphinAnimTimers();
+
+        __dolphinAnimTimers.push(setTimeout(() => {
+          if (token !== __dolphinAnimToken) return;
+
+          // Stop spinning
+          for (const el of all) el.classList.remove("dolphinSpin");
+
+          // Fade dolphin out
+          for (const el of all) {
+            el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
+            el.style.opacity = "1";
+            el.style.transform = "rotate(0deg) scale(1)";
+            void el.offsetWidth;
+            el.style.opacity = "0";
+          }
+
+          // Swap to splash and "explode" in (rotated left)
+          __dolphinAnimTimers.push(setTimeout(() => {
+            if (token !== __dolphinAnimToken) return;
+
+            for (const el of all) {
+              el.textContent = "💦";
+              el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
+              el.style.opacity = "0";
+              el.style.transform = "rotate(-135deg) scale(0.7)";
+              void el.offsetWidth;
+              el.style.opacity = "1";
+              el.style.transform = "rotate(-135deg) scale(1.15)";
+            }
+
+            // Settle splash scale back to 1.0 quickly
+            __dolphinAnimTimers.push(setTimeout(() => {
+              if (token !== __dolphinAnimToken) return;
+              for (const el of all) {
+                el.style.transition = "transform 160ms ease-out";
+                el.style.transform = "rotate(-135deg) scale(1)";
+              }
+            }, FADE_MS + 20));
+
+            // Hold splash, then fade out and reset to idle dolphin
+            __dolphinAnimTimers.push(setTimeout(() => {
+              if (token !== __dolphinAnimToken) return;
+
+              for (const el of all) {
+                el.style.transition = "opacity " + FADE_MS + "ms linear, transform " + FADE_MS + "ms ease-out";
+                el.style.opacity = "0";
+                el.style.transform = "rotate(-135deg) scale(0.9)";
+              }
+
+              __dolphinAnimTimers.push(setTimeout(() => {
+                if (token !== __dolphinAnimToken) return;
+
+                for (const el of all) {
+                  el.textContent = "🐬";
+                  el.style.transition = "opacity 200ms linear";
+                  el.style.opacity = "0";
+                  el.style.transform = "rotate(0deg) scale(1)";
+                  void el.offsetWidth;
+                  el.style.opacity = "1";
+                }
+
+                // Explicit final reset after dolphin fade-in completes
+                __dolphinAnimTimers.push(setTimeout(() => {
+                  if (token !== __dolphinAnimToken) return;
+                  for (const el of all) {
+                    el.style.display = "";
+                    el.style.opacity = "1";
+                    el.style.transform = "";
+                    el.style.transition = "";
+                    el.classList.remove("animating");
+                  }
+                  if (activeBtn) activeBtn.classList.remove("active");
+                }, 200));
+              }, FADE_MS));
+            }, SPLASH_HOLD_MS));
+          }, FADE_MS));
+        }, wait));
+      }
+
       function renderAll(payload, workoutText) {
         captureSummary(payload, workoutText);
         const ok = renderCards(payload, workoutText);
@@ -2074,28 +2220,16 @@ app.get("/", (req, res) => {
         
         // Reset min-height after clearing
         cards.style.minHeight = "";
-
-        // Show spinning dolphin
-        dolphinLoader.textContent = "🐬";
-        dolphinLoader.classList.add("dolphinSpin");
-        const spinStartedAt = Date.now();
-        dolphinLoader.dataset.spinStartedAt = String(spinStartedAt);
-        generateBtn.classList.add("active");
-        statusPill.textContent = "";
-        
-        // Also spin the regen dolphin
+        // Dolphin animation (stabilised)
         const regenDolphin = document.getElementById("regenDolphin");
-        if (regenDolphin) regenDolphin.classList.add("dolphinSpin");
+        dolphinAnimBegin(dolphinLoader, [regenDolphin], generateBtn);
+        statusPill.textContent = "";
 
         const payload = formToPayload();
-
         const isCustom = payload.poolLength === "custom";
         if (isCustom) {
           if (!payload.customPoolLength) {
-            dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "🐬";
-            generateBtn.classList.remove("active");
-            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+            dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2122,10 +2256,7 @@ app.get("/", (req, res) => {
           }
 
           if (!res.ok) {
-            dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "🐬";
-            generateBtn.classList.remove("active");
-            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+            dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2133,10 +2264,7 @@ app.get("/", (req, res) => {
           }
 
           if (!data || data.ok !== true) {
-            dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "🐬";
-            generateBtn.classList.remove("active");
-            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+            dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2147,32 +2275,14 @@ app.get("/", (req, res) => {
           const workoutName = String(data.workoutName || "").trim();
 
           if (!workoutText) {
-            dolphinLoader.classList.remove("dolphinSpin");
-            dolphinLoader.textContent = "🐬";
-            generateBtn.classList.remove("active");
-            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+            dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
-
-          // Stop spinning, show splash after at least one full rotation (1000ms)
-          dolphinLoader.classList.remove("dolphinSpin");
-          if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
-          
-          const started = Number(dolphinLoader.dataset.spinStartedAt || "0");
-          const elapsed = Date.now() - started;
-          const wait = Math.max(0, 1000 - elapsed);
-          
-          setTimeout(() => {
-            dolphinLoader.textContent = "💦";
-            setTimeout(() => {
-              dolphinLoader.textContent = "🐬";
-              generateBtn.classList.remove("active");
-            }, 800);
-          }, wait);
+          // Dolphin animation finish (stabilised)
+          dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
           statusPill.textContent = "";
-
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
           const nameDisplayEl = document.getElementById("workoutNameDisplay");
           const nameText = document.getElementById("workoutNameText");
@@ -2202,6 +2312,10 @@ app.get("/", (req, res) => {
           // Force reflow to reset animation state (critical for consistent behavior)
           void cards.offsetWidth;
           if (nameDisplayEl) void nameDisplayEl.offsetWidth;
+
+          // Wait until splash is visible before scrolling
+          // Timing: dolphin fade-out (200ms) + splash fade-in (200ms) + buffer
+          await new Promise(r => setTimeout(r, 420));
 
           // STEP 2: Scroll to workout area - title has padding-top:20px for clearance
           const scrollTarget = nameDisplayEl && nameDisplayEl.style.display !== "none" ? nameDisplayEl : cards;
@@ -2245,10 +2359,7 @@ app.get("/", (req, res) => {
           copyBtn.disabled = false;
           copyBtn.dataset.copyText = workoutText;
         } catch (err) {
-          dolphinLoader.classList.remove("dolphinSpin");
-          dolphinLoader.textContent = "🐬";
-          generateBtn.classList.remove("active");
-          if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+            dolphinAnimFinish(dolphinLoader, [regenDolphin], generateBtn);
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }

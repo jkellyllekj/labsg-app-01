@@ -42,11 +42,11 @@
       }
       /* Effort bar icons */
       .effortIcon {
-        width: 62px;           /* +25% from 50px */
+        width: 62px;
         height: 62px;
         object-fit: contain;
         display: block;
-        margin: 0 auto;
+        margin: 0;
         filter: none !important;
         opacity: 1 !important;
       }

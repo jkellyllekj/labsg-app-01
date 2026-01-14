@@ -1536,18 +1536,25 @@ app.get("/", (req, res) => {
         // Gradient background colors matching CardGym: blue -> green -> yellow -> orange -> red
         const bgColors = ['#b9f0fd', '#cfffc0', '#fcf3d5', '#ffc374', '#fe5050'];
         
-        let strip = '<div style=\\"margin-top:12px;\\">';
-        strip += '<div style=\\"display:flex; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+        let strip = '<div style=\\"margin-top:10px;\\">';
+        
+        // Outer scroll wrapper (mobile can swipe horizontally)
+        strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding-bottom:2px;\\">';
+        
+        // Inner strip keeps rounded corners + shadow
+        strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:max-content; min-width:100%; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
         
         for (let i = 0; i < 5; i++) {
           const isActive = (i + 1) <= level;
           const opacity = isActive ? '1' : '0.4';
-          strip += '<div style=\\"flex:1; padding:8px 4px; background:' + bgColors[i] + '; text-align:center;\\">';
+          
+          // Square tiles, flex-centred so the dolphins are perfectly centred
+          strip += '<div style=\\"flex:0 0 74px; width:74px; height:74px; box-sizing:border-box; padding:4px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
           strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
           strip += '</div>';
         }
         
-        strip += '</div></div>';
+        strip += '</div></div></div>';
         return strip;
       }
   `;

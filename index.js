@@ -366,9 +366,9 @@ app.get("/", (req, res) => {
   const HOME_HTML = `
     <style>
       :root {
-        /* 50% white for chips and buttons */
-        --white50: rgba(255,255,255,0.50);
-        --whiteBorder: rgba(255,255,255,0.45);
+        /* 35% white for chips and buttons */
+        --white35: rgba(255,255,255,0.35);
+        --whiteBorder: rgba(255,255,255,0.42);
         /* Zone colors: BLUE=Easy, GREEN=Moderate, YELLOW=Strong, ORANGE=Hard, RED=Full Gas */
         /* CardGym pastel colors */
         --zone-easy-bg: #b9f0fd;
@@ -459,7 +459,7 @@ app.get("/", (req, res) => {
         display:inline-block;
         padding:6px 10px;
         border-radius: 8px;
-        background: var(--white50);
+        background: var(--white35);
         border: 1px solid var(--whiteBorder);
         color:#0b0b0b;
         box-shadow: 0 6px 16px rgba(0,0,0,0.10);
@@ -474,7 +474,7 @@ app.get("/", (req, res) => {
       /* Unified white button style for pool and generate */
       #controlsGrid button,
       .poolRow button {
-        background: var(--white50);
+        background: var(--white35);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 700;
@@ -518,7 +518,7 @@ app.get("/", (req, res) => {
 
       /* Generate button box with dolphin inside */
       .generateBox {
-        background: var(--white50);
+        background: var(--white35);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         font-weight: 800;
@@ -556,7 +556,7 @@ app.get("/", (req, res) => {
 
       /* Readable white glass chip */
       .readChip {
-        background: var(--white50);
+        background: var(--white35);
         border: 1px solid var(--whiteBorder);
         color: #0b0b0b;
         box-shadow: 0 8px 18px rgba(0,0,0,0.12);
@@ -701,6 +701,41 @@ app.get("/", (req, res) => {
         .advanced-grid {
           grid-template-columns: 1fr !important;
         }
+      }
+      .setHeaderRow {
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+      }
+      .setRightCol {
+        display:flex;
+        flex-direction:column;
+        align-items:flex-end;
+        justify-content:flex-start;
+        gap:10px;
+      }
+      .setRightCol .setDolphin {
+        font-size:22px;
+        line-height:1;
+      }
+      .setRightCol .setMeters {
+        font-weight:700;
+      }
+      .workoutTitleRow {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        justify-content:flex-end;
+      }
+      .iconBtn {
+        background: transparent;
+        border:none;
+        padding:0;
+        cursor:pointer;
+        font-size:22px;
+        line-height:1;
+        text-shadow: 0 6px 14px rgba(0,0,0,0.20);
       }
     </style>
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">
@@ -903,7 +938,13 @@ app.get("/", (req, res) => {
       <div id="resultWrap" style="margin-top:16px; padding:0; background:transparent; border-radius:0; border:none; box-shadow:none;">
         <div id="errorBox" style="display:none; margin-bottom:10px; padding:10px; background:#fff; border:1px solid #e7e7e7; border-radius:8px;"></div>
 
-        <div id="workoutNameDisplay" style="display:none; text-align:right; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;"><span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
+        <div id="workoutNameDisplay" style="display:none; margin-bottom:8px; margin-top:10px; scroll-margin-top:20px;">
+          <div class="workoutTitleRow">
+            <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtn">🐬</button>
+            <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtn">🖼️</button>
+            <span id="workoutNameText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span>
+          </div>
+        </div>
         <div id="cards" style="display:none;"></div>
 
         <div id="totalBox" style="display:none; text-align:right; margin-top:8px;"><span id="totalText" style="display:inline-block; font-weight:700; font-size:15px; font-variant:small-caps; color:#111; background:#ffff00; padding:6px 14px; border-radius:4px; border:1px solid #111; box-shadow:0 2px 6px rgba(0,0,0,0.25);"></span></div>
@@ -2064,48 +2105,40 @@ app.get("/", (req, res) => {
           
           html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;">');
 
-          // Header row: label on left, dolphin + metres stacked on right
-          html.push('<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">');
-          
-          // Left: label
-          html.push('<span style="font-weight:700; color:' + textColor + ';">' + safeHtml(label) + '</span>');
-          
-          // Right: vertical stack with dolphin above, metres below
           const subTextColor = textColor === '#fff' ? '#eee' : '#666';
           const distColor = textColor === '#fff' ? '#99ccff' : '#0055aa';
-          html.push('<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">');
+          const restColor = textColor === '#fff' ? '#ffcccc' : '#c41e3a';
+          const bodyClean = stripRestFromBody(body);
+
+          // Main layout: left column (title + detail) | right column (dolphin + metres)
+          html.push('<div class="setHeaderRow">');
+          
+          // Left column: title and detail lines
+          html.push('<div style="flex:1; min-width:0;">');
+          html.push('<div style="font-weight:700; color:' + textColor + '; margin-bottom:6px;">' + safeHtml(label) + '</div>');
+          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; font-weight:600; color:' + textColor + ';">' + safeHtml(bodyClean) + "</div>");
+          if (restDisplay) {
+            html.push('<div style="color:' + restColor + '; font-weight:600; font-size:14px; margin-top:4px;">' + safeHtml(restDisplay) + "</div>");
+          }
+          if (Number.isFinite(estSec)) {
+            html.push('<div style="font-size:12px; color:' + subTextColor + '; margin-top:4px;">Est: ' + fmtMmSs(estSec) + "</div>");
+          }
+          html.push("</div>");
+          
+          // Right column: dolphin aligned with title, metres aligned with detail
+          html.push('<div class="setRightCol">');
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
               '" style="padding:0; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease; line-height:1;" title="Reroll this set">' +
-              '<span class="reroll-dolphin" style="font-size:22px;">🐬</span>' +
+              '<span class="reroll-dolphin setDolphin">🐬</span>' +
             "</button>"
           );
           if (Number.isFinite(setDist)) {
-            html.push('<div style="font-weight:700; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
+            html.push('<div class="setMeters" style="font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
           }
           html.push("</div>");
           
-          html.push("</div>");
-
-          // 2-column layout: set description | rest (red) + optional time
-          html.push('<div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:start;">');
-
-          // Column 1: Set body (with rest stripped out for cleaner display)
-          const bodyClean = stripRestFromBody(body);
-          html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; font-weight:600; color:' + textColor + '; min-width:0;">' + safeHtml(bodyClean) + "</div>");
-
-          // Column 2: Rest + optional time stacked
-          const restColor = textColor === '#fff' ? '#ffcccc' : '#c41e3a';
-          html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
-          if (restDisplay) {
-            html.push('<div style="color:' + restColor + '; font-weight:600; font-size:14px; white-space:nowrap;">' + safeHtml(restDisplay) + "</div>");
-          }
-          if (Number.isFinite(estSec)) {
-            html.push('<div style="font-size:12px; color:' + subTextColor + '; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
-          }
-          html.push("</div>");
-
           html.push("</div>");
 
           html.push("</div>");
@@ -2641,6 +2674,14 @@ app.get("/", (req, res) => {
           if (gen) gen.click();
         });
       }
+      
+      // Wire up workout title area regen and bg buttons
+      document.getElementById("regenBtn2")?.addEventListener("click", () => {
+        document.getElementById("generateBtn")?.click();
+      });
+      document.getElementById("bgCycleBtn2")?.addEventListener("click", () => {
+        document.getElementById("bgCycleBtn")?.click();
+      });
 
   `;
   /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */

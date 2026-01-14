@@ -1,0 +1,152 @@
+UI only. index.js only. Smallest reversible changes. No workout logic changes.
+
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163 (only if needed for wiring the new header dolphin and bg button)
+
+1) Set white chip transparency to 35 percent
+
+We tested 25 percent and 50 percent. Now set it to 35 percent.
+
+Where the shared white variable is defined, set:
+
+:root {
+  --white35: rgba(255,255,255,0.35);
+  --whiteBorder: rgba(255,255,255,0.42);
+}
+
+
+Then ensure all white chips and buttons use var(--white35) as their background, including:
+
+Swim Gen chip
+
+Pool buttons
+
+Advanced options chip
+
+1500 chip
+
+Generate box background
+
+Summary capsules
+
+Keep glow rings and shadows unchanged.
+
+2) Fix per set dolphins alignment and spacing
+
+Current is: dolphin above metres. We want:
+
+Dolphin aligned with the set title line (Warm up, Build, Drill)
+
+Metres aligned with the set detail line (the “9x25 …” line), and on the right.
+
+Implementation: in each set card header area, structure it as a 2 row right column:
+
+Row 1: dolphin right aligned, aligned with title
+Row 2: metres right aligned, aligned with detail line
+
+Use this CSS:
+
+.setHeaderRow {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.setRightCol {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:10px; /* creates space between dolphin and metres */
+}
+
+.setRightCol .setDolphin {
+  font-size:22px;
+  line-height:1;
+}
+
+.setRightCol .setMeters {
+  font-weight:700;
+}
+
+
+Then in the set card HTML, ensure the left column contains both title and detail lines, and the right column is setRightCol with dolphin first then metres second.
+
+Result:
+
+dolphin lines up with “Build”
+
+metres lines up with “5x25 freestyle descend to hard”
+
+3) Add regen dolphin and bg picker next to the workout title chip (Mixed Bag etc.)
+
+You want:
+
+A dolphin next to the workout title (Mixed Bag) on the left, acting as regenerate.
+
+The background picker also present there.
+
+Keep the dolphin next to Swim Gen as a logo, that is fine.
+
+Where the workout title chip is rendered (the yellow “Mixed Bag” chip area), add a small left side control cluster:
+
+regen dolphin button
+
+background button
+
+Layout:
+
+place them immediately to the left of the yellow title chip, aligned vertically center with it.
+
+HTML example:
+
+<div class="workoutTitleRow">
+  <button id="regenBtn2" type="button" aria-label="Regenerate" class="iconBtn">🐬</button>
+  <button id="bgCycleBtn2" type="button" aria-label="Change background" class="iconBtn">🖼️</button>
+  <div id="workoutTitleChip">Mixed Bag</div>
+</div>
+
+
+CSS:
+
+.workoutTitleRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.iconBtn{
+  background: transparent;
+  border:none;
+  padding:0;
+  cursor:pointer;
+  font-size:22px;
+  line-height:1;
+  text-shadow: 0 6px 14px rgba(0,0,0,0.20);
+}
+
+
+Wiring:
+
+regenBtn2 should trigger the same action as Generate. Use generateBtn.click().
+
+bgCycleBtn2 should call the same background cycle function as the top bg button. Reuse existing handler.
+
+If those functions are not in scope, just dispatch click events to the existing buttons generateBtn and bgCycleBtn.
+
+Example:
+
+document.getElementById("regenBtn2")?.addEventListener("click", () => {
+  document.getElementById("generateBtn")?.click();
+});
+
+document.getElementById("bgCycleBtn2")?.addEventListener("click", () => {
+  document.getElementById("bgCycleBtn")?.click();
+});
+
+
+End.

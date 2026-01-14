@@ -163,6 +163,62 @@ function fnv1a32(str) {
   return h >>> 0;
 }
 
+// Mulberry32 PRNG for deterministic random
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// Check if body contains full gas effort words
+function isFullGasBody(body) {
+  const low = String(body).toLowerCase();
+  return low.includes("sprint") || low.includes("all out") || low.includes("full gas") || low.includes("max effort");
+}
+
+// Inject one full gas into Main or Kick with ~50% probability
+function injectOneFullGas(sections, seed) {
+  // If any section already full gas, do nothing
+  const already = sections.some(s => isFullGasBody(s.body));
+  if (already) return sections;
+
+  // 50% probability, deterministic per generate
+  if (mulberry32(seed >>> 0)() >= 0.5) return sections;
+
+  // Only Main or Kick
+  const candidates = sections
+    .map((s, i) => ({ s, i, k: String(s.label).toLowerCase() }))
+    .filter(x => x.k.includes("main") || x.k.includes("kick"));
+
+  if (!candidates.length) return sections;
+
+  const pick = candidates[
+    Math.floor(mulberry32((seed ^ 0x9e3779b9) >>> 0)() * candidates.length)
+  ];
+
+  const idx = pick.i;
+  const lines = String(sections[idx].body).split("\n");
+
+  if (!lines.length) return sections;
+
+  // Force a full-gas trigger word
+  if (/strong/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/strong/i, "sprint");
+  } else if (/fast/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/fast/i, "sprint");
+  } else if (/hard/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/hard/i, "sprint");
+  } else {
+    lines[0] = lines[0] + " sprint";
+  }
+
+  sections[idx].body = lines.join("\n");
+  return sections;
+}
+
 // Section templates for coach-plausible workout blocks
 const SECTION_TEMPLATES = {
   warmup: [
@@ -4188,11 +4244,10 @@ app.post("/generate-workout", (req, res) => {
     // Post-process: snap all sections to even lengths and apply minimums
     applySectionMinimums(sets, total, base);
 
-    const lines = [];
-    
     // Add total distance to opts so set builder can check for short workouts
     const optsWithTotal = { ...opts, totalDistance: total };
 
+    // Build section bodies
     for (const s of sets) {
       const setLabel = s.label;
       const setDist = s.dist;
@@ -4230,45 +4285,25 @@ app.post("/generate-workout", (req, res) => {
       }
 
       if (!body) {
-        const fallback = safeSimpleSetBody(setLabel, setDist, poolLen, opts);
-        lines.push(setLabel + ": " + fallback.split("\n")[0]);
-        for (const extra of fallback.split("\n").slice(1)) lines.push(extra);
-        lines.push("");
-        continue;
+        body = safeSimpleSetBody(setLabel, setDist, poolLen, opts);
       }
 
-      const bodyLines = body.split("\n");
-      lines.push(setLabel + ": " + bodyLines[0]);
+      s.body = body;
+    }
+
+    // RED INJECTION: Inject full gas at workout level with ~50% probability
+    injectOneFullGas(sets, seed);
+
+    // Format sections to lines
+    const lines = [];
+    for (const s of sets) {
+      const bodyLines = String(s.body).split("\n");
+      lines.push(s.label + ": " + bodyLines[0]);
       for (const extra of bodyLines.slice(1)) lines.push(extra);
       lines.push("");
     }
 
     while (lines.length && String(lines[lines.length - 1]).trim() === "") lines.pop();
-
-    // RED INJECTION: If no set has hard/fullgas wording, ~20% chance to promote one
-    const hasRedEffort = lines.some(line => {
-      const low = String(line).toLowerCase();
-      return low.includes("hard") || low.includes("full gas") || low.includes("fullgas") || low.includes("all out");
-    });
-    
-    if (!hasRedEffort && ((seed * 31337) >>> 0) % 5 === 0) {
-      // Find a main or kick line to promote (not warmup or cooldown)
-      for (let i = 0; i < lines.length; i++) {
-        const line = String(lines[i]);
-        const low = line.toLowerCase();
-        if ((low.includes("main") || low.includes("kick")) && !low.includes("warm") && !low.includes("cool")) {
-          // Replace "strong" or "fast" with "hard" or add "hard" if just "moderate"
-          if (low.includes("strong")) {
-            lines[i] = line.replace(/strong/gi, "hard");
-          } else if (low.includes("fast")) {
-            lines[i] = line.replace(/fast/gi, "hard");
-          } else if (low.includes("moderate")) {
-            lines[i] = line.replace(/moderate/gi, "strong");
-          }
-          break;
-        }
-      }
-    }
 
     const footer = [];
     footer.push("");

@@ -252,6 +252,8 @@ Workout area:
 
 - Added missing fnv1a32 hash helper used for template randomisation
 
+- Red (full gas) now injected at workout level with ~50% probability when absent, limited to Main or Kick
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

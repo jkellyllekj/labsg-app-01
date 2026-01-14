@@ -1,0 +1,88 @@
+START — RED INJECTION FIX (FIRST-GENERATE)
+
+Goal:
+Ensure a red (full gas) card appears on first generation about 50% of the time.
+Red must come from Main or Kick only.
+Warm up, Drill, Build, Cool down must NEVER be red.
+
+File: index.js
+
+PART A — Fix fnv1a32 crash (safety)
+
+If fnv1a32 is referenced but not defined, add this alias near the existing fnv1a helper:
+
+function fnv1a32(str) {
+  return fnv1a(str);
+}
+
+PART B — Inject red at WORKOUT level, not text-output level
+
+Problem:
+Red injection currently edits formatted text too late and often misses Main/Kick.
+Result: zero red on first generation.
+
+Fix:
+Inject “full gas” directly into one section body AFTER all sections are built.
+
+Instructions:
+
+1) Add this helper near other helpers:
+
+function injectOneFullGas(sections, seed) {
+  // If any section already full gas, do nothing
+  const already = sections.some(
+    s => getEffortLevel(s.label, s.body) === "fullgas"
+  );
+  if (already) return sections;
+
+  // 50% probability, deterministic per generate
+  if (mulberry32(seed >>> 0)() >= 0.5) return sections;
+
+  // Only Main or Kick
+  const candidates = sections
+    .map((s, i) => ({ s, i, k: String(s.label).toLowerCase() }))
+    .filter(x => x.k.includes("main") || x.k.includes("kick"));
+
+  if (!candidates.length) return sections;
+
+  const pick =
+    candidates[
+      Math.floor(
+        mulberry32((seed ^ 0x9e3779b9) >>> 0)() * candidates.length
+      )
+    ];
+
+  const idx = pick.i;
+  const lines = String(sections[idx].body).split("\n");
+
+  if (!lines.length) return sections;
+
+  // Force a full-gas trigger word
+  if (/strong/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/strong/i, "sprint");
+  } else if (/fast/i.test(lines[0])) {
+    lines[0] = lines[0].replace(/fast/i, "sprint");
+  } else {
+    lines[0] = lines[0] + " sprint";
+  }
+
+  sections[idx].body = lines.join("\n");
+  return sections;
+}
+
+2) In buildWorkout(...), AFTER all section bodies are generated and BEFORE returning,
+add this single line:
+
+sections = injectOneFullGas(sections, seed);
+
+PART C — Project state update
+
+Update project-state.md with one short bullet:
+“Red (full gas) now injected at workout level with ~50% probability when absent, limited to Main or Kick.”
+
+Verification required before finishing:
+- Generate 10 workouts at 1500 → red appears ~4–6 times.
+- Generate 10 workouts at 2600 → red appears sometimes.
+- Warm up and cool down never show red.
+
+END — RED INJECTION FIX (FIRST-GENERATE)

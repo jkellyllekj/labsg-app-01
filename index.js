@@ -486,18 +486,25 @@ app.get("/", (req, res) => {
           0 0 0 3px rgba(255,215,0,0.55);
       }
 
-      /* Controls grid layout */
+      /* Controls grid stays 2 columns even on small screens */
       #controlsGrid {
-        display:grid;
-        grid-template-columns: 1fr 140px;
-        gap: 12px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
         align-items: start;
       }
 
+      /* Generate column width should hug content */
+      #generateStack {
+        width: auto;
+        min-width: 110px;
+      }
+
+      /* Pool buttons should not force wrap into weird shapes */
       .poolRow {
-        display:flex;
-        gap:8px;
-        flex-wrap:wrap;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       /* Make the pool buttons slightly tighter vertically */
@@ -506,32 +513,69 @@ app.get("/", (req, res) => {
         padding-bottom:5px !important;
       }
 
-      .generateBig {
-        width: 100%;
-        min-height: 92px;
-        border-radius: 8px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size: 16px;
-        font-weight: 700;
+      /* Generate button box with dolphin inside */
+      .generateBox {
+        background: rgba(255,255,255,0.78);
+        border: 1px solid rgba(255,255,255,0.55);
+        color: #0b0b0b;
+        font-weight: 800;
+        border-radius: 10px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+        padding: 10px 12px;
+        width: auto;
+        min-width: 110px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
         cursor: pointer;
       }
 
-      #generateStack {
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:flex-start;
-        gap: 8px;
+      .genLabel {
+        line-height: 1;
+        font-size: 15px;
       }
 
-      /* Dolphin always visible, centered under Generate */
-      .dolphinIdle {
-        display:inline-block;
-        font-size:40px;
-        line-height:1;
-        pointer-events:none;
+      .genDolphin {
+        display: inline-block;
+        font-size: 40px;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      /* Generate active: glow ring not background change */
+      .generateBox.active {
+        box-shadow:
+          0 10px 24px rgba(0,0,0,0.14),
+          0 0 0 3px rgba(64,201,224,0.55);
+      }
+
+      /* Readable white glass chip */
+      .readChip {
+        background: rgba(255,255,255,0.78);
+        border: 1px solid rgba(255,255,255,0.55);
+        color: #0b0b0b;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+      }
+
+      /* Advanced wrap pointer events and styling */
+      #advancedWrap input,
+      #advancedWrap select,
+      #advancedWrap button,
+      #advancedWrap label {
+        pointer-events: auto;
+      }
+      #advancedWrap {
+        position: relative;
+        z-index: 2;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.26);
+        border-radius: 12px;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.12);
+      }
+      #advancedWrap * {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.28);
       }
 
       .glassSummary {
@@ -654,17 +698,6 @@ app.get("/", (req, res) => {
         .advanced-grid {
           grid-template-columns: 1fr !important;
         }
-        #controlsGrid {
-          grid-template-columns: 1fr;
-        }
-        #generateStack {
-          flex-direction: row;
-          justify-content: flex-start;
-        }
-        .generateBig {
-          min-height: auto;
-          padding: 10px 20px;
-        }
       }
     </style>
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
@@ -676,10 +709,10 @@ app.get("/", (req, res) => {
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:10px;">
                 <h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
-  <span class="glassChip">Swim Gen</span>
+  <span class="glassChip readChip">Swim Gen</span>
 </h3>
-                <button id="bgCycleBtn" type="button" aria-label="Change background"
-  style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:8px; padding:4px 8px; cursor:pointer;">🖼️</button>
+                <button id="bgCycleBtn" type="button" aria-label="Change background" class="readChip"
+  style="border-radius:6px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
               <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
             </div>
@@ -695,8 +728,8 @@ app.get("/", (req, res) => {
                 class="distance-slider"
                 style="flex:1;"
               />
-              <span class="glassChip" style="white-space:nowrap; border-radius:8px;">
-                <strong id="distanceLabel">1500</strong> <span style="color:#555; font-size:13px;">(m or yd)</span>
+              <span class="glassChip readChip" style="white-space:nowrap; border-radius:8px; padding:6px 12px;">
+                <strong id="distanceLabel">1500</strong>
               </span>
             </div>
 
@@ -722,14 +755,14 @@ app.get("/", (req, res) => {
               </div>
 
               <div id="generateStack">
-                <button id="generateBtn" type="submit" class="generateBig">
-                  Generate
+                <button id="generateBtn" type="submit" class="generateBox">
+                  <div class="genLabel">Generate</div>
+                  <div id="dolphinLoader" class="genDolphin">🐬</div>
                 </button>
-                <span id="dolphinLoader" class="dolphinIdle">🐬</span>
               </div>
             </div>
 
-            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:10px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px;">
               <div style="margin-bottom:14px;">
                 <label style="display:block; font-weight:600; margin-bottom:4px;">
                   Custom pool length

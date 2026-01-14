@@ -1,0 +1,201 @@
+We need to correct the generator control layout for small screens and restore advanced options usability. UI only. index.js only. Smallest reversible changes. Do not touch workout generation logic or background cycling logic.
+
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163 (only if needed for toggle visuals)
+
+1) Keep Generate on the right always. Never drop below.
+
+In ROUTE_HOME_UI_HTML_R110, in the Swim Gen panel controls layout we recently added (#controlsGrid, #leftControls, #generateStack), make it responsive without stacking.
+
+Add or replace with this CSS:
+
+/* Controls grid stays 2 columns even on small screens */
+#controlsGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+
+/* Generate column width should hug content */
+#generateStack {
+  width: auto;
+  min-width: 110px;
+}
+
+/* Pool buttons should not force wrap into weird shapes */
+.poolRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+
+Remove any media query that changes grid-template-columns to 1fr or stacks generate underneath.
+
+2) Generate button size and internal layout
+
+You want:
+
+Top aligned with the top of the pool buttons row.
+
+Bottom aligned with the Advanced options row baseline.
+
+Word “Generate” at the top inside the box.
+
+Dolphin inside the same box under the word.
+
+Button not excessively wide, should be close to advanced options width.
+
+Replace the Generate area HTML with this single button containing label and dolphin:
+
+<button id="generateBtn" type="submit" class="generateBox">
+  <div class="genLabel">Generate</div>
+  <div id="dolphinLoader" class="genDolphin">🐬</div>
+</button>
+
+
+Then add CSS:
+
+.generateBox {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #0b0b0b;
+  font-weight: 800;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+  padding: 10px 12px;
+  width: auto;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.genLabel {
+  line-height: 1;
+  font-size: 15px;
+}
+
+.genDolphin {
+  display: inline-block;
+  font-size: 40px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Generate active: glow ring not background change */
+.generateBox.active {
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.14),
+    0 0 0 3px rgba(64,201,224,0.55);
+}
+
+
+Important: This keeps Generate as a right side box, not full width, and keeps the dolphin inside it.
+
+3) Make Swim Gen title, background icon, and 1500 pill readable again
+
+Right now you said Swim Gen lost its readable chip feel and the 1500 pill should be white.
+
+Use a consistent readable “white glass chip” at about 75 to 80 percent opacity, not fully white.
+
+Add this CSS:
+
+.readChip {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #0b0b0b;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+
+Then apply it:
+
+Add class="glassChip readChip" to the Swim Gen title span.
+
+Add class="readChip" to #bgCycleBtn and reduce its radius by 2px.
+
+For the 1500 pill, make it a readChip and remove the “(m or yd)” suffix.
+
+4) Remove “(m or yd)” from the 1500 pill, keep it narrower
+
+In the HTML where the 1500 display renders, remove the suffix span or text that shows “(m or yd)”.
+
+Set the pill content to only the number, for example 1500.
+
+Then make the slider a bit longer by reclaiming the space. Do not change logic, only layout.
+
+5) Restore custom pool length behaviour in Advanced options
+
+You said after the changes, the “custom pool length” is no longer clickable and the previous behaviour was:
+
+Typing a number in the custom length input automatically switches to Custom.
+
+We need to restore that. This is UI wiring, not workout generation.
+
+In the Advanced options HTML, ensure the input is not covered by any overlay and has a normal pointer.
+
+Add CSS:
+
+#advancedWrap input,
+#advancedWrap select,
+#advancedWrap button,
+#advancedWrap label {
+  pointer-events: auto;
+}
+#advancedWrap {
+  position: relative;
+  z-index: 2;
+}
+
+
+If there is any element absolutely positioned over the advanced area, remove it.
+
+Then in the JS that handles custom pool length, restore the original behaviour:
+
+On input change in the custom length field: set selected pool option to “custom” and update displayed pool label.
+
+If the old “custom button” was removed, do not re add it. Use the input change behaviour only.
+
+6) Make Advanced options contents readable
+
+Apply readChip styling only behind text blocks inside Advanced wrap, not full panel tint.
+
+Simple approach:
+
+Add readChip to the small labels and option rows, or add a light text shadow.
+
+Add:
+
+#advancedWrap {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.26);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.12);
+}
+
+#advancedWrap * {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.28);
+}
+
+7) Keep dolphin animation behaviour unchanged but now inside the button
+
+Do not reposition dolphin with JS.
+
+Keep the existing dolphinSpin keyframes.
+
+In ROUTE_HOME_UI_JS_RENDER_GLUE_R163 ensure references still point to #dolphinLoader which now lives inside #generateBtn.
+
+No movement. Only class toggles and text swap for splash as already designed.
+
+Parallax note
+
+Do not implement parallax yet. That is a separate feature. First we lock layout and readability.
+
+End.

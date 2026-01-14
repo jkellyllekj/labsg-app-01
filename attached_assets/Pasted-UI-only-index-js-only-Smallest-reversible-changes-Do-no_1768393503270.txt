@@ -1,0 +1,138 @@
+UI only. index.js only. Smallest reversible changes. Do not touch workout generation logic.
+
+Edit only these blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+1) Fix dolphin spin and splash timing
+
+Problem: spin does not complete a full 360 before splash. We want:
+
+Full spin takes 1000ms (1 second) per rotation
+
+Only splash after at least one full rotation has completed
+
+Dolphin then returns to idle after a short delay
+
+In home CSS where dolphinSpin is defined, change animation speed from 1500ms to 1000ms:
+
+.dolphinSpin {
+  display: inline-block;
+  animation: dolphinSpin 1000ms linear infinite;
+}
+
+
+In submit handler logic in ROUTE_HOME_UI_JS_RENDER_GLUE_R163, change completion behaviour:
+
+On success, do NOT splash immediately. Instead:
+
+stop spinning only after one full second has passed since spin start
+
+then show splash
+
+then restore dolphin after 800ms
+
+Implementation approach: store spinStart timestamp when generation starts.
+
+At generation start:
+
+const spinStartedAt = Date.now();
+dolphinLoader.dataset.spinStartedAt = String(spinStartedAt);
+
+
+On success completion, compute remaining time to reach 1000ms minimum:
+
+dolphinLoader.classList.remove("dolphinSpin");
+
+const started = Number(dolphinLoader.dataset.spinStartedAt || "0");
+const elapsed = Date.now() - started;
+const wait = Math.max(0, 1000 - elapsed);
+
+setTimeout(() => {
+  dolphinLoader.textContent = "💦";
+  setTimeout(() => {
+    dolphinLoader.textContent = "🐬";
+    generateBtn.classList.remove("active");
+  }, 800);
+}, wait);
+
+
+On error or catch, reset immediately to dolphin and remove active:
+
+dolphinLoader.classList.remove("dolphinSpin");
+dolphinLoader.textContent = "🐬";
+generateBtn.classList.remove("active");
+
+2) Add a floating “regen dolphin” next to the Swim Gen title
+
+Goal: allow regenerating without scrolling back up.
+
+Add a small dolphin icon next to the Swim Gen title that acts like clicking Generate. No background. Just floating.
+
+In the header row HTML near “Swim Gen”, add:
+
+<button id="regenBtn" type="button" aria-label="Regenerate" style="background:transparent; border:none; padding:0; cursor:pointer; line-height:1;">
+  <span id="regenDolphin" style="display:inline-block; font-size:26px;">🐬</span>
+</button>
+
+
+Place it immediately after the Swim Gen title chip, before the bg image icon.
+
+In JS, wire it so it triggers generation exactly like Generate does.
+
+Simplest: call generateBtn.click().
+
+Add:
+
+const regenBtn = document.getElementById("regenBtn");
+if (regenBtn) {
+  regenBtn.addEventListener("click", () => {
+    const gen = document.getElementById("generateBtn");
+    if (gen) gen.click();
+  });
+}
+
+
+Optional: while generating, spin the regen dolphin too:
+
+add dolphinSpin class to #regenDolphin when generating starts
+
+remove it on completion and error
+
+3) Move the per set dolphins to the right side in line with the metres
+
+Goal: within each set card header, the dolphin icon should be on the right, above the metres number, aligned.
+
+Find where set cards render the dolphin in each panel. Adjust its container so:
+
+top row right side contains: dolphin above, metres below
+
+title remains left
+
+If the set card header currently has something like left title and right metres, change right column to a small vertical stack:
+
+Right column structure:
+
+dolphin (small)
+
+metres
+
+CSS suggestion:
+
+.setRight {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+}
+.setRight .setDolphin {
+  font-size:22px;
+  line-height:1;
+}
+
+
+Then update the render HTML for each card header accordingly.
+
+End.

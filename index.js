@@ -388,7 +388,7 @@ app.get("/", (req, res) => {
       }
       .dolphinSpin {
         display: inline-block;
-        animation: dolphinSpin 1500ms linear infinite;
+        animation: dolphinSpin 1000ms linear infinite;
       }
       /* Glass chip for text legibility */
       .glassChip {
@@ -716,6 +716,9 @@ app.get("/", (req, res) => {
                 <h3 style="margin:0; font-size:20px; font-weight:700; font-variant:small-caps; letter-spacing:0.5px;">
   <span class="glassChip readChip">Swim Gen</span>
 </h3>
+                <button id="regenBtn" type="button" aria-label="Regenerate" style="background:transparent; border:none; padding:0; cursor:pointer; line-height:1;">
+  <span id="regenDolphin" style="display:inline-block; font-size:26px;">🐬</span>
+</button>
                 <button id="bgCycleBtn" type="button" aria-label="Change background" class="readChip"
   style="border-radius:6px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
@@ -2061,39 +2064,42 @@ app.get("/", (req, res) => {
           
           html.push('<div data-effort="' + effortLevel + '" style="' + boxStyle + ' border-radius:12px; padding:12px;">');
 
-          // Header row: label + reroll button
-          html.push('<div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px; color:' + textColor + ';">');
-          html.push('<span>' + safeHtml(label) + '</span>');
+          // Header row: label on left, dolphin + metres stacked on right
+          html.push('<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">');
+          
+          // Left: label
+          html.push('<span style="font-weight:700; color:' + textColor + ';">' + safeHtml(label) + '</span>');
+          
+          // Right: vertical stack with dolphin above, metres below
+          const subTextColor = textColor === '#fff' ? '#eee' : '#666';
+          const distColor = textColor === '#fff' ? '#99ccff' : '#0055aa';
+          html.push('<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">');
           html.push(
             '<button type="button" data-reroll-set="' +
               safeHtml(String(idx)) +
-              '" style="padding:2px 6px; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease;" title="Reroll this set">' +
-              '<span class="reroll-dolphin">🐬</span>' +
+              '" style="padding:0; border-radius:8px; border:none; background:transparent; cursor:pointer; transition:transform 1s ease; line-height:1;" title="Reroll this set">' +
+              '<span class="reroll-dolphin" style="font-size:22px;">🐬</span>' +
             "</button>"
           );
+          if (Number.isFinite(setDist)) {
+            html.push('<div style="font-weight:700; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
+          }
+          html.push("</div>");
+          
           html.push("</div>");
 
-          // 3-column layout: set description | rest (red) | distance
-          html.push('<div style="display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:start;">');
+          // 2-column layout: set description | rest (red) + optional time
+          html.push('<div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:start;">');
 
           // Column 1: Set body (with rest stripped out for cleaner display)
           const bodyClean = stripRestFromBody(body);
           html.push('<div data-set-body="' + safeHtml(String(idx)) + '" data-original-body="' + safeHtml(body) + '" style="white-space:pre-wrap; line-height:1.35; font-weight:600; color:' + textColor + '; min-width:0;">' + safeHtml(bodyClean) + "</div>");
 
-          // Column 2: Rest - use contrasting color for dark backgrounds
+          // Column 2: Rest + optional time stacked
           const restColor = textColor === '#fff' ? '#ffcccc' : '#c41e3a';
+          html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
           if (restDisplay) {
             html.push('<div style="color:' + restColor + '; font-weight:600; font-size:14px; white-space:nowrap;">' + safeHtml(restDisplay) + "</div>");
-          } else {
-            html.push('<div></div>');
-          }
-
-          // Column 3: Distance (and optional time)
-          const subTextColor = textColor === '#fff' ? '#eee' : '#666';
-          html.push('<div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">');
-          if (Number.isFinite(setDist)) {
-            const distColor = textColor === '#fff' ? '#99ccff' : '#0055aa';
-            html.push('<div style="font-weight:700; font-size:14px; white-space:nowrap; color:' + distColor + ';">' + String(setDist) + unitShort + "</div>");
           }
           if (Number.isFinite(estSec)) {
             html.push('<div style="font-size:12px; color:' + subTextColor + '; white-space:nowrap;">Est: ' + fmtMmSs(estSec) + "</div>");
@@ -2451,8 +2457,14 @@ app.get("/", (req, res) => {
         // Show spinning dolphin
         dolphinLoader.textContent = "🐬";
         dolphinLoader.classList.add("dolphinSpin");
+        const spinStartedAt = Date.now();
+        dolphinLoader.dataset.spinStartedAt = String(spinStartedAt);
         generateBtn.classList.add("active");
         statusPill.textContent = "";
+        
+        // Also spin the regen dolphin
+        const regenDolphin = document.getElementById("regenDolphin");
+        if (regenDolphin) regenDolphin.classList.add("dolphinSpin");
 
         const payload = formToPayload();
 
@@ -2462,6 +2474,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2491,6 +2504,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2501,6 +2515,7 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2514,18 +2529,27 @@ app.get("/", (req, res) => {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
             generateBtn.classList.remove("active");
+            if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
           }
 
-          // Stop spinning, show splash, then return to dolphin
+          // Stop spinning, show splash after at least one full rotation (1000ms)
           dolphinLoader.classList.remove("dolphinSpin");
-          dolphinLoader.textContent = "💦";
+          if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
+          
+          const started = Number(dolphinLoader.dataset.spinStartedAt || "0");
+          const elapsed = Date.now() - started;
+          const wait = Math.max(0, 1000 - elapsed);
+          
           setTimeout(() => {
-            dolphinLoader.textContent = "🐬";
-            generateBtn.classList.remove("active");
-          }, 450);
+            dolphinLoader.textContent = "💦";
+            setTimeout(() => {
+              dolphinLoader.textContent = "🐬";
+              generateBtn.classList.remove("active");
+            }, 800);
+          }, wait);
           statusPill.textContent = "";
 
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
@@ -2603,10 +2627,20 @@ app.get("/", (req, res) => {
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "🐬";
           generateBtn.classList.remove("active");
+          if (regenDolphin) regenDolphin.classList.remove("dolphinSpin");
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }
       });
+      
+      // Wire up regen button to trigger Generate
+      const regenBtn = document.getElementById("regenBtn");
+      if (regenBtn) {
+        regenBtn.addEventListener("click", () => {
+          const gen = document.getElementById("generateBtn");
+          if (gen) gen.click();
+        });
+      }
 
   `;
   /* __END_ROUTE_HOME_UI_JS_EVENTS_R170__ */

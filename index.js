@@ -448,10 +448,11 @@ app.get("/", (req, res) => {
       .glassChip {
         display: inline-block;
         padding: 4px 10px;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.22);
-        border: 1px solid rgba(255,255,255,0.28);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.24);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        color: #111;
       }
       .glassChipStrong {
         background: rgba(255,255,255,0.38);
@@ -460,8 +461,8 @@ app.get("/", (req, res) => {
       /* Glass panel with reflection */
       .glassPanel {
         background: transparent;
-        border: 1px solid rgba(255,255,255,0.45);
-        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,0.40);
+        border-radius: 20px;
         box-shadow: 0 12px 32px rgba(0,0,0,0.18);
         position: relative;
         overflow: hidden;
@@ -476,19 +477,66 @@ app.get("/", (req, res) => {
           rgba(255,255,255,0.00) 45%);
         pointer-events: none;
       }
-      /* Pool buttons default */
+      /* Readable text on any background, without panel tint */
+      .glassTextReadable,
+      .glassPanel h3,
+      .glassPanel label,
+      .glassPanel button,
+      .glassPanel input,
+      .glassPanel a,
+      #toggleAdvanced {
+        text-shadow:
+          0 1px 2px rgba(0,0,0,0.35),
+          0 0 1px rgba(255,255,255,0.35);
+      }
+
+      /* Small chip only behind critical text, not whole panel */
+      .textChipLite {
+        display:inline-block;
+        padding:2px 8px;
+        border-radius:10px;
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.20);
+      }
+
+      /* Slightly soften all inline text color */
+      .glassPanel,
+      .glassPanel * {
+        color: #0b0b0b;
+      }
+
+      /* Unselected is softer and translucent */
       #poolButtonsRow button {
-        background: rgba(255,255,255,0.18);
-        border: 1px solid rgba(255,255,255,0.30);
-        color: #111;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.22);
+        color: #0b0b0b;
         font-weight: 600;
       }
-      /* Pool button selected */
+
+      /* Selected is white and bold */
       #poolButtonsRow button.active {
         background: rgba(255,255,255,0.92);
         border-color: rgba(255,255,255,0.55);
-        color: #111;
+        color: #0b0b0b;
         font-weight: 800;
+      }
+
+      /* Dolphin anchoring */
+      #dolphinLoader {
+        display:inline-block;
+        font-size:40px;
+        line-height:1;
+        position:absolute;
+        left:0;
+        top:0;
+        transform: translate(0,0);
+        pointer-events:none;
+      }
+
+      /* Keep Advanced row layout stable */
+      #advancedRow {
+        position:relative;
+        justify-content:flex-start !important;
       }
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(16px); }
@@ -597,13 +645,14 @@ app.get("/", (req, res) => {
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
-      <form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:20px;">
+      <form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:16px;">
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:10px;">
                 <h3 style="margin:0; font-size:22px; font-weight:900;"><span class="glassChip">Swim Gen</span></h3>
-                <button id="bgCycleBtn" type="button" aria-label="Change background" style="background:rgba(255,255,255,0.20); border:1px solid rgba(255,255,255,0.28); border-radius:12px; padding:4px 8px; cursor:pointer;">🖼️</button>
+                <button id="bgCycleBtn" type="button" aria-label="Change background"
+  style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:10px; padding:4px 8px; cursor:pointer;">🖼️</button>
               </div>
               <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
             </div>
@@ -632,11 +681,11 @@ app.get("/", (req, res) => {
 
             <div id="poolButtonsRow" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <div id="poolButtons" style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
-                <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
-                <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
+                <button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25m</button>
+                <button type="button" data-pool="50m" style="padding:6px 14px; border-radius:7px; cursor:pointer;">50m</button>
+                <button type="button" data-pool="25yd" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25yd</button>
               </div>
-              <button id="generateBtn" type="submit" style="padding:6px 14px; border-radius:8px; cursor:pointer;">
+              <button id="generateBtn" type="submit" style="padding:6px 14px; border-radius:7px; cursor:pointer;">
                 Generate
               </button>
             </div>
@@ -648,7 +697,7 @@ app.get("/", (req, res) => {
               <span id="dolphinLoader" style="display:inline-block; font-size:40px; line-height:1;">🐬</span>
             </div>
 
-            <div id="advancedWrap" style="display:none; margin-top:10px; padding:16px; border:1px solid #e0e0e0; border-radius:14px; background:linear-gradient(180deg, #fff 0%, #f8f9fa 100%); box-shadow:0 4px 12px rgba(0,60,80,0.06);">
+            <div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:12px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
               <div style="margin-bottom:14px;">
                 <label style="display:block; font-weight:600; margin-bottom:4px;">
                   Custom pool length
@@ -808,6 +857,28 @@ app.get("/", (req, res) => {
       const statusPill = document.getElementById("statusPill");
       const dolphinLoader = document.getElementById("dolphinLoader");
 
+      function positionDolphinUnderGenerate() {
+        const form = document.getElementById("genForm");
+        const btn = document.getElementById("generateBtn");
+        const advRow = document.getElementById("advancedRow");
+        const d = document.getElementById("dolphinLoader");
+        if (!form || !btn || !advRow || !d) return;
+
+        const rForm = form.getBoundingClientRect();
+        const rBtn = btn.getBoundingClientRect();
+        const rAdv = advRow.getBoundingClientRect();
+
+        const centerX = (rBtn.left - rForm.left) + (rBtn.width / 2);
+        const topY = (rAdv.top - rForm.top) + ((rAdv.height - d.offsetHeight) / 2);
+
+        d.style.left = Math.round(centerX - (d.offsetWidth / 2)) + "px";
+        d.style.top = Math.round(topY) + "px";
+      }
+
+      window.addEventListener("resize", () => {
+        positionDolphinUnderGenerate();
+      });
+
       const cards = document.getElementById("cards");
       const totalBox = document.getElementById("totalBox");
       const totalText = document.getElementById("totalText");
@@ -829,6 +900,10 @@ app.get("/", (req, res) => {
 
       const toggleAdvanced = document.getElementById("toggleAdvanced");
       const advancedWrap = document.getElementById("advancedWrap");
+      const generateBtn = document.getElementById("generateBtn");
+
+      positionDolphinUnderGenerate();
+      setTimeout(positionDolphinUnderGenerate, 0);
   `;
   /* __END_ROUTE_HOME_UI_JS_DOM_R130__ */
 
@@ -2290,6 +2365,8 @@ app.get("/", (req, res) => {
         // Show spinning dolphin next to Advanced options
         dolphinLoader.textContent = "🐬";
         dolphinLoader.classList.add("dolphinSpin");
+        generateBtn.classList.add("active");
+        positionDolphinUnderGenerate();
         statusPill.textContent = "";
 
         const payload = formToPayload();
@@ -2299,6 +2376,7 @@ app.get("/", (req, res) => {
           if (!payload.customPoolLength) {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
+            generateBtn.classList.remove("active");
             statusPill.textContent = "";
             renderError("Error", ["Enter a custom pool length."]);
             return;
@@ -2327,6 +2405,7 @@ app.get("/", (req, res) => {
           if (!res.ok) {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
+            generateBtn.classList.remove("active");
             statusPill.textContent = "";
             const msg = (data && (data.error || data.message)) ? (data.error || data.message) : ("HTTP " + res.status);
             renderError("Request failed", [msg].filter(Boolean));
@@ -2336,6 +2415,7 @@ app.get("/", (req, res) => {
           if (!data || data.ok !== true) {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
+            generateBtn.classList.remove("active");
             statusPill.textContent = "";
             const msg = data && data.error ? data.error : "Unknown error.";
             renderError("Generation failed", [msg].filter(Boolean));
@@ -2348,6 +2428,7 @@ app.get("/", (req, res) => {
           if (!workoutText) {
             dolphinLoader.classList.remove("dolphinSpin");
             dolphinLoader.textContent = "🐬";
+            generateBtn.classList.remove("active");
             statusPill.textContent = "";
             renderError("No workout returned", ["workoutText was empty."]);
             return;
@@ -2356,8 +2437,11 @@ app.get("/", (req, res) => {
           // Stop spinning, show splash, then return to dolphin
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "💦";
-          await new Promise(r => setTimeout(r, 250));
-          dolphinLoader.textContent = "🐬";
+          setTimeout(() => {
+            dolphinLoader.textContent = "🐬";
+            generateBtn.classList.remove("active");
+            positionDolphinUnderGenerate();
+          }, 450);
           statusPill.textContent = "";
 
           // STEP 1: Setup title and cards for fade-in (both invisible initially)
@@ -2434,6 +2518,7 @@ app.get("/", (req, res) => {
         } catch (err) {
           dolphinLoader.classList.remove("dolphinSpin");
           dolphinLoader.textContent = "🐬";
+          generateBtn.classList.remove("active");
           statusPill.textContent = "";
           renderError("Network error", [String(err && err.message ? err.message : err)]);
         }

@@ -1,0 +1,128 @@
+You are not imagining it. Replit saying “74×74 tiles” does not match what your phone screenshot shows because the code that is actually running for the footer strip is still the old inline flex:1 + padding:8px 4px version.
+
+I can see that exact old version still present in renderEmojiIntensityStrip():
+
+flex:1; padding:8px 4px; text-align:center;
+
+margin-top:12px;
+
+overflow:hidden; on the strip container
+
+That will always create: too much top and bottom padding, and slight “off-centre” look (especially if the PNG has uneven whitespace). 
+
+index
+
+So we fix it properly, in the smallest way, by making the tiles:
+
+true squares (via aspect-ratio: 1 / 1)
+
+flex-centred (so the icon is dead-centre even if the image has weird internal padding)
+
+tighter padding and smaller top margin
+
+still scrollable when needed, but on big phones it should fit without scroll
+
+Change A: Replace the effort strip HTML builder inside renderEmojiIntensityStrip()
+
+File: index.js 
+
+index
+
+Find this function: function renderEmojiIntensityStrip() { and inside it find the block that starts with:
+
+let strip = '<div style=\\"margin-top:12px;\\">';
+strip += '<div style=\\"display:flex; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+
+
+…and ends with:
+
+strip += '</div></div>';
+return strip;
+
+
+Replace that entire strip-building section with this:
+
+let strip = '<div style=\\"margin-top:8px;\\">';
+
+// Scroll wrapper (only scrolls if it truly needs to)
+strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;\\">';
+
+// Inner strip: full width, but never less than a sensible minimum.
+// On big phones this fits without scrolling.
+strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:100%; min-width:360px; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+
+for (let i = 0; i < 5; i++) {
+  const isActive = (i + 1) <= level;
+  const opacity = isActive ? '1' : '0.4';
+
+  // Square tile, tighter padding, true centre
+  strip += '<div style=\\"flex:1 1 0; aspect-ratio:1 / 1; box-sizing:border-box; padding:2px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
+  strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
+  strip += '</div>';
+}
+
+strip += '</div></div></div>';
+return strip;
+
+Why this addresses your exact complaints
+
+Big phone should show all 5: width:100% + 5 tiles sharing width evenly. No forced 74px widths.
+
+Scroll still works on small phones: min-width:360px means small screens can swipe.
+
+Dead-centre dolphins: tiles are display:flex; align-items:center; justify-content:center.
+
+Less top border: margin-top:8px and tile padding:2px.
+
+Change B: Make the icons fill the square more and remove any “centering lies”
+
+Right now .effortIcon is still 50×50 with margin: 0 auto, which is not ideal once we are flex-centering. 
+
+styles
+
+File: styles.css 
+
+styles
+
+Find:
+
+.effortIcon {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  filter: none;
+}
+
+
+Replace with:
+
+.effortIcon {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin: 0;
+  filter: none !important;
+  opacity: 1;
+}
+
+
+This makes them properly face-readable and removes any layout side-effects from margin:auto.
+
+Sanity check you can do immediately
+
+Use your built-in Viewport Lab frames (you already have 320px, 390px, 430px in the project). The strip should:
+
+430px: no scroll, all visible
+
+390px: no scroll, all visible
+
+320px: scrolls
+
+The frame definitions are already in index.js so you can verify without guessing. 
+
+index
+
+If you apply the two edits above and still see “green left / yellow right”, then the PNG assets themselves have uneven transparent padding and we solve that by hard-cropping assets later. But 90% of the time, this flex-centre + square tiles fix makes it look perfect even with imperfect PNGs.

@@ -1536,20 +1536,21 @@ app.get("/", (req, res) => {
         // Gradient background colors matching CardGym: blue -> green -> yellow -> orange -> red
         const bgColors = ['#b9f0fd', '#cfffc0', '#fcf3d5', '#ffc374', '#fe5050'];
         
-        let strip = '<div style=\\"margin-top:10px;\\">';
+        let strip = '<div style=\\"margin-top:8px;\\">';
         
-        // Outer scroll wrapper (mobile can swipe horizontally)
-        strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding-bottom:2px;\\">';
+        // Scroll wrapper (only scrolls if it truly needs to)
+        strip += '<div style=\\"overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;\\">';
         
-        // Inner strip keeps rounded corners + shadow
-        strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:max-content; min-width:100%; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
+        // Inner strip: full width, but never less than a sensible minimum.
+        // On big phones this fits without scrolling.
+        strip += '<div style=\\"display:flex; flex-wrap:nowrap; width:100%; min-width:360px; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);\\">';
         
         for (let i = 0; i < 5; i++) {
           const isActive = (i + 1) <= level;
           const opacity = isActive ? '1' : '0.4';
           
-          // Square tiles, flex-centred so the dolphins are perfectly centred
-          strip += '<div style=\\"flex:0 0 74px; width:74px; height:74px; box-sizing:border-box; padding:4px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
+          // Square tile, tighter padding, true centre
+          strip += '<div style=\\"flex:1 1 0; aspect-ratio:1 / 1; box-sizing:border-box; padding:2px; background:' + bgColors[i] + '; display:flex; align-items:center; justify-content:center;\\">';
           strip += '<img class=\\"effortIcon\\" src=\\"' + dolphinIcons[i] + '\\" alt=\\"' + iconAlts[i] + '\\" style=\\"opacity:' + opacity + ';\\">';
           strip += '</div>';
         }

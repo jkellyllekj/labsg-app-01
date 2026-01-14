@@ -1,0 +1,269 @@
+Goal: UI polish only. Keep clear glass. No blur. No frosted panel tint. Workout cards stay full width with no wrapper panel. Smallest reversible changes only. Jess will test.
+
+File: index.js
+
+Edit only these existing blocks:
+
+ROUTE_HOME_UI_HTML_R110
+
+ROUTE_HOME_UI_JS_DOM_R130
+
+ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+Do not touch any other blocks.
+
+1) ROUTE_HOME_UI_HTML_R110
+A) Reduce padding and rounding, keep glass clear
+
+Find this line:
+
+<form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:20px;">
+
+
+Replace with:
+
+<form id="genForm" class="glassPanel" style="position:relative; max-width:520px; padding:16px;">
+
+
+Find the bg button inline style and reduce radius and border a touch. Replace the whole button tag with this:
+
+<button id="bgCycleBtn" type="button" aria-label="Change background"
+  style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.26); border-radius:10px; padding:4px 8px; cursor:pointer;">🖼️</button>
+
+
+Find pool buttons inline border radius 8px and change to 7px for each of the 3 pool buttons and the Generate button.
+
+Example:
+
+<button type="button" data-pool="25m" class="active" style="padding:6px 14px; border-radius:7px; cursor:pointer;">25m</button>
+
+
+Do the same for the other pool buttons and for #generateBtn.
+
+B) Make Advanced wrap transparent, not white tinted
+
+Find the advancedWrap div. Replace its inline style fully with this:
+
+<div id="advancedWrap" style="display:none; margin-top:10px; padding:14px; border:1px solid rgba(255,255,255,0.26); border-radius:12px; background:transparent; box-shadow:0 8px 20px rgba(0,0,0,0.10);">
+
+C) Update glass CSS for readability and consistent rounding
+
+Inside the <style> in this block, apply these exact edits.
+
+Update .glassPanel to slightly less rounding and a cleaner border:
+
+Replace the existing .glassPanel rule with:
+
+.glassPanel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.40);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+
+Tone down the title chip so it stands out but is not bold blocky.
+
+Replace .glassChip with:
+
+.glassChip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.24);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  color: #111;
+}
+
+
+Add robust text readability that works on both dark and light backgrounds without tinting the whole panel.
+
+Add these new rules near the other UI CSS:
+
+/* Readable text on any background, without panel tint */
+.glassTextReadable,
+.glassPanel h3,
+.glassPanel label,
+.glassPanel button,
+.glassPanel input,
+.glassPanel a,
+#toggleAdvanced {
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.35),
+    0 0 1px rgba(255,255,255,0.35);
+}
+
+/* Small chip only behind critical text, not whole panel */
+.textChipLite {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:10px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.20);
+}
+
+/* Slightly soften all inline text color */
+.glassPanel,
+.glassPanel * {
+  color: #0b0b0b;
+}
+
+
+Invert the pool and generate button behaviour as requested.
+
+Replace the #poolButtonsRow button and .active rules with:
+
+/* Unselected is softer and translucent */
+#poolButtonsRow button {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: #0b0b0b;
+  font-weight: 600;
+}
+
+/* Selected is white and bold */
+#poolButtonsRow button.active {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(255,255,255,0.55);
+  color: #0b0b0b;
+  font-weight: 800;
+}
+
+
+Dolphin must always be visible, anchored under Generate and on the same band as Advanced options, no drifting.
+
+Add these CSS rules (keep the existing spin keyframes and class, but add this):
+
+/* Dolphin anchoring */
+#dolphinLoader {
+  display:inline-block;
+  font-size:40px;
+  line-height:1;
+  position:absolute;
+  left:0;
+  top:0;
+  transform: translate(0,0);
+  pointer-events:none;
+}
+
+/* Keep Advanced row layout stable */
+#advancedRow {
+  position:relative;
+  justify-content:flex-start !important;
+}
+
+
+Keep the existing:
+
+.dolphinSpin { animation: dolphinSpin 1500ms linear infinite; }
+
+
+Do not add any jumping animation.
+
+2) ROUTE_HOME_UI_JS_DOM_R130
+
+Add a dolphin positioning function and wire it to resize. This is UI only.
+
+After:
+
+const dolphinLoader = document.getElementById("dolphinLoader");
+
+
+Add:
+
+function positionDolphinUnderGenerate() {
+  const form = document.getElementById("genForm");
+  const btn = document.getElementById("generateBtn");
+  const advRow = document.getElementById("advancedRow");
+  const d = document.getElementById("dolphinLoader");
+  if (!form || !btn || !advRow || !d) return;
+
+  const rForm = form.getBoundingClientRect();
+  const rBtn = btn.getBoundingClientRect();
+  const rAdv = advRow.getBoundingClientRect();
+
+  const centerX = (rBtn.left - rForm.left) + (rBtn.width / 2);
+  const topY = (rAdv.top - rForm.top) + ((rAdv.height - d.offsetHeight) / 2);
+
+  d.style.left = Math.round(centerX - (d.offsetWidth / 2)) + "px";
+  d.style.top = Math.round(topY) + "px";
+}
+
+window.addEventListener("resize", () => {
+  positionDolphinUnderGenerate();
+});
+
+
+Also call it once after DOM is ready, at the end of the DOM wiring section. Add:
+
+positionDolphinUnderGenerate();
+setTimeout(positionDolphinUnderGenerate, 0);
+
+
+This prevents drifting and keeps it aligned even if fonts load late.
+
+3) ROUTE_HOME_UI_JS_RENDER_GLUE_R163
+
+Make Generate behave like the pool buttons when active, and keep dolphin visible.
+
+At the start of the submit handler, right after you begin generating, add:
+
+generateBtn.classList.add("active");
+positionDolphinUnderGenerate();
+
+
+On every early return path where you stop generating, also remove the active class.
+
+Add generateBtn.classList.remove("active"); in these places:
+
+After any !res.ok error handling before return;
+
+After any !data || data.ok !== true error handling before return;
+
+In the catch block before exiting
+
+After successful completion once splash is done
+
+For the completion splash, keep the dolphin in the same spot. Use a short swap only.
+
+Where it currently does:
+
+dolphinLoader.textContent = "💦";
+setTimeout(() => { dolphinLoader.textContent = "🐬"; }, ...);
+
+
+Keep it, but also ensure active class is removed after splash returns to dolphin:
+
+dolphinLoader.textContent = "💦";
+setTimeout(() => {
+  dolphinLoader.textContent = "🐬";
+  generateBtn.classList.remove("active");
+  positionDolphinUnderGenerate();
+}, 450);
+
+
+Also, when generation starts, ensure the dolphin is visible and spinning only then:
+
+Idle: dolphin shows, no spin class
+
+Generating: add .dolphinSpin
+
+Done: remove spin, do splash, return to dolphin
+
+So at start:
+
+dolphinLoader.textContent = "🐬";
+dolphinLoader.classList.add("dolphinSpin");
+
+
+At all exits and success before splash:
+
+dolphinLoader.classList.remove("dolphinSpin");
+
+
+Do not hide the dolphin at any time.
+
+End.

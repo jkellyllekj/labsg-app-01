@@ -39,6 +39,110 @@ function snapToPoolMultipleShared(dist, poolLen) {
   return Math.round(d / base) * base;
 }
 
+// ============================================================================
+// VALIDATION HELPERS - Free-tier realism guards
+// ============================================================================
+
+// Allowed rep counts by rep distance (coach-plausible patterns)
+function isAllowedRepCount(repCount, repDistance) {
+  const r = Number(repCount);
+  const d = Number(repDistance);
+  if (!Number.isFinite(r) || r < 1) return false;
+  if (!Number.isFinite(d) || d <= 0) return false;
+  
+  // Single rep is always allowed
+  if (r === 1) return true;
+  
+  // Short reps (25-50): allow 2,3,4,5,6,8,10,12,16,20
+  if (d <= 50) {
+    return [2, 3, 4, 5, 6, 8, 10, 12, 16, 20].includes(r);
+  }
+  // Medium reps (75-100): allow 2,3,4,5,6,8,10,12
+  if (d <= 100) {
+    return [2, 3, 4, 5, 6, 8, 10, 12].includes(r);
+  }
+  // Long reps (200+): allow 2,3,4,5,6,8,10
+  return [2, 3, 4, 5, 6, 8, 10].includes(r);
+}
+
+// Check if total distance ends at home end (even number of lengths)
+function endsAtHomeEnd(totalDistance, poolLen) {
+  const d = Number(totalDistance);
+  const p = Number(poolLen);
+  if (!Number.isFinite(d) || !Number.isFinite(p) || p <= 0) return false;
+  const lengths = d / p;
+  return Number.isInteger(lengths) && lengths % 2 === 0;
+}
+
+// Validate warm-up/cool-down line: no hard efforts allowed
+function isValidWarmupCoolLine(text) {
+  const t = String(text || "").toLowerCase();
+  const forbidden = ["hard", "threshold", "sprint", "max", "full gas", "fullgas", "fast", "race pace", "all out"];
+  for (const word of forbidden) {
+    if (t.includes(word)) return false;
+  }
+  return true;
+}
+
+// Validate drill line: no odd/random rep counts
+function isValidDrillLine(repCount) {
+  const r = Number(repCount);
+  // Drills should use clean rep counts: 2,3,4,5,6,8,10,12
+  // Reject odd random numbers like 7, 9, 11, 13
+  const forbidden = [7, 9, 11, 13, 14, 15, 17, 18, 19];
+  return !forbidden.includes(r);
+}
+
+// Validate kick line: no "relaxed" or "easy" with short reps
+function isValidKickLine(text, repDistance) {
+  const t = String(text || "").toLowerCase();
+  const d = Number(repDistance);
+  // Short kick reps (25-50) should not be "relaxed" or "easy" - too short to be meaningful
+  if (d <= 50 && (t.includes("relaxed") || t.includes("easy"))) {
+    return false;
+  }
+  return true;
+}
+
+// Parse a line to extract NxD format
+function parseNxD(line) {
+  const match = String(line || "").match(/^(\d+)x(\d+)/i);
+  if (!match) return null;
+  return { reps: Number(match[1]), dist: Number(match[2]) };
+}
+
+// Validate a set body: all lines must parse, total must match target
+function validateSetBody(body, targetDistance, poolLen) {
+  const lines = String(body || "").split("\n").filter(l => l.trim());
+  if (lines.length === 0) return { valid: false, reason: "empty body" };
+  
+  let totalParsed = 0;
+  for (const line of lines) {
+    const parsed = parseNxD(line);
+    if (!parsed) {
+      // Check for single distance format (e.g., "200 easy")
+      const singleMatch = line.match(/^(\d+)\s+/);
+      if (singleMatch) {
+        totalParsed += Number(singleMatch[1]);
+        continue;
+      }
+      return { valid: false, reason: "unparseable line: " + line };
+    }
+    totalParsed += parsed.reps * parsed.dist;
+  }
+  
+  if (totalParsed !== targetDistance) {
+    return { valid: false, reason: "distance mismatch: got " + totalParsed + ", expected " + targetDistance };
+  }
+  
+  // Check even lengths
+  if (!endsAtHomeEnd(totalParsed, poolLen)) {
+    return { valid: false, reason: "odd number of lengths" };
+  }
+  
+  return { valid: true };
+}
+
 // Shuffle array deterministically based on seed
 function shuffleWithSeed(arr, seed) {
   const result = arr.slice();
@@ -111,18 +215,30 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   };
 
   // Find best rep distance - now with seed-based preference shuffling
+  // Applies isAllowedRepCount guard to reject implausible rep counts
   const findBestFit = (preferredDists, useSeed) => {
     const dists = useSeed ? shuffleWithSeed(preferredDists, seedC) : preferredDists;
+    // First pass: exact fit with allowed rep count
+    for (const d of dists) {
+      if (d > 0 && target % d === 0) {
+        const reps = target / d;
+        if (reps >= 2 && reps <= 20 && isAllowedRepCount(reps, d)) {
+          return { reps, dist: d };
+        }
+      }
+    }
+    // Second pass: allow any exact fit (fallback for edge cases)
     for (const d of dists) {
       if (d > 0 && target % d === 0) {
         const reps = target / d;
         if (reps >= 2 && reps <= 20) return { reps, dist: d };
       }
     }
+    // Third pass: floor division (last resort)
     for (const d of dists) {
       if (d > 0) {
         const reps = Math.floor(target / d);
-        if (reps >= 2) return { reps, dist: d };
+        if (reps >= 2 && isAllowedRepCount(reps, d)) return { reps, dist: d };
       }
     }
     return null;
@@ -166,12 +282,25 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const wantMultiPart = (seedA % 5) === 0 && target >= 400 && k.includes("main");
 
   // WARM-UP: Simple easy swim with variety
+  // Guard: warm-up must not contain hard effort keywords
   if (k.includes("warm")) {
     const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
     const warmDesc = warmDescs[seedA % warmDescs.length];
+    // Validate: warm-up should never have hard efforts (guard check)
+    if (!isValidWarmupCoolLine(warmDesc)) {
+      // Fallback to safe default
+      return makeLine(4, d100 > 0 ? d100 : d50, stroke + " easy", 0);
+    }
     const fit = findBestFit([d100, d50, d200, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, warmDesc, 0);
-    return makeLine(fit.reps, fit.dist, warmDesc, 0);
+    const line = makeLine(fit.reps, fit.dist, warmDesc, 0);
+    // Final guard: validate even lengths
+    if (!endsAtHomeEnd(fit.reps * fit.dist, base)) {
+      // Adjust to next even count
+      const evenReps = fit.reps % 2 === 0 ? fit.reps : fit.reps + 1;
+      return makeLine(evenReps, fit.dist, warmDesc, 0);
+    }
+    return line;
   }
 
   // BUILD: Build set with variety - clear progression keywords for gradient
@@ -187,9 +316,17 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // DRILL: Named drill with nice display
+  // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
   if (k.includes("drill")) {
     const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, drill, 0);
+    
+    // Validate: drill should use clean rep counts
+    if (!isValidDrillLine(fit.reps)) {
+      // Adjust to nearest clean rep count
+      const cleanReps = fit.reps < 7 ? 6 : fit.reps < 9 ? 8 : fit.reps < 11 ? 10 : 12;
+      return makeLine(cleanReps, fit.dist, drill, restFor(fit.dist, "easy"));
+    }
     
     // If many reps, show drill choice suggestion
     if (fit.reps >= 6 && (seedB % 3) === 0) {
@@ -200,11 +337,12 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   // KICK: Kick set with variety across effort levels
   // Use rerollNum to CYCLE through effort levels deliberately
+  // Guard: no "relaxed" or "easy" with short reps (25-50)
   if (k.includes("kick")) {
     const finNote = hasFins ? " with fins" : "";
     // Organized by effort level for deliberate cycling
     const kickByEffort = {
-      moderate: ["kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote, "kick relaxed" + finNote, "flutter kick" + finNote],
+      moderate: ["kick steady" + finNote, "kick on side" + finNote, "streamline kick" + finNote, "flutter kick" + finNote],
       strong: ["kick build" + finNote, "kick descend" + finNote, "kick descend 1-4" + finNote],
       hard: ["kick strong" + finNote, "kick fast" + finNote, "kick hard" + finNote],
       fullgas: ["kick sprint" + finNote, "kick max effort" + finNote]
@@ -214,9 +352,15 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     const effortIdx = rerollNum % effortLevels.length;
     const effort = effortLevels[effortIdx];
     const descs = kickByEffort[effort];
-    const kickDesc = descs[seedA % descs.length];
+    let kickDesc = descs[seedA % descs.length];
     const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, "kick" + finNote, 0);
+    
+    // Validate: no "relaxed" or "easy" with short reps
+    if (!isValidKickLine(kickDesc, fit.dist)) {
+      // Switch to a valid description for short kick
+      kickDesc = "kick steady" + finNote;
+    }
     return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist, effort));
   }
 
@@ -243,12 +387,25 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // COOL-DOWN: Easy swim with variety
+  // Guard: cool-down must not contain hard effort keywords
   if (k.includes("cool")) {
     const coolDescs = ["easy choice", stroke + " easy", "easy swim", "choice loosen up", "relaxed swim"];
     const coolDesc = coolDescs[seedA % coolDescs.length];
+    // Validate: cool-down should never have hard efforts (guard check)
+    if (!isValidWarmupCoolLine(coolDesc)) {
+      // Fallback to safe default
+      return makeLine(4, d100 > 0 ? d100 : d50, stroke + " easy", 0);
+    }
     const fit = findBestFit([d100, d200, d50].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, coolDesc, 0);
-    return makeLine(fit.reps, fit.dist, coolDesc, 0);
+    const line = makeLine(fit.reps, fit.dist, coolDesc, 0);
+    // Final guard: validate even lengths
+    if (!endsAtHomeEnd(fit.reps * fit.dist, base)) {
+      // Adjust to next even count
+      const evenReps = fit.reps % 2 === 0 ? fit.reps : fit.reps + 1;
+      return makeLine(evenReps, fit.dist, coolDesc, 0);
+    }
+    return line;
   }
 
   // MAIN SET: Coach-quality variety with optional multi-part
@@ -3872,14 +4029,37 @@ app.post("/generate-workout", (req, res) => {
       const setLabel = s.label;
       const setDist = s.dist;
 
-      const body = buildOneSetBodyShared({
-        label: setLabel,
-        targetDistance: setDist,
-        poolLen,
-        unitsShort,
-        opts: optsWithTotal,
-        seed: (seed + fnv1a32(setLabel)) >>> 0
-      });
+      // Set-level validation with reroll logic
+      // Try up to 5 times to get a valid set body
+      let body = null;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (attempts < maxAttempts) {
+        const candidateBody = buildOneSetBodyShared({
+          label: setLabel,
+          targetDistance: setDist,
+          poolLen,
+          unitsShort,
+          opts: optsWithTotal,
+          seed: (seed + fnv1a32(setLabel) + attempts) >>> 0,
+          rerollCount: attempts
+        });
+        
+        if (!candidateBody) {
+          attempts++;
+          continue;
+        }
+        
+        // Validate the generated body
+        const validation = validateSetBody(candidateBody, setDist, poolLen);
+        if (validation.valid) {
+          body = candidateBody;
+          break;
+        }
+        
+        attempts++;
+      }
 
       if (!body) {
         const fallback = safeSimpleSetBody(setLabel, setDist, poolLen, opts);

@@ -202,6 +202,16 @@ Workout area:
   - Moved most inline CSS out into styles.css
   - Viewport Lab CSS is scoped to avoid bleeding into the main UI
 
+2026-01-14
+- Free-tier realism validation guards added
+  - Added validation helpers: isAllowedRepCount, endsAtHomeEnd, isValidWarmupCoolLine, isValidDrillLine, isValidKickLine, parseNxD, validateSetBody
+  - findBestFit now filters by allowed rep counts (2,3,4,5,6,8,10,12,16,20 for short reps; less for longer)
+  - Warm-up and cool-down guard against hard effort keywords
+  - Drill sets guard against odd/random rep counts (7, 9, 11, 13)
+  - Kick sets guard against "relaxed" or "easy" with short reps
+  - Set-level validation rerolls invalid sets up to 5 times before fallback
+  - No tier engine yet - just validation guards
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---
@@ -257,13 +267,13 @@ Testing note:
 
 Pick one only. Logic only.
 
-Define the tier engine and output contract:
-- Write a concrete tier model (tiers, goals, constraints, allowed set types)
-- Define a strict output schema that UI can always parse
-- Add a validation step that rejects or repairs bad outputs
-- Update buildWorkout and buildOneSetBodyShared to obey tier constraints
+Validation guards are now in place. Next:
+- Test generated workouts for coach plausibility
+- Review rep count distributions
+- Review effort level distributions
+- Identify remaining implausible patterns
 
-Stop after this single pass and wait for Jess manual review of generated workouts.
+Stop after testing and wait for Jess manual review of generated workouts.
 
 <!-- __END_PS_NEXT_SINGLE_STEP_PS120__ -->
 

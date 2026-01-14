@@ -1,0 +1,82 @@
+Task: UI polish. Fix card transparency, fix dolphin anchor, change V to VO, soften active pool buttons. index.js only. No logic refactors.
+
+File: index.js
+Edits are in __START_ROUTE_HOME_UI_HTML_R110__ (HTML template) and the CSS block in the same route.
+
+1) Make the main input card more transparent (this is the big missing piece)
+
+Find the main white rounded card wrapper for the input UI. It is the div that wraps the title “Swim Gen”, the slider, pool buttons, and Generate.
+
+It will have a style with a solid background like background:#fff or background: rgba(255,255,255,...).
+
+Change that background to 50% transparent:
+
+Replace whatever it currently is with:
+
+background: rgba(255,255,255,0.5);
+
+
+Optional but recommended (keeps it readable over the photo):
+
+backdrop-filter: blur(6px);
+-webkit-backdrop-filter: blur(6px);
+
+
+Do not change padding, radius, or layout.
+
+2) Fix the dolphin start height and splash position by restoring its original anchor near Generate
+
+Right now #dolphinLoader is sitting near the slider label area, which breaks the animation baseline.
+
+Do this:
+
+A) Remove #dolphinLoader from the pool buttons row completely.
+
+B) Put #dolphinLoader back in the Generate row, immediately after the Generate button, using this exact span:
+
+<span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:12px;"></span>
+
+
+This restores the same baseline the animation expects, so the dolphin starts on the same line as “Generating…” and the splash appears in the consistent location.
+
+3) Change the tiny viewport link from V to VO
+
+Find the small faint link you added (currently “V”) and change its inner text to:
+
+VO
+
+
+Leave the faint styling as is.
+
+4) Soften the active pool button style (stop the heavy black fill)
+
+Find the CSS rules for the pool buttons selected state. It will be something like:
+
+.poolBtn.active { ... }
+or
+
+button[data-pool].active { ... }
+or the JS toggles an active class.
+
+Change the active styling to a light tint instead of solid black:
+
+/* Active pool button */
+.poolBtn.active,
+#poolButtons button.active {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.18);
+  color: #111;
+}
+
+
+Do not change sizes, just colours.
+
+Why this will match what you asked for
+
+Card becomes visibly translucent over the background image (your screenshot shows it is still basically opaque right now).
+
+Dolphin animation uses the Generate row again, so start height and splash placement return to how it was.
+
+Viewport link becomes “VO” as requested.
+
+Pool selection is still clear, but not aggressive black.

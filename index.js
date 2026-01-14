@@ -543,12 +543,12 @@ app.get("/", (req, res) => {
     <div id="adBanner" style="width:100%; max-width:520px; height:50px; margin-bottom:10px; background:rgba(200,200,200,0.5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#666;">Ad placeholder</div>
 
     <div style="max-width:520px;">
-      <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.9); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
+      <form id="genForm" style="position:relative; max-width:520px; padding:20px; border:1px solid rgba(255,255,255,0.3); border-radius:16px; background:rgba(255,255,255,0.5); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:0 4px 20px rgba(0,80,100,0.15);">
         <div class="form-row">
           <div class="form-col">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <h3 style="margin:0; font-size:22px; font-weight:700;">Swim Gen</h3>
-              <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">V</a>
+              <a href="/viewport-lab" style="font-size:12px; opacity:0.25; text-decoration:none; color:#111;">VO</a>
             </div>
 
             <div style="display:flex; align-items:center; gap:12px;">
@@ -574,10 +574,9 @@ app.get("/", (req, res) => {
             <input type="hidden" name="poolLength" id="poolLengthHidden" value="25m" />
 
             <div id="poolButtons" style="display:flex; align-items:center; gap:10px;">
-              <button type="button" data-pool="25m" style="background:#111; color:#fff; border:2px solid #111; padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
+              <button type="button" data-pool="25m" style="background:rgba(0,0,0,0.08); color:#111; border:2px solid rgba(0,0,0,0.18); padding:6px 14px; border-radius:8px; cursor:pointer;">25m</button>
               <button type="button" data-pool="50m" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">50m</button>
               <button type="button" data-pool="25yd" style="background:#fff; color:#111; border:2px solid #ccc; padding:6px 14px; border-radius:8px; cursor:pointer;">25yd</button>
-              <span id="dolphinLoader" style="display:inline-block; margin-left:10px;"></span>
             </div>
 
             <div style="margin-top:12px;">
@@ -710,6 +709,7 @@ app.get("/", (req, res) => {
             <button type="submit" style="padding:8px 12px; border-radius:10px; border:1px solid #111; background:#111; color:#fff; cursor:pointer;">
               Generate
             </button>
+            <span id="dolphinLoader" style="display:inline-block; vertical-align:middle; margin-left:12px;"></span>
             <button id="copyBtn" type="button" style="display:none; padding:8px 12px; border-radius:10px; border:1px solid #777; background:#fff; color:#111; cursor:pointer;" disabled>
               Copy
             </button>
@@ -2131,11 +2131,11 @@ app.get("/", (req, res) => {
         for (const btn of poolButtons.querySelectorAll("button[data-pool]")) {
           const isActive = btn.getAttribute("data-pool") === poolValue;
           btn.style.fontWeight = isActive ? "600" : "400";
-          btn.style.border = isActive ? "2px solid #111" : "2px solid #ccc";
+          btn.style.border = isActive ? "2px solid rgba(0,0,0,0.18)" : "2px solid #ccc";
           btn.style.borderRadius = "8px";
           btn.style.padding = "6px 14px";
-          btn.style.background = isActive ? "#111" : "#fff";
-          btn.style.color = isActive ? "#fff" : "#111";
+          btn.style.background = isActive ? "rgba(0,0,0,0.08)" : "#fff";
+          btn.style.color = "#111";
           btn.style.cursor = "pointer";
         }
       }

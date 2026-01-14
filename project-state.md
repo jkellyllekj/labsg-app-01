@@ -218,6 +218,11 @@ Workout area:
   - Each section tries template first, falls back to existing logic
   - Prevents 125m/175m/225m fragments at small totals
 
+- Fixed template selection by normalizing section labels
+  - Added normalizeSectionKey(label) to convert "Warm up" -> "warmup", etc.
+  - Template selection now uses normalized key instead of raw label
+  - Templates now actually fire for matching sections
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

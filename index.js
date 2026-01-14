@@ -193,6 +193,16 @@ function pickTemplate(section, targetDistance, seed) {
   return fits[idx];
 }
 
+function normalizeSectionKey(label) {
+  const l = String(label).toLowerCase();
+  if (l.includes("warm")) return "warmup";
+  if (l.includes("build")) return "build";
+  if (l.includes("drill")) return "drill";
+  if (l.includes("kick")) return "kick";
+  if (l.includes("cool")) return "cooldown";
+  return null;
+}
+
 // ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
 function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) {
   const base = poolLen;
@@ -325,7 +335,8 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Guard: warm-up must not contain hard effort keywords
   if (k.includes("warm")) {
     // Try template first
-    const template = pickTemplate("warmup", target, seedA);
+    const sectionKey = normalizeSectionKey(label);
+    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
     if (template) return template.body;
     
     const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
@@ -346,7 +357,8 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // BUILD: Build set with variety - clear progression keywords for gradient
   if (k.includes("build")) {
     // Try template first
-    const template = pickTemplate("build", target, seedA);
+    const sectionKey = normalizeSectionKey(label);
+    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
     if (template) return template.body;
     
     const buildSetDescs = [
@@ -363,7 +375,8 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
   if (k.includes("drill")) {
     // Try template first
-    const template = pickTemplate("drill", target, seedA);
+    const sectionKey = normalizeSectionKey(label);
+    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
     if (template) return template.body;
     
     const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
@@ -385,7 +398,8 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Guard: no "relaxed" or "easy" with short reps (25-50)
   if (k.includes("kick")) {
     // Try template first
-    const template = pickTemplate("kick", target, seedA);
+    const sectionKey = normalizeSectionKey(label);
+    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
     if (template) return template.body;
     
     const finNote = hasFins ? " with fins" : "";
@@ -435,7 +449,8 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // Guard: cool-down must not contain hard effort keywords
   if (k.includes("cool")) {
     // Try template first
-    const template = pickTemplate("cooldown", target, seedA);
+    const sectionKey = normalizeSectionKey(label);
+    const template = sectionKey ? pickTemplate(sectionKey, target, seedA) : null;
     if (template) return template.body;
     
     const coolDescs = ["easy choice", stroke + " easy", "easy swim", "choice loosen up", "relaxed swim"];

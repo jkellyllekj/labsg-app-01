@@ -3261,6 +3261,8 @@ app.post("/reroll-set", (req, res) => {
   }
 
   function restSecondsFor(label, repDist, opts) {
+    if (!opts || !opts.allowRest) return 0;
+
     const k = String(label || "").toLowerCase();
     let base = 15;
 

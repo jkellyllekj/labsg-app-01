@@ -254,6 +254,8 @@ Workout area:
 
 - Red (full gas) now injected at workout level with ~50% probability when absent, limited to Main or Kick
 
+- Disabled rest seconds display for free tier by gating restSecondsFor behind opts.allowRest
+
 <!-- __END_PS_RECENT_FIXES_PS090__ -->
 
 ---

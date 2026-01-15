@@ -1,0 +1,109 @@
+START
+
+🛠️ AGENT TASK: Replace Generic Drill Sets with Realistic Drill Descriptions
+
+🎯 Goal
+
+Improve Drill set variety and realism by replacing vague descriptions like "drill choice" and "drill swim" with structured sets using real drills.
+
+These drill sets should reflect what swimmers and coaches actually use — e.g. Fist, Scull, DPS, Catch-up — and follow logical patterns (50s or 25s, grouped by type).
+
+📁 Edit only:
+index.js
+
+🧠 What to Do
+
+Update Drill set generation logic in buildOneSetBodyShared() (where k.includes("drill")):
+
+Replace or supplement existing generic lines (e.g. "6x50 drill swim", "4x100 drill choice") with named, structured drills.
+
+Use templates like:
+
+6×50 drill (Fist, Catch-up, DPS)
+8×25 drill (Scull front, Scull rear)
+4×50 (25 drill / 25 swim)
+
+
+Vary set lengths but keep total drill distance between 4 × poolLength and 8 × poolLength
+
+Effort must always stay in blue, green, or yellow zones (never orange/red)
+
+Drill sets should feel short, precise, and technical
+
+Use these example drills as your base:
+
+Fist
+
+Catch-up
+
+DPS (Distance Per Stroke)
+
+Scull Front / Rear
+
+3-3-3 (Drill with 3 strokes right/left/both)
+
+Long Dog
+
+Single Arm
+
+25 Drill + 25 Swim
+
+Jazz Hands
+
+Torpedo Glide
+
+Finger Drag
+
+Use these terms inside the set body text so each drill card feels instructional.
+
+Effort Handling
+
+These should always output with a blue, green, or yellow dolphin icon (effort level).
+
+Avoid sprint, strong, or threshold tags.
+
+✅ Example Outputs (valid)
+
+6×50 drill (Fist, DPS, Catch-up) ✅
+
+4×50 (25 drill / 25 swim) ✅
+
+8×25 Scull drill (front / rear) ✅
+
+5×50 finger drag + long dog ✅
+
+6×50 freestyle drills (Catch-up, DPS, Single Arm) ✅
+
+🧪 Test Instructions
+
+Generate workouts of:
+
+1000m, 1500m, 2000m
+
+Pool: 25m and 50m
+
+Confirm:
+
+Each Drill section includes real, named drills (no “drill swim” or “drill choice”)
+
+Total drill distance is reasonable (100–400m)
+
+All effort icons for Drill sections are blue, green, or yellow
+
+Generator renders cleanly, no validation or snapping issues
+
+📋 Report Back
+
+Please confirm:
+
+New Drill templates or logic added
+
+Example Drill sets generated
+
+Confirmation that effort levels are capped correctly
+
+No UI or validation issues occurred
+
+Do not update Pull or Main logic yet — those will come next.
+
+FINISH

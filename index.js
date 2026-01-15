@@ -245,14 +245,24 @@ const SECTION_TEMPLATES = {
     { body: "6x50 descend 1-3 twice", dist: 300 }
   ],
   drill: [
-    { body: "6x50 drill choice", dist: 300 },
-    { body: "8x25 drill choice", dist: 200 },
-    { body: "6x50 drill down swim back", dist: 300 },
-    { body: "4x50 drill", dist: 200 },
-    { body: "4x100 drill swim", dist: 400 },
-    { body: "8x50 catch up", dist: 400 },
-    { body: "6x50 fingertip drag", dist: 300 },
-    { body: "4x75 drill choice", dist: 300 }
+    // Named drill sets - structured and instructional
+    { body: "6x50 drill (Fist, Catch-up, DPS)", dist: 300 },
+    { body: "8x25 Scull drill (front / rear)", dist: 200 },
+    { body: "4x50 (25 drill / 25 swim)", dist: 200 },
+    { body: "6x50 Catch-up drill", dist: 300 },
+    { body: "8x50 Finger Drag", dist: 400 },
+    { body: "4x50 DPS focus", dist: 200 },
+    { body: "6x50 Single Arm drill", dist: 300 },
+    { body: "8x25 Torpedo Glide", dist: 200 },
+    { body: "4x100 (50 drill / 50 swim)", dist: 400 },
+    { body: "6x50 drill (Long Dog, Catch-up)", dist: 300 },
+    { body: "5x50 3-3-3 drill", dist: 250 },
+    { body: "4x50 Fist drill", dist: 200 },
+    { body: "6x50 (Finger Drag, DPS, Catch-up)", dist: 300 },
+    { body: "8x25 drill (Scull, Fist)", dist: 200 },
+    { body: "4x75 drill (25 Catch-up / 25 Fist / 25 swim)", dist: 300 },
+    { body: "5x50 Jazz Hands drill", dist: 250 },
+    { body: "6x50 freestyle drills (Catch-up, DPS, Single Arm)", dist: 300 }
   ],
   kick: [
     // Simple flat effort sets

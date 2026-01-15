@@ -1,250 +1,139 @@
-<!-- __START_FILE_PROJECT_STATE_PS000__ -->
+# Project: Swim Workout Generator
 
-# Project State
-
-Project: Swim Workout Generator  
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
-Last updated: 2026-01-14  
-Status: Authoritative
+Last updated: 2026-01-16  
+Status: Active
 
 ---
 
-<!--
-============================================================================
-BLOCK INDEX
-PS010 - READ_FIRST
-PS020 - CURRENT_PHASE
-PS030 - FROZEN
-PS040 - ALLOWED
-PS050 - ACTIVE_FILES
-PS060 - CURRENT_SYSTEM_SNAPSHOT
-PS070 - INVARIANTS
-PS080 - OBSERVED_FAILURES
-PS090 - RECENT_FIXES
-PS100 - CURRENT_KNOWN_UI_ISSUES
-PS110 - WORKING_MODE_OVERRIDE
-PS120 - NEXT_SINGLE_STEP
-============================================================================
--->
+## Current Focus
 
-<!-- __START_PS_READ_FIRST_PS010__ -->
+**Phase: v1 Logic Stability and Constraint Engine**
 
-## If this is a new chat, read this first
+The current focus is to:
+- Fix math regressions in conventional pools (25m, 50m, 25yd)
+- Stabilize set and effort logic so outputs feel coach-realistic
+- Honor a consistent workout structure across all pool types
+- Keep UI frozen (no visual redesigns or layout changes)
 
-This file is the sole source of truth for the current state of the project.  
-Repo and file truth overrides chat memory.
-
-If anything here is unclear or stale: STOP and update this file first.
-
-<!-- __END_PS_READ_FIRST_PS010__ -->
+This phase completes when:
+- All workouts follow the correct section sequence
+- Every set ends at the same wall (even number of lengths)
+- Effort patterns are plausible and varied
+- Generator outputs are coach-plausible on first try
 
 ---
 
-<!-- __START_PS_CURRENT_PHASE_PS020__ -->
+## Architecture Overview
 
-## Current Phase
-
-v1 Logic and tier engine build
-
-Purpose:
-- Lock the current UI and stop UI iteration for now
-- Make workouts coach plausible and consistent
-- Introduce tiers and constraints so outputs are structured and reliable
-- Keep the app minimal and stable in Replit
-
-Non goals:
-- No UI redesigns
-- No refactors for cleanliness
-- No architectural changes
-
-<!-- __END_PS_CURRENT_PHASE_PS020__ -->
+- The entire app runs from `index.js` (single file logic and UI).
+- Styles are in `styles.css` (UI is frozen for now).
+- Workouts are generated client-side, using seeded randomness.
+- The user selects pool length, total distance, and a few advanced options.
+- Workouts are structured as a sequence of “cards” (Warm-up, Drill, Main, etc.).
 
 ---
 
-<!-- __START_PS_FROZEN_PS030__ -->
+## Structure Goals (Workout Format)
 
-## Frozen
+Every workout should follow this high-level section order:
 
-- index.js is the only runtime file
-- styles.css is used for extracted CSS and is served by index.js
-- Two layer background crossfade system (bgA and bgB)
-- Background randomises on page load
-- Workout cards render full width layout (no extra outer panel around the sets)
-- Current Swim Gen top panel layout and control placements are locked for now
-- Effort strip behaviour is locked for now, even if imperfect on some phones
+1. **Warm-up**  
+   Easy or very easy swimming only (effort: blue or green). No build or sprint sets in warm-up.
 
-<!-- __END_PS_FROZEN_PS030__ -->
+2. **Build Set** (when total distance allows)  
+   Treated as “warm-up part 2”. Progressively builds intensity. Should ramp up or alternate effort. Can include yellow or orange, and very rarely red if warming up for sprints.
 
----
+3. **Kick and/or Pull Set**  
+   Typically comes *before* the Drill. Kick sets may include harder efforts (orange or red). Pull is optional based on user toggle.
 
-<!-- __START_PS_ALLOWED_PS040__ -->
+4. **Drill Set**  
+   Technique-focused, always low to moderate effort (blue, green, yellow max). Never red. Often short and simple, but should appear in most workouts ≥ 1000m.
 
-## Allowed
+5. **Main Set**  
+   Highest intensity. Can include moderate to full gas efforts. Should sometimes include gradients (descends, builds, variable). Red-level effort must appear in at least 60–70% of workouts.
 
-Primary work now:
-- Workout generation logic changes only
-- Tier model and constraints
-- Output formatting so parsing is reliable
-- Reroll reliability improvements
+6. **Cool-down**  
+   Always low effort. No descending sets or surprises. Typically 100–300m in total.
 
-UI work:
-- Only tiny UI fixes that are strictly required to support logic work
-- Park all other UI polish until after the tier engine is stable
-
-Change size rule:
-- One bounded change at a time
-- Touch as few blocks as possible
-
-<!-- __END_PS_ALLOWED_PS040__ -->
+Not every workout must include every section. But if the total is ≥ 1000m:
+- Build should appear
+- Kick and Drill should appear
+- Main and Cool-down are always present
 
 ---
 
-<!-- __START_PS_ACTIVE_FILES_PS050__ -->
+## Distance and Pool Length Rules
 
-## Active Files
-
-- index.js - sole runtime and UI logic
-- styles.css - external stylesheet
-- project-state.md - authoritative state
-- WORKING-METHOD-REPLIT.md - working rules
-
-<!-- __END_PS_ACTIVE_FILES_PS050__ -->
+- **Every set must end at the same wall it started**: this means each set distance must be divisible by `2 × poolLength` (e.g. 50m in a 25m pool, 100m in a 50m pool).
+- The **total workout** may slightly overshoot the user request (e.g. 3320m for a requested 3300m) — this is allowed *only* if necessary to preserve even-wall endings.
+- This logic **must apply equally** across all pools — standard (25m, 50m, 25yd) and custom (e.g. 27m, 33m, etc.).
+- For custom pools, the generator should display `(X lengths)` after each set for clarity.
+- No set should ever end on an odd number of pool lengths.
 
 ---
 
-<!-- __START_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+## Effort and Variety Rules
 
-## Current System Snapshot
+- **Warm-up and Cool-down**: only blue/green (easy) efforts.
+- **Build**: may ramp up from blue to yellow/orange. Red allowed very rarely.
+- **Drill**: never red, usually blue/green. Should include recognizable drills.
+- **Kick**: can include all zones, including red (e.g. sprint kick).
+- **Main**: may include yellow, orange, red. Often descends, builds, or varies effort.
 
-Backgrounds:
-- Random background works on page load
-- Manual background cycling works
-- Two layer crossfade is live and does not flash fallback green in normal use
-
-Routes and tools:
-- Dolphin assets are served from public/assets/dolphins/ and used across UI and effort bar
-
-UI top area:
-- Ad placeholder banner at top
-- Single Swim Gen panel contains:
-  - Title row with Swim Gen text and a background icon button (picture icon)
-  - Distance slider with the distance readout to the right
-  - Pool length buttons in one row (25m, 50m, 25yd) plus Generate on same row
-  - Advanced options collapsed area below
-  - Dolphin loader visible on the panel
-
-Workout area:
-- Set cards render below and should remain full width (no extra enclosing panel)
-
-<!-- __END_PS_CURRENT_SYSTEM_SNAPSHOT_PS060__ -->
+**Effort variety goals:**
+- At least one red set in 60–70% of workouts.
+- Hard (orange) should appear alone, not only inside gradients.
+- Gradients (descends, builds, etc.): target 30% of workouts.
+- Avoid back-to-back gradients in every section — it should feel deliberate and varied.
 
 ---
-
-<!-- __START_PS_INVARIANTS_PS070__ -->
 
 ## Invariants
 
-- Background filenames may contain spaces and parentheses
-- Background switching must never reveal fallback colour
-- Manual background cycling must advance, not toggle
-- Keep index.js as the only runtime file
-- Keep workout set cards full width (no extra outer container around the list)
-
-<!-- __END_PS_INVARIANTS_PS070__ -->
-
----
-
-<!-- __START_PS_OBSERVED_FAILURES_PS080__ -->
-
-## Observed Failures
-
-- Rest seconds still appear in free tier as a red 20s line. This must never render in free tier.
-- Reroll sometimes shows "Reroll failed to produce a replacement set." This warning is not acceptable. There must always be a replacement, at minimum a change in effort.
-- Home-end rule is inconsistent. Total distance is even-length, but individual set distances can still be odd-length totals (example 550m, 450m, 350m, and similar). Rule should be: every set ends at the same wall, so each set distance must be a multiple of 2 * poolLen.
-- Intensity colour is missing on first generation. Red (hard or fullgas) almost never appears unless rerolling individual sets. First generation should include at least one red set about 50 percent of the time. Mainly in Main or Kick, never in Warm up or Cool down.
-- Variety is still low. On repeated Generate, templates repeat quickly and large workouts sometimes fall back to generic swim blocks, so Drill and Kick stop looking like drills and kick.
-- Cool down often locks to "200 easy" too often. Need more plausible options like 250 and 300 in metres, and the yard equivalents.
-- Terminology: In this app a lap means one length, not down and back. Add a small help popup later.
-
-<!-- __END_PS_OBSERVED_FAILURES_PS080__ -->
+These must always hold:
+- Every set must end at the starting wall.
+- No UI layout changes during this phase.
+- index.js is the only file with runtime logic.
+- Each section card must render at full width, no outer wrappers.
+- Generator must never return null or show “Reroll failed”.
 
 ---
-
-<!-- __START_PS_RECENT_FIXES_PS090__ -->
 
 ## Recent Fixes
 
-- Template based section generation was added and is now firing for many small and mid workouts, removing the worst 125m and 175m fragment sections.
-- Some sessions now look more coach plausible on first generate, but the issues in PS080 remain and must be fixed before further tier work.
-
-Rollback note:
-- Safe rollback checkpoint exists from about 2026-01-14 around 18:00, labelled by Jess as the May checkpoint. Use this if the logic work goes haywire.
-
-<!-- __END_PS_RECENT_FIXES_PS090__ -->
+- Effort logic refactored to allow for gradient + single-intensity variation.
+- Set snapping confirmed to work correctly in custom pools (e.g. 27m).
+- Some template selection bugs corrected (templates now respect pool length).
+- Section validation logic now respects min section length and avoids bad splits.
 
 ---
 
-<!-- __START_PS_CURRENT_KNOWN_UI_ISSUES_PS100__ -->
+## Current Known Issues
 
-## Current Known UI Issues
-
-UI is parked. Do not spend time here unless it blocks logic work.
-
-Dolphin and splash animation
-- Splash resting angle is still not correct in all contexts
-  - Desired: fixed resting angle rotated left about 130 degrees
-  - Splash must never spin
-- Dolphin fade out and splash fade in should be a true crossfade
-  - Desired: both happen at the same time over 0.2 seconds
-- Reveal and scroll timing still feels slightly off on some devices
-  - Desired: splash is visible before any smooth scroll begins
-
-Effort bar icons
-- Effort dolphins still feel cut off or tight on some phones
-- Threshold and Full Gas sometimes appear faded again
-  - Desired for now: both remain blue, no warm tint
-
-Layout polish parked
-- Set card dolphin and metres alignment is noted but not urgent yet
-  - Desired: dolphin aligns with set title line
-  - Desired: metres aligns with the set detail line
-
-<!-- __END_PS_CURRENT_KNOWN_UI_ISSUES_PS100__ -->
+- Standard pools (25m, 50m, 25yd) still allow some sets to end on odd number of lengths.
+- Build section sometimes merged into Warm-up.
+- Kick and Drill occasionally skipped in workouts between 1000–1500m.
+- Effort variety remains too gradient-heavy. Needs more “hard only” or “sprint only” sets.
+- Full Gas effort still underrepresented.
+- Reroll rotation often reuses same templates too quickly.
 
 ---
 
-<!-- __START_PS_WORKING_MODE_OVERRIDE_PS110__ -->
+## Working Method (summary)
 
-## Working Mode Override for this project
-
-Hybrid mode:
-- ChatGPT does planning and produces precise search strings and patch instructions
-- Replit Agent executes edits only
-- Jess manually tests in the browser
-
-Testing note:
-- The Agent should not claim something works unless Jess confirms after manual testing
-
-<!-- __END_PS_WORKING_MODE_OVERRIDE_PS110__ -->
+- All edits happen in `index.js`
+- One small, bounded change per step
+- Agent must test each output in Replit
+- UI is frozen — logic fixes only
+- No full file rewrites unless explicitly needed
+- Agent must update this file when fixing a listed issue
 
 ---
 
-<!-- __START_PS_NEXT_SINGLE_STEP_PS120__ -->
+## Next Task
 
-## Next Single Step
+**Fix set snapping logic in conventional pools.**  
+Ensure all sets, including Main, are passed through the same `snapSection()` logic so that every set ends at the same wall. No 350m/450m sets in a 50m pool.  
+Allow slight total overshoot if needed, just like in custom pools.
 
-Stop all new feature work. Do one control fix.
-
-Free tier must never display rest seconds and reroll must never fail.
-
-Implement:
-- Strip any standalone rest line like "20s" from all set bodies before rendering.
-- Ensure the reroll endpoint always returns a valid replacement set, with a guaranteed effort change fallback, and never returns null.
-
-Keep UI frozen.
-
-<!-- __END_PS_NEXT_SINGLE_STEP_PS120__ -->
-
----
-
-<!-- __END_FILE_PROJECT_STATE_PS000__ -->

@@ -1,13 +1,13 @@
 # Working Method, Replit Agent Edition
 
-Last updated: 2026-01-13  
+Last updated: 2026-01-15  
 Status: Authoritative
 
 ## Purpose
 
 This document defines how we work inside Replit using the Agent so we move fast, avoid context decay, and do not waste time or money.
 
-This is a reusable working method intended to apply to any project, not just Swim Workout Generator.
+This is a reusable working method intended to apply to any project.
 
 ## Core truth
 
@@ -15,14 +15,12 @@ GitHub is the source of truth for code history and rollback.
 
 Replit is the workspace where the Agent edits and runs code.
 
-
 ## Context decay control
 
-- After the main files are loaded into the chat (PROJECT_STATE.md, WORKING-METHOD-REPLIT.md, and the current runtime file such as index.js), the assistant must NOT rewrite or re-output the entire runtime file for small changes.
-- Instead, the assistant must provide precise, targeted edit instructions for the Replit Agent: file path, the exact block or function to change, and the exact replacement snippet.
-- Only output full-file replacements when explicitly requested, or when adding first-time block markers to a file that has none, or when a change is so large that a partial edit would be riskier.
+- After the main files are loaded into the chat (the project’s designated project state file, WORKING-METHOD-REPLIT.md, and the current runtime file such as index.js), the assistant must NOT rewrite or re output the entire runtime file for small changes.
+- Instead, the assistant must provide precise, targeted edit instructions for the Replit Agent: file path, the exact function or location to change, and the exact replacement snippet.
+- Only output full file replacements when explicitly requested, or when a change is so large that a partial edit would be riskier.
 - This avoids context decay and reduces wasted Replit Agent usage costs.
-
 
 Chat is for planning, reasoning, review, and decisions.
 
@@ -32,8 +30,11 @@ The Agent is an execution tool, not the primary thinker.
 
 We keep three documents only.
 
-PROJECT_STATE.md  
+Project state file  
 This is the authoritative, living record of the project. It contains vision, constraints, decisions, known limitations, and next steps.
+
+The filename is project specific and must begin with `PROJECT_STATE_`  
+Example: `PROJECT_STATE_CAPISCO.md`
 
 WORKING-METHOD-REPLIT.md  
 This file. It defines how we collaborate with the Agent.
@@ -41,7 +42,7 @@ This file. It defines how we collaborate with the Agent.
 COACH_DESIGN_NOTES.md or other design notes  
 Optional, project specific, deep intent documents. These are not required reading for the Agent unless explicitly instructed.
 
-The Agent must keep PROJECT_STATE.md current when instructed.
+The Agent must keep the project’s designated project state file current when instructed.
 
 ## Agent operating mode
 
@@ -56,7 +57,7 @@ The Agent does the edits, runs the app, and reports results.
 
 At the start of every Agent session, the Agent must do this in order.
 
-1. Read PROJECT_STATE.md and this Working Method.
+1. Read the project’s designated project state file and this Working Method.
 2. State the current phase and the next task in one short paragraph.
 3. State which files it expects to touch.
 4. Wait for confirmation or proceed only if explicitly told to execute.
@@ -73,13 +74,16 @@ If a task is already well defined, the Agent must skip planning and execute dire
 
 ## Change size rule
 
-Agent must work in small, bounded changes.
+Agent must work in small, bounded micro changes.
 
-One goal per change.
+One goal per micro change.
+
+An Agent run may include up to 3 micro changes if they are fully independent and low risk.  
+Each micro change must be committed separately.
 
 Touch as few files as possible.
 
-No refactors unless PROJECT_STATE.md explicitly allows it.
+No refactors unless the project’s designated project state file explicitly allows it.
 
 ## Testing rule, non negotiable
 
@@ -102,7 +106,7 @@ A change is done only when all of the following are true.
 - Code change is made.
 - App or tests have been run.
 - Errors are fixed or clearly listed.
-- PROJECT_STATE.md is updated if instructed.
+- The project’s designated project state file is updated if instructed.
 
 ## Context decay control
 
@@ -110,7 +114,7 @@ When the session feels confused, repetitive, or risky.
 
 Stop.
 
-Re read PROJECT_STATE.md.
+Re read the project’s designated project state file.
 
 Summarise what is currently true.
 
@@ -118,7 +122,7 @@ Continue with one small change only.
 
 ## New project intake, first session only
 
-When starting a new project, the Agent must ask and record answers in PROJECT_STATE.md.
+When starting a new project, the Agent must ask and record answers in the project’s designated project state file.
 
 - Target platforms now.
 - Platforms possibly needed later.
@@ -149,7 +153,7 @@ When invoked, the Agent must immediately do the following.
 
 1. Stop problem solving and halt work.
 2. Ensure code is saved and in a stable state.
-3. Update PROJECT_STATE.md with current reality, including:
+3. Update the project’s designated project state file with current reality, including:
    - Next steps
    - Decisions made
    - Vision updates
@@ -163,13 +167,13 @@ When invoked, the Agent must immediately do the following.
    - Files touched
 5. Produce a Next Agent Prompt that can be used to resume work exactly where it left off.
 
-PROJECT_STATE.md is the memory.  
+The project’s designated project state file is the memory.  
 The handover and prompt preserve continuity between sessions.
 
 ## Stability note
 
 This document should change rarely.
 
-PROJECT_STATE.md changes often.
+The project’s designated project state file changes often.
 
 If this document needs to change, it should be discussed and agreed deliberately.

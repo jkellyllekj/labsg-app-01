@@ -364,14 +364,21 @@ function applySectionMinimums(sets, total, poolLen) {
     s.dist = snapped;
   }
   
-  // Subtract adjustment from main set(s)
+  // Subtract adjustment from main set(s) and always snap main sets
   const mainSets = sets.filter(s => String(s.label).toLowerCase().includes("main"));
-  if (mainSets.length > 0 && adjustment > 0) {
-    // Distribute adjustment across main sets proportionally
-    const mainTotal = mainSets.reduce((sum, s) => sum + s.dist, 0);
-    for (const m of mainSets) {
-      const share = Math.round((m.dist / mainTotal) * adjustment);
-      m.dist = snapSection(m.dist - share, poolLen);
+  if (mainSets.length > 0) {
+    if (adjustment > 0) {
+      // Distribute adjustment across main sets proportionally
+      const mainTotal = mainSets.reduce((sum, s) => sum + s.dist, 0);
+      for (const m of mainSets) {
+        const share = Math.round((m.dist / mainTotal) * adjustment);
+        m.dist = snapSection(m.dist - share, poolLen);
+      }
+    } else {
+      // Even without adjustment, snap all main sets to home-end multiples
+      for (const m of mainSets) {
+        m.dist = snapSection(m.dist, poolLen);
+      }
     }
   }
   

@@ -107,6 +107,19 @@ These must always hold:
 - Some template selection bugs corrected (templates now respect pool length).
 - Section validation logic now respects min section length and avoids bad splits.
 
+## ✅ Snapping Logic Overhaul (Jan 2026)
+
+- All pool lengths (25m, 50m, 25yd, and non-standard sizes like 27m, 29m, 33m) now share the **same universal snapping logic**.
+- All swim sets (warmup, build, drill, kick, main, cooldown) are **snapped to even multiples of poolLength**, ensuring swimmers always finish at the home wall.
+- The generator allows small rounding up/down (e.g., 2484m instead of 2500m for a 27m pool), but always preserves lap logic.
+- **Main and Drill sections preserve their assigned distance exactly** during generation and regeneration — no drift.
+- Legacy fallback functions like `safeSimpleSetBody()` and soft-matching logic in `pickTemplate()` and `findBestFit()` have been disabled.
+- **1x filler lines** (e.g., “1x50 easy”) are no longer generated under any condition.
+- Snapping logic is now clean, unified, and validated across pool types.
+
+> Note: The 27m test exposed one case of drill math drift (7x54 = 403), which was caused by regeneration fallback. This was fixed as part of this rewrite.
+
+
 ---
 
 ## Current Known Issues

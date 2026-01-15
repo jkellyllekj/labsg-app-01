@@ -186,3 +186,17 @@ This document should change rarely.
 The project’s designated project state file changes often.
 
 If this document needs to change, it should be discussed and agreed deliberately.
+## Agent Instruction Boundaries (Snapping + Regeneration Logic)
+
+Effective Jan 2026, the Agent must follow these rules when working on snapping, set math, or regeneration logic:
+
+- DO NOT use any fallback methods like `safeSimpleSetBody()` to force totals.
+- DO NOT allow templates that mismatch the section's assigned distance.
+- DO NOT use ±range matching in `pickTemplate()` or `findBestFit()`. Only exact matches are valid.
+- DO NOT inject single-line fillers (e.g., 1x50 easy) to close gaps.
+- DO NOT reintroduce per-pool snapping logic. All pools use a shared engine.
+
+All regeneration (Main, Drill, etc.) must:
+- Retain original snapped allocation
+- Match math exactly
+- Snap to 2×poolLength

@@ -255,14 +255,28 @@ const SECTION_TEMPLATES = {
     { body: "4x75 drill choice", dist: 300 }
   ],
   kick: [
-    { body: "6x50 kick descend", dist: 300 },
-    { body: "4x100 kick strong", dist: 400 },
-    { body: "8x25 kick fast", dist: 200 },
+    // Simple flat effort sets
+    { body: "4x100 kick steady", dist: 400 },
+    { body: "6x50 kick moderate", dist: 300 },
     { body: "4x50 kick moderate", dist: 200 },
-    { body: "6x50 kick build", dist: 300 },
-    { body: "8x50 kick choice", dist: 400 },
-    { body: "4x75 kick", dist: 300 },
-    { body: "200 kick\n4x50 kick fast", dist: 400 }
+    { body: "8x25 kick fast", dist: 200 },
+    { body: "8x50 kick steady", dist: 400 },
+    { body: "5x50 kick steady", dist: 250 },
+    // Progression sets (strong → sprint)
+    { body: "200 kick strong\n4x50 kick sprint", dist: 400 },
+    { body: "6x50 kick descend", dist: 300 },
+    { body: "6x50 kick build sprint", dist: 300 },
+    { body: "4x100 kick build", dist: 400 },
+    { body: "300 kick descend 1-3", dist: 300 },
+    { body: "150 kick strong\n4x25 kick sprint", dist: 250 },
+    // Alternating effort sets
+    { body: "6x50 kick (25 easy / 25 fast)", dist: 300 },
+    { body: "8x50 kick (25 moderate / 25 sprint)", dist: 400 },
+    { body: "4x100 kick (50 steady / 50 fast)", dist: 400 },
+    { body: "5x50 kick (25 easy / 25 fast)", dist: 250 },
+    // Multi-line progression (orange → red)
+    { body: "4x50 kick strong\n4x25 kick sprint", dist: 300 },
+    { body: "200 kick moderate\n6x50 kick fast", dist: 500 }
   ],
   cooldown: [
     { body: "200 easy", dist: 200 },

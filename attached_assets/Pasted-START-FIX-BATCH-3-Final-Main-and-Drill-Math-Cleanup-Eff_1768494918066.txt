@@ -1,0 +1,64 @@
+START
+
+🛠️ FIX BATCH #3: Final Main and Drill Math Cleanup + Effort Realism
+
+---
+
+📁 Edit: index.js only
+
+---
+
+🎯 TASKS
+
+1. ✅ DRILL SET MATH & FORMAT FIX
+- Fix regeneration logic so drill sets NEVER display incorrect totals (e.g., 12x50 = 625m ❌).
+- Distance must always equal: number of reps × rep length.
+- If drill set has to be split into groups (e.g., 6x50 + 2x25), each block must be clearly labeled, and sum must be exact.
+- Preserve the structured format (e.g., “6x50 Drill FC” + numbered list of drills).
+
+2. ✅ MAIN SET MATH + ALLOCATION
+- Prevent main sets from changing total distance on reroll (e.g., 1100 → 600m ❌).
+- Main set regeneration must keep the original snapped allocation.
+- Fix any fallback logic that substitutes partial blocks (e.g., “4x150” instead of full 1100m total).
+- Validate final sum of all blocks == main set target.
+
+3. ❌ NO GIANT BLOCKS LIKE 92×25s
+- Cap max reps for any main set block:
+  - Max 25s: 30 reps
+  - Max 50s: 20 reps
+  - If a set would exceed those, split it into multiple blocks (e.g., 3×10x25, or 2×15x50)
+- Always structure large sets with logical breaks or rounds
+
+4. 🎨 EFFORT ZONE COVERAGE & VARIETY
+- Fix skewed effort mix:
+  - Current ratio is ~80% gradients, 20% flat — should be ~30% gradient, 70% flat
+  - Add more flat-blue, flat-yellow, and flat-green sets
+  - Reduce red (Full Gas) appearance unless it's a Sprint-focused Main set
+- Drill sets should vary between blue, green, and yellow — not always green
+- Regenerating any section should change effort zone **at least every 2–3 clicks**
+
+---
+
+🧪 TEST
+
+Generate full workouts at:
+- 25m pool
+- Distances: 1500m, 2500m, 5000m
+
+Confirm:
+- No filler math errors in Drill or Main
+- Effort bars (colors) vary significantly from set to set
+- Main sets never include >30×25s or >20×50s unbroken
+- Long workouts show multiple distinct effort zones and template variety
+
+---
+
+📋 REPORT BACK
+
+Please confirm:
+1. Which fallback or generation logic blocks were changed
+2. Max reps now enforced
+3. Effort breakdowns now distributed more accurately (flat vs gradient)
+4. Drill and Main set totals validated across regeneration
+
+FINISH

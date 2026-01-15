@@ -4530,7 +4530,7 @@ app.post("/generate-workout", (req, res) => {
         effort = buildEfforts[(dist + (seed || 0)) % buildEfforts.length];
       }
       
-      // Helper function for dynamic drill generation - preserves distance
+      // Helper function for dynamic drill generation - ALWAYS preserves exact distance, NO 1x blocks
       function generateDrillSetDynamic(drillDist, poolLen, drillSeed) {
         const drillNames = [
           "Fist", "Catch-up", "DPS", "Jazz Hands", "Long Dog", "Scull Front",
@@ -4541,71 +4541,177 @@ app.post("/generate-workout", (req, res) => {
         const d100 = snapToPoolMultiple(100, poolLen);
         const d25 = snapToPoolMultiple(25, poolLen);
         
-        let reps = 0;
-        let repDist = d50;
+        // Find rep distance that divides evenly - MUST be exact fit
+        const repOptions = [d100, d50, d25, poolLen].filter(d => d > 0);
+        let repDist = 0;
+        let totalReps = 0;
         
-        // Find exact fit that matches drillDist
-        if (d100 > 0 && drillDist % d100 === 0) {
-          reps = drillDist / d100;
-          repDist = d100;
-        } else if (d50 > 0 && drillDist % d50 === 0) {
-          reps = drillDist / d50;
-          repDist = d50;
-        } else if (d25 > 0 && drillDist % d25 === 0) {
-          reps = drillDist / d25;
-          repDist = d25;
-        }
-        
-        // If reps too high for single set, use 100m reps or split into parts
-        if (reps > 16 && d100 > 0) {
-          // Try 100m reps first
-          if (drillDist % d100 === 0) {
-            reps = drillDist / d100;
-            repDist = d100;
+        // Find first exact divisor
+        for (const rd of repOptions) {
+          if (rd > 0 && drillDist % rd === 0) {
+            repDist = rd;
+            totalReps = drillDist / rd;
+            break;
           }
         }
         
-        // If still too many, generate multi-part drill
-        if (reps > 16) {
-          const part1Reps = 8;
-          const part1Dist = part1Reps * repDist;
-          const remaining = drillDist - part1Dist;
-          const part2Reps = remaining > 0 && repDist > 0 ? Math.floor(remaining / repDist) : 0;
-          
-          const lines = [];
-          lines.push(String(part1Reps) + "x" + String(repDist) + " Drill FC");
-          for (let i = 0; i < part1Reps; i++) {
-            const drillIdx = (drillSeed + i) % drillNames.length;
-            lines.push((i + 1) + ". " + drillNames[drillIdx]);
-          }
-          if (part2Reps >= 2) {
-            lines.push(String(part2Reps) + "x" + String(repDist) + " Drill FC");
-            for (let i = 0; i < part2Reps; i++) {
-              const drillIdx = (drillSeed + part1Reps + i) % drillNames.length;
-              lines.push((i + 1) + ". " + drillNames[drillIdx]);
+        // If no exact fit found, try mixed-distance approach
+        if (totalReps === 0) {
+          // Find two rep distances that can sum to drillDist
+          for (const d1 of repOptions) {
+            if (d1 <= 0) continue;
+            for (let r1 = 2; r1 <= 10; r1++) {
+              const rem = drillDist - (r1 * d1);
+              if (rem <= 0) continue;
+              for (const d2 of repOptions) {
+                if (d2 <= 0) continue;
+                if (rem % d2 === 0) {
+                  const r2 = rem / d2;
+                  if (r2 >= 2 && r2 <= 10 && r1 * d1 + r2 * d2 === drillDist) {
+                    // Found valid two-part split
+                    const lines = [];
+                    lines.push(String(r1) + "x" + String(d1) + " Drill FC");
+                    for (let i = 0; i < r1; i++) {
+                      lines.push((i + 1) + ". " + drillNames[(drillSeed + i) % drillNames.length]);
+                    }
+                    lines.push(String(r2) + "x" + String(d2) + " Drill FC");
+                    for (let i = 0; i < r2; i++) {
+                      lines.push((i + 1) + ". " + drillNames[(drillSeed + r1 + i) % drillNames.length]);
+                    }
+                    return lines.join("\n");
+                  }
+                }
+              }
             }
+          }
+          
+          // Ultimate fallback: use pool length as rep distance
+          repDist = poolLen;
+          totalReps = drillDist / poolLen;
+          if (!Number.isInteger(totalReps) || totalReps < 1) {
+            // Cannot divide evenly - return single distance line
+            return String(drillDist) + " choice drill easy";
+          }
+        }
+        
+        // Handle edge case: only 1 rep needed - prefer smaller rep distance for more reps
+        if (totalReps === 1) {
+          // Try to use a smaller rep distance to get 2+ reps
+          for (const rd of [d50, d25, poolLen].filter(d => d > 0 && d < repDist)) {
+            if (drillDist % rd === 0) {
+              const newReps = drillDist / rd;
+              if (newReps >= 2 && newReps <= 10) {
+                repDist = rd;
+                totalReps = newReps;
+                break;
+              }
+            }
+          }
+          // If still 1 rep, use 2x half-distance format
+          if (totalReps === 1 && drillDist >= 50) {
+            const halfDist = drillDist / 2;
+            if (halfDist % poolLen === 0) {
+              const lines = [];
+              lines.push("2x" + String(halfDist) + " Drill FC");
+              lines.push("1. " + drillNames[drillSeed % drillNames.length]);
+              lines.push("2. " + drillNames[(drillSeed + 1) % drillNames.length]);
+              return lines.join("\n");
+            }
+          }
+          // Ultimate fallback: still use numbered format
+          const lines = [];
+          lines.push("1x" + String(drillDist) + " Drill FC");
+          lines.push("1. choice drill");
+          return lines.join("\n");
+        }
+        
+        // Max 10 reps per numbered block for readability
+        const maxRepsPerBlock = 10;
+        
+        // Single block case: if reps <= max, just return one block
+        if (totalReps <= maxRepsPerBlock && totalReps >= 2) {
+          const header = String(totalReps) + "x" + String(repDist) + " Drill FC";
+          const lines = [header];
+          for (let i = 0; i < totalReps; i++) {
+            lines.push((i + 1) + ". " + drillNames[(drillSeed + i) % drillNames.length]);
           }
           return lines.join("\n");
         }
         
-        if (reps < 2) reps = Math.max(4, Math.floor(drillDist / (d50 || 50)));
+        // Multi-block case: split evenly into blocks of 4-10 reps each
+        const numBlocks = Math.ceil(totalReps / maxRepsPerBlock);
+        const baseRepsPerBlock = Math.floor(totalReps / numBlocks);
+        const extraReps = totalReps % numBlocks;
         
-        const header = String(reps) + "x" + String(repDist) + " Drill FC";
-        const lines = [header];
-        for (let i = 0; i < reps; i++) {
-          const drillIdx = (drillSeed + i) % drillNames.length;
-          lines.push((i + 1) + ". " + drillNames[drillIdx]);
+        const lines = [];
+        let drillIdx = drillSeed;
+        let usedReps = 0;
+        
+        for (let block = 0; block < numBlocks; block++) {
+          // Distribute extra reps evenly across first blocks
+          const blockReps = baseRepsPerBlock + (block < extraReps ? 1 : 0);
+          
+          // Guarantee minimum 2 reps per block
+          if (blockReps < 2) continue;
+          
+          lines.push(String(blockReps) + "x" + String(repDist) + " Drill FC");
+          for (let i = 0; i < blockReps; i++) {
+            lines.push((i + 1) + ". " + drillNames[(drillIdx + i) % drillNames.length]);
+          }
+          drillIdx += blockReps;
+          usedReps += blockReps;
         }
+        
+        // Safety: if we somehow didn't emit anything, use single distance line
+        if (lines.length === 0) {
+          return String(drillDist) + " choice drill easy";
+        }
+        
         return lines.join("\n");
       }
       
-      // Try exact fit first - no filler lines allowed
+      // Max reps limits: 30 for 25s, 20 for 50s, 16 for 100s
+      function maxRepsFor(repDist) {
+        if (repDist <= 25) return 30;
+        if (repDist <= 50) return 20;
+        if (repDist <= 100) return 16;
+        return 12;
+      }
+      
+      // Try exact fit first - enforce max reps limits
       const candidates = [d100, d50, d75, d25].filter(d => d > 0);
       for (const repDist of candidates) {
         if (dist % repDist === 0) {
           const reps = dist / repDist;
-          if (reps >= 2 && reps <= 20) {
+          const maxR = maxRepsFor(repDist);
+          if (reps >= 2 && reps <= maxR) {
             return String(reps) + "x" + String(repDist) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
+          }
+        }
+      }
+      
+      // If reps would exceed max, split into structured rounds
+      for (const repDist of candidates) {
+        if (dist % repDist === 0) {
+          const totalReps = dist / repDist;
+          const maxR = maxRepsFor(repDist);
+          if (totalReps > maxR) {
+            // Split into even rounds (e.g., 3x10x25 instead of 30x25)
+            const numRounds = Math.ceil(totalReps / maxR);
+            const repsPerRound = Math.floor(totalReps / numRounds);
+            const remainder = totalReps - (repsPerRound * numRounds);
+            
+            const lines = [];
+            for (let round = 0; round < numRounds; round++) {
+              const thisRoundReps = repsPerRound + (round < remainder ? 1 : 0);
+              if (thisRoundReps >= 2) {
+                // Vary effort per round for visual interest
+                const roundEfforts = ["strong", "hard", "threshold", "build", "fast"];
+                const roundEffort = roundEfforts[(round + (seed || 0)) % roundEfforts.length];
+                lines.push(String(thisRoundReps) + "x" + String(repDist) + " " + roundEffort + (rest > 0 ? " rest " + String(rest) + "s" : ""));
+              }
+            }
+            if (lines.length > 0) return lines.join("\n");
           }
         }
       }
@@ -4618,11 +4724,13 @@ app.post("/generate-workout", (req, res) => {
       for (const d1 of candidates) {
         for (const d2 of candidates) {
           if (d1 === d2) continue;
-          for (let r1 = 2; r1 <= 12; r1++) {
+          const maxR1 = maxRepsFor(d1);
+          const maxR2 = maxRepsFor(d2);
+          for (let r1 = 2; r1 <= Math.min(12, maxR1); r1++) {
             const remaining = dist - r1 * d1;
             if (remaining > 0 && remaining % d2 === 0) {
               const r2 = remaining / d2;
-              if (r2 >= 2 && r2 <= 12 && r1 * d1 + r2 * d2 === dist) {
+              if (r2 >= 2 && r2 <= Math.min(12, maxR2) && r1 * d1 + r2 * d2 === dist) {
                 const line1 = String(r1) + "x" + String(d1) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
                 const line2 = String(r2) + "x" + String(d2) + " " + effort2 + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : "");
                 return line1 + "\n" + line2;
@@ -4632,12 +4740,36 @@ app.post("/generate-workout", (req, res) => {
         }
       }
 
-      // Last resort: single block at smallest rep distance
+      // Last resort: split into max-rep blocks that sum to exact total
       const smallest = candidates[candidates.length - 1] || base2;
       if (dist % smallest === 0) {
-        const reps = dist / smallest;
-        if (reps >= 2) {
-          return String(reps) + "x" + String(smallest) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
+        const totalReps = dist / smallest;
+        const maxR = maxRepsFor(smallest);
+        if (totalReps > maxR) {
+          const numBlocks = Math.ceil(totalReps / maxR);
+          const baseRepsPerBlock = Math.floor(totalReps / numBlocks);
+          const extraReps = totalReps % numBlocks;
+          
+          const lines = [];
+          let usedReps = 0;
+          for (let b = 0; b < numBlocks; b++) {
+            // Distribute extra reps across first blocks to ensure exact total
+            const blockReps = baseRepsPerBlock + (b < extraReps ? 1 : 0);
+            if (blockReps >= 2) {
+              const blockEfforts = ["strong", "hard", "threshold", "fast", "build"];
+              const blockEffort = blockEfforts[b % blockEfforts.length];
+              lines.push(String(blockReps) + "x" + String(smallest) + " " + blockEffort + (rest > 0 ? " rest " + String(rest) + "s" : ""));
+              usedReps += blockReps;
+            }
+          }
+          
+          // Verify total: usedReps * smallest must equal dist
+          if (lines.length > 0 && usedReps * smallest === dist) {
+            return lines.join("\n");
+          }
+        }
+        if (totalReps >= 2) {
+          return String(totalReps) + "x" + String(smallest) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
         }
       }
 

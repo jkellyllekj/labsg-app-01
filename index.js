@@ -319,10 +319,25 @@ function pickTemplate(section, targetDistance, seed, poolLen) {
   const list = SECTION_TEMPLATES[section];
   if (!list) return null;
   
-  // Filter templates that fit distance AND end at home end
+  // First try: exact match only (critical for drill sections)
+  const exactFits = list.filter(t => {
+    if (t.dist !== targetDistance) return false;
+    if (poolLen === 25 || poolLen === 50) {
+      if (!endsAtHomeEnd(t.dist, poolLen)) return false;
+    }
+    return true;
+  });
+  
+  if (exactFits.length) {
+    const sectionHash = fnv1a32(section);
+    const shuffled = shuffleWithSeed(exactFits, (seed ^ sectionHash) >>> 0);
+    const idx = ((seed * 7919) >>> 0) % shuffled.length;
+    return shuffled[idx];
+  }
+  
+  // Second try: templates smaller than or equal to target (for flexible sections)
   const fits = list.filter(t => {
     if (t.dist > targetDistance) return false;
-    // For 25m and 50m pools, enforce home end
     if (poolLen === 25 || poolLen === 50) {
       if (!endsAtHomeEnd(t.dist, poolLen)) return false;
     }
@@ -583,33 +598,54 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
 
   // DRILL: Structured numbered drill list (coach-style)
   // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
+  // CRITICAL: Must match target distance exactly
   if (k.includes("drill")) {
     const drillPool = [
       "Fist", "Catch-up", "DPS", "Jazz Hands", "Long Dog",
       "Scull Front", "Scull Rear", "Torpedo Glide", "Single Arm",
-      "3-3-3", "Finger Drag", "25 Drill / 25 Swim", "50 Drill / 50 Swim"
+      "3-3-3", "Finger Drag", "25 Drill / 25 Swim"
     ];
     
-    const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
-    if (!fit) return makeLine(1, target, drill, 0);
+    // Find exact fit that matches target distance
+    const candidates = [d50, d25, d75, d100].filter(x => x > 0);
+    let fit = null;
+    for (const repDist of candidates) {
+      if (target % repDist === 0) {
+        const reps = target / repDist;
+        if (reps >= 2 && reps <= 12 && isValidDrillLine(reps)) {
+          fit = { reps, dist: repDist };
+          break;
+        }
+      }
+    }
     
-    let reps = fit.reps;
-    if (!isValidDrillLine(reps)) {
-      reps = reps < 7 ? 6 : reps < 9 ? 8 : reps < 11 ? 10 : 12;
+    // Fallback: try any valid rep count
+    if (!fit) {
+      for (const repDist of candidates) {
+        if (target % repDist === 0) {
+          const reps = target / repDist;
+          if (reps >= 2 && reps <= 20) {
+            fit = { reps, dist: repDist };
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!fit) {
+      // Last resort: single line format
+      return target + " drill easy";
     }
     
     // Build numbered drill list
     const shuffledDrills = shuffleWithSeed([...drillPool], seedA);
     const drillLines = [];
-    for (let i = 0; i < reps; i++) {
+    for (let i = 0; i < fit.reps; i++) {
       drillLines.push((i + 1) + ". " + shuffledDrills[i % shuffledDrills.length]);
     }
     
-    const heading = reps + "x" + fit.dist + " Drill FC";
-    const body = heading + "\n" + drillLines.join("\n");
-    const totalDist = reps * fit.dist;
-    
-    return { body, dist: totalDist };
+    const heading = fit.reps + "x" + fit.dist + " Drill FC";
+    return heading + "\n" + drillLines.join("\n");
   }
 
   // KICK: Kick set with variety across effort levels
@@ -4414,37 +4450,52 @@ app.post("/generate-workout", (req, res) => {
       const base2 = poolLen2;
       const d100 = snapToPoolMultiple(100, base2);
       const d50 = snapToPoolMultiple(50, base2);
-
-      const lines2 = [];
-      let remaining2 = dist;
+      const d75 = snapToPoolMultiple(75, base2);
+      const d25 = snapToPoolMultiple(25, base2);
 
       const k = String(label || "").toLowerCase();
       const rest = (k.includes("main") ? 20 : k.includes("drill") ? 20 : k.includes("build") ? 15 : 0);
 
-      if (d100 > 0) {
-        const reps = Math.floor(remaining2 / d100);
-        if (reps >= 2) {
-          const use = Math.min(reps, 12);
-          lines2.push(String(use) + "x" + String(d100) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : ""));
-          remaining2 -= use * d100;
+      // Try exact fit first - no filler lines allowed
+      const candidates = [d100, d50, d75, d25].filter(d => d > 0);
+      for (const repDist of candidates) {
+        if (dist % repDist === 0) {
+          const reps = dist / repDist;
+          if (reps >= 2 && reps <= 20) {
+            return String(reps) + "x" + String(repDist) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
+          }
         }
       }
 
-      if (d50 > 0 && remaining2 > 0) {
-        const reps = Math.floor(remaining2 / d50);
-        if (reps >= 2) {
-          const use = Math.min(reps, 16);
-          lines2.push(String(use) + "x" + String(d50) + " easy" + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : ""));
-          remaining2 -= use * d50;
+      // Two-part fallback: find r1 x d1 + r2 x d2 = dist (no filler)
+      for (const d1 of candidates) {
+        for (const d2 of candidates) {
+          if (d1 === d2) continue;
+          for (let r1 = 2; r1 <= 12; r1++) {
+            const remaining = dist - r1 * d1;
+            if (remaining > 0 && remaining % d2 === 0) {
+              const r2 = remaining / d2;
+              if (r2 >= 2 && r2 <= 12 && r1 * d1 + r2 * d2 === dist) {
+                const line1 = String(r1) + "x" + String(d1) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
+                const line2 = String(r2) + "x" + String(d2) + " easy" + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : "");
+                return line1 + "\n" + line2;
+              }
+            }
+          }
         }
       }
 
-      if (remaining2 > 0) {
-        lines2.push("1x" + String(remaining2) + " easy");
-        remaining2 = 0;
+      // Last resort: single block at smallest rep distance
+      const smallest = candidates[candidates.length - 1] || base2;
+      if (dist % smallest === 0) {
+        const reps = dist / smallest;
+        if (reps >= 2) {
+          return String(reps) + "x" + String(smallest) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
+        }
       }
 
-      return lines2.join("\n");
+      // Absolute fallback: single distance line (never 1x filler)
+      return String(dist) + " steady";
     }
   }
 });

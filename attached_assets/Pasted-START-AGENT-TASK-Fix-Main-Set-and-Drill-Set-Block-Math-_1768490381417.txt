@@ -1,0 +1,66 @@
+START
+
+🛠️ AGENT TASK: Fix Main Set and Drill Set Block Math Issues
+
+---
+
+🎯 GOAL
+
+Fix two structural bugs in `index.js`:
+
+1. Main sets frequently miscalculate internal math and add mismatched filler repeats (e.g. "5x100 + 1x50 easy" for a 550m main set).
+2. Drill sets regenerate with mismatched or incorrect total distances, especially at longer workout lengths.
+
+---
+
+📁 Edit only:
+
+index.js
+
+---
+
+🧠 WHAT TO DO
+
+1. 🛠️ **Fix Main Set Block Assembly**
+   - In `buildOneSetBodyShared()` where `k.includes("main")`:
+     - Prevent generation of malformed sets like `5x100 + 1x50 easy` to force distance fit.
+     - Validate that all blocks of a Main set **sum to the total set distance** exactly.
+     - If blocks don’t add up evenly, adjust the number of repeats **instead of** appending a misfit line.
+     - All lines in a Main set must be divisible by `poolLength`, and the sum must match the set distance.
+
+2. 🛠️ **Fix Drill Regeneration Distance Issues**
+   - When regenerating the Drill section, ensure that:
+     - The new drill block **matches the set’s allocated snapped distance**.
+     - Drill templates (like `6x50`, `8x25`, etc.) are re-selected to match the same snapped total.
+     - Do not allow a mismatch between heading (e.g. "6x50") and printed total (e.g. 350m).
+     - All sets still end at the correct wall (snap to `2 × poolLength`).
+
+---
+
+🧪 TEST INSTRUCTIONS
+
+Generate and regenerate workouts at:
+- 25m and 50m pools
+- 1000m, 1500m, and 2000m
+
+✅ CONFIRM:
+- Main sets do not contain filler lines like `1x50 easy`
+- All blocks inside Main sets add up to the printed total
+- Drill sets (both initial and after regen) display matching headings and distances
+- No drill set shows 350m unless justified by exact length math (e.g. `7x50`)
+- Generator validates and renders successfully
+
+---
+
+📋 REPORT BACK
+
+Please confirm:
+1. Code sections updated
+2. Main set examples before/after fix (show correct math)
+3. Drill regeneration examples (correct header-to-distance alignment)
+4. That no invalid extra lines or mismatched totals occur
+5. That all sets still snap to wall correctly
+
+Only fix logic and math — no effort tuning or template expansions yet.
+
+FINISH

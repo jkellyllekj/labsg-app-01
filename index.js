@@ -126,6 +126,10 @@ function validateSetBody(body, targetDistance, poolLen) {
         totalParsed += Number(singleMatch[1]);
         continue;
       }
+      // Skip numbered drill list lines (e.g., "1. Fist", "2. Catch-up")
+      if (line.match(/^\d+\.\s+\w/)) {
+        continue;
+      }
       return { valid: false, reason: "unparseable line: " + line };
     }
     totalParsed += parsed.reps * parsed.dist;
@@ -245,24 +249,23 @@ const SECTION_TEMPLATES = {
     { body: "6x50 descend 1-3 twice", dist: 300 }
   ],
   drill: [
-    // Named drill sets - structured and instructional
-    { body: "6x50 drill (Fist, Catch-up, DPS)", dist: 300 },
-    { body: "8x25 Scull drill (front / rear)", dist: 200 },
-    { body: "4x50 (25 drill / 25 swim)", dist: 200 },
-    { body: "6x50 Catch-up drill", dist: 300 },
-    { body: "8x50 Finger Drag", dist: 400 },
-    { body: "4x50 DPS focus", dist: 200 },
-    { body: "6x50 Single Arm drill", dist: 300 },
-    { body: "8x25 Torpedo Glide", dist: 200 },
-    { body: "4x100 (50 drill / 50 swim)", dist: 400 },
-    { body: "6x50 drill (Long Dog, Catch-up)", dist: 300 },
-    { body: "5x50 3-3-3 drill", dist: 250 },
-    { body: "4x50 Fist drill", dist: 200 },
-    { body: "6x50 (Finger Drag, DPS, Catch-up)", dist: 300 },
-    { body: "8x25 drill (Scull, Fist)", dist: 200 },
-    { body: "4x75 drill (25 Catch-up / 25 Fist / 25 swim)", dist: 300 },
-    { body: "5x50 Jazz Hands drill", dist: 250 },
-    { body: "6x50 freestyle drills (Catch-up, DPS, Single Arm)", dist: 300 }
+    // Structured numbered drill sets (coach-style)
+    { body: "6x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front", dist: 300 },
+    { body: "8x25 Drill FC\n1. Scull Front\n2. Scull Rear\n3. Torpedo Glide\n4. Fist\n5. Finger Drag\n6. Catch-up\n7. DPS\n8. Single Arm", dist: 200 },
+    { body: "4x50 Drill FC\n1. Catch-up\n2. DPS\n3. Fist\n4. 25 Drill / 25 Swim", dist: 200 },
+    { body: "6x50 Drill FC\n1. Finger Drag\n2. Long Dog\n3. 3-3-3\n4. Catch-up\n5. Single Arm\n6. DPS", dist: 300 },
+    { body: "8x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Torpedo Glide", dist: 400 },
+    { body: "4x50 Drill FC\n1. Single Arm\n2. Torpedo Glide\n3. 3-3-3\n4. Scull Rear", dist: 200 },
+    { body: "6x50 Drill FC\n1. Torpedo Glide\n2. Scull Front\n3. Scull Rear\n4. Fist\n5. DPS\n6. Catch-up", dist: 300 },
+    { body: "8x25 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm", dist: 200 },
+    { body: "4x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist", dist: 400 },
+    { body: "6x50 Drill FC\n1. Jazz Hands\n2. 3-3-3\n3. Single Arm\n4. Finger Drag\n5. Torpedo Glide\n6. Long Dog", dist: 300 },
+    { body: "5x50 Drill FC\n1. Fist\n2. DPS\n3. Catch-up\n4. Scull Front\n5. 25 Drill / 25 Swim", dist: 250 },
+    { body: "4x50 Drill FC\n1. Long Dog\n2. Finger Drag\n3. 3-3-3\n4. Jazz Hands", dist: 200 },
+    { body: "6x50 Drill FC\n1. Single Arm\n2. Fist\n3. Catch-up\n4. DPS\n5. Scull Front\n6. Torpedo Glide", dist: 300 },
+    { body: "4x75 Drill FC\n1. Catch-up\n2. Fist\n3. DPS\n4. 25 Drill / 25 Swim", dist: 300 },
+    { body: "5x50 Drill FC\n1. Jazz Hands\n2. Long Dog\n3. 3-3-3\n4. Finger Drag\n5. Single Arm", dist: 250 },
+    { body: "6x50 Drill FC\n1. DPS\n2. Fist\n3. Catch-up\n4. Single Arm\n5. Finger Drag\n6. Scull Rear", dist: 300 }
   ],
   kick: [
     // Simple flat effort sets
@@ -578,21 +581,35 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     return makeLine(fit.reps, fit.dist, buildSetDesc, restFor(fit.dist, "moderate"));
   }
 
-  // DRILL: Named drill with nice display
+  // DRILL: Structured numbered drill list (coach-style)
   // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
   if (k.includes("drill")) {
+    const drillPool = [
+      "Fist", "Catch-up", "DPS", "Jazz Hands", "Long Dog",
+      "Scull Front", "Scull Rear", "Torpedo Glide", "Single Arm",
+      "3-3-3", "Finger Drag", "25 Drill / 25 Swim", "50 Drill / 50 Swim"
+    ];
+    
     const fit = findBestFit([d50, d25, d75].filter(x => x > 0), true);
     if (!fit) return makeLine(1, target, drill, 0);
     
-    if (!isValidDrillLine(fit.reps)) {
-      const cleanReps = fit.reps < 7 ? 6 : fit.reps < 9 ? 8 : fit.reps < 11 ? 10 : 12;
-      return makeLine(cleanReps, fit.dist, drill, restFor(fit.dist, "easy"));
+    let reps = fit.reps;
+    if (!isValidDrillLine(reps)) {
+      reps = reps < 7 ? 6 : reps < 9 ? 8 : reps < 11 ? 10 : 12;
     }
     
-    if (fit.reps >= 6 && (seedB % 3) === 0) {
-      return makeLine(fit.reps, fit.dist, "drill choice (" + drill + ", " + drill2 + ")", restFor(fit.dist, "easy"));
+    // Build numbered drill list
+    const shuffledDrills = shuffleWithSeed([...drillPool], seedA);
+    const drillLines = [];
+    for (let i = 0; i < reps; i++) {
+      drillLines.push((i + 1) + ". " + shuffledDrills[i % shuffledDrills.length]);
     }
-    return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist, "easy"));
+    
+    const heading = reps + "x" + fit.dist + " Drill FC";
+    const body = heading + "\n" + drillLines.join("\n");
+    const totalDist = reps * fit.dist;
+    
+    return { body, dist: totalDist };
   }
 
   // KICK: Kick set with variety across effort levels

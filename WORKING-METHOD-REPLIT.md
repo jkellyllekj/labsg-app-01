@@ -1,6 +1,6 @@
 # Working Method, Replit Agent Edition
 
-Last updated: 2026-01-15  
+Last updated: 2026-01-15
 Status: Authoritative
 
 ## Purpose
@@ -30,16 +30,16 @@ The Agent is an execution tool, not the primary thinker.
 
 We keep three documents only.
 
-Project state file  
+Project state file
 This is the authoritative, living record of the project. It contains vision, constraints, decisions, known limitations, and next steps.
 
-The filename is project specific and must begin with `PROJECT_STATE_`  
+The filename is project specific and must begin with `PROJECT_STATE_`
 Example: `PROJECT_STATE_CAPISCO.md`
 
-WORKING-METHOD-REPLIT.md  
+WORKING-METHOD-REPLIT.md
 This file. It defines how we collaborate with the Agent.
 
-COACH_DESIGN_NOTES.md or other design notes  
+COACH_DESIGN_NOTES.md or other design notes
 Optional, project specific, deep intent documents. These are not required reading for the Agent unless explicitly instructed.
 
 The Agent must keep the project’s designated project state file current when instructed.
@@ -50,17 +50,26 @@ Default mode is EXECUTION ONLY.
 
 The Agent does not own planning, architecture, or product decisions unless explicitly asked.
 
-The human plus ChatGPT do the thinking.  
+The human plus ChatGPT do the thinking.
 The Agent does the edits, runs the app, and reports results.
+
+## Agent scope, execution only
+
+By default, the Agent must not read project state or working method files. These documents are for the human and ChatGPT.
+
+The Agent must only do what it is explicitly instructed to do in the current message.
+
+The Agent must not update docs, propose next steps, or infer intent unless explicitly instructed.
+
+If the Agent is asked to run tests, it must run exactly the specified test and report only the requested output.
 
 ## Session start rule
 
 At the start of every Agent session, the Agent must do this in order.
 
-1. Read the project’s designated project state file and this Working Method.
-2. State the current phase and the next task in one short paragraph.
-3. State which files it expects to touch.
-4. Wait for confirmation or proceed only if explicitly told to execute.
+1. Wait for explicit instructions.
+2. Execute only what is requested.
+3. Do not add commentary, next steps, or doc updates unless asked.
 
 If the Agent skips this, stop and restart the session.
 
@@ -78,7 +87,7 @@ Agent must work in small, bounded micro changes.
 
 One goal per micro change.
 
-An Agent run may include up to 3 micro changes if they are fully independent and low risk.  
+An Agent run may include up to 3 micro changes if they are fully independent and low risk.
 Each micro change must be committed separately.
 
 Touch as few files as possible.
@@ -167,7 +176,7 @@ When invoked, the Agent must immediately do the following.
    - Files touched
 5. Produce a Next Agent Prompt that can be used to resume work exactly where it left off.
 
-The project’s designated project state file is the memory.  
+The project’s designated project state file is the memory.
 The handover and prompt preserve continuity between sessions.
 
 ## Stability note

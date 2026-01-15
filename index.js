@@ -226,10 +226,10 @@ const SECTION_TEMPLATES = {
     { body: "400 easy", dist: 400 },
     { body: "4x100 easy", dist: 400 },
     { body: "8x50 easy", dist: 400 },
-    { body: "200 easy\n4x50 build", dist: 400 },
+    { body: "200 easy\n4x50 easy choice", dist: 400 },
     { body: "6x50 easy choice", dist: 300 },
     { body: "4x75 easy", dist: 300 },
-    { body: "200 easy\n2x100 build", dist: 400 },
+    { body: "200 easy\n2x100 moderate", dist: 400 },
     { body: "500 easy", dist: 500 },
     { body: "2x200 easy", dist: 400 },
     { body: "10x50 easy", dist: 500 }
@@ -4194,7 +4194,7 @@ app.post("/generate-workout", (req, res) => {
     const includeKick = opts.includeKick && total >= snapToPoolMultiple(1500, base);
     const includePull = opts.includePull && total >= snapToPoolMultiple(1500, base);
 
-    const wantBuild = total >= snapToPoolMultiple(1200, base);
+    const wantBuild = total >= snapToPoolMultiple(1000, base);
     const wantDrill = true;
 
     const minMainPct = 0.30;

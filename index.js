@@ -31,7 +31,19 @@ app.get("/styles.css", (req, res) => {
   }
 });
 
+// Universal snapping: ALL pools use 2×poolLen as base unit for home-wall finish
 function snapToPoolMultipleShared(dist, poolLen) {
+  const d = Number(dist);
+  if (!Number.isFinite(d) || d <= 0) return 0;
+  const base = Number(poolLen);
+  if (!Number.isFinite(base) || base <= 0) return d;
+  // Snap to 2×poolLen (round trip) to ensure home-wall finish
+  const base2 = base * 2;
+  return Math.round(d / base2) * base2;
+}
+
+// For rep distances, snap to single pool length multiples
+function snapRepDistToPool(dist, poolLen) {
   const d = Number(dist);
   if (!Number.isFinite(d) || d <= 0) return 0;
   const base = Number(poolLen);
@@ -44,6 +56,7 @@ function snapToPoolMultipleShared(dist, poolLen) {
 // ============================================================================
 
 // Allowed rep counts by rep distance (coach-plausible patterns)
+// Expanded to include common counts like 11, 14, 15 that occur with odd pools
 function isAllowedRepCount(repCount, repDistance) {
   const r = Number(repCount);
   const d = Number(repDistance);
@@ -53,16 +66,11 @@ function isAllowedRepCount(repCount, repDistance) {
   // Single rep is always allowed
   if (r === 1) return true;
   
-  // Short reps (25-50): allow 2,3,4,5,6,8,10,12,16,20
-  if (d <= 50) {
-    return [2, 3, 4, 5, 6, 8, 10, 12, 16, 20].includes(r);
-  }
-  // Medium reps (75-100): allow 2,3,4,5,6,8,10,12
-  if (d <= 100) {
-    return [2, 3, 4, 5, 6, 8, 10, 12].includes(r);
-  }
-  // Long reps (200+): allow 2,3,4,5,6,8,10
-  return [2, 3, 4, 5, 6, 8, 10].includes(r);
+  // Allow any rep count 2-20 for flexibility with odd pools
+  // This prevents drift when templates don't match exactly
+  if (r >= 2 && r <= 20) return true;
+  
+  return false;
 }
 
 // Check if total distance ends at home end (even number of lengths)
@@ -328,31 +336,63 @@ const SECTION_TEMPLATES = {
   ],
   main: [
     // Flat effort sets (variety of colors)
+    { body: "4x100 hard", dist: 400 },
+    { body: "8x50 fast", dist: 400 },
+    { body: "5x100 hard", dist: 500 },
+    { body: "10x50 fast", dist: 500 },
     { body: "6x100 strong", dist: 600 },
+    { body: "6x100 threshold", dist: 600 },
+    { body: "12x50 steady", dist: 600 },
+    { body: "8x75 strong", dist: 600 },
+    { body: "3x200 build", dist: 600 },
+    { body: "4x150 build", dist: 600 },
     { body: "8x100 moderate", dist: 800 },
     { body: "4x200 strong", dist: 800 },
-    { body: "5x100 hard", dist: 500 },
+    { body: "8x100 negative split", dist: 800 },
+    { body: "6x150 strong", dist: 900 },
     { body: "10x100 steady", dist: 1000 },
-    { body: "8x50 fast", dist: 400 },
-    { body: "6x100 threshold", dist: 600 },
-    { body: "4x100 hard", dist: 400 },
-    { body: "12x50 steady", dist: 600 },
     { body: "5x200 moderate", dist: 1000 },
-    { body: "10x50 fast", dist: 500 },
-    { body: "8x75 strong", dist: 600 },
+    { body: "20x50 strong", dist: 1000 },
+    { body: "8x150 moderate", dist: 1200 },
+    { body: "12x100 steady", dist: 1200 },
+    { body: "6x200 strong", dist: 1200 },
+    { body: "14x100 steady", dist: 1400 },
+    { body: "7x200 moderate", dist: 1400 },
+    { body: "15x100 threshold", dist: 1500 },
+    { body: "10x150 moderate", dist: 1500 },
+    { body: "16x100 moderate", dist: 1600 },
+    { body: "8x200 strong", dist: 1600 },
+    { body: "18x100 steady", dist: 1800 },
+    { body: "9x200 moderate", dist: 1800 },
+    { body: "20x100 moderate", dist: 2000 },
+    { body: "10x200 steady", dist: 2000 },
     // Progression/build sets
     { body: "5x100 descend 1-5", dist: 500 },
-    { body: "3x200 build", dist: 600 },
     { body: "6x100 descend 1-3 twice", dist: 600 },
-    { body: "4x150 build", dist: 600 },
-    { body: "8x100 negative split", dist: 800 },
-    // Multi-part sets
+    { body: "8x100 descend 1-4 twice", dist: 800 },
+    { body: "10x100 descend 1-5 twice", dist: 1000 },
+    // Multi-part sets (dist = sum of both parts)
     { body: "8x50 fast\n4x100 moderate", dist: 800 },
     { body: "400 strong\n4x100 descend 1-4", dist: 800 },
-    { body: "6x150 strong", dist: 900 },
     { body: "4x150 build\n4x50 fast", dist: 800 },
     { body: "6x100 steady\n6x50 fast", dist: 900 },
-    { body: "300 easy\n6x100 hard", dist: 900 }
+    { body: "300 easy\n6x100 hard", dist: 900 },
+    { body: "5x100 strong\n5x100 threshold", dist: 1000 },
+    { body: "6x100 steady\n8x50 fast", dist: 1000 },
+    { body: "8x100 moderate\n4x100 hard", dist: 1200 },
+    { body: "10x100 steady\n4x50 fast", dist: 1200 },
+    { body: "6x150 moderate\n6x50 fast", dist: 1200 },
+    { body: "10x100 moderate\n8x50 fast", dist: 1400 },
+    { body: "8x150 steady\n4x50 fast", dist: 1400 },
+    { body: "10x100 threshold\n10x50 fast", dist: 1500 },
+    { body: "12x100 steady\n6x50 fast", dist: 1500 },
+    { body: "10x100 strong\n12x50 fast", dist: 1600 },
+    { body: "8x200 moderate", dist: 1600 },
+    { body: "12x100 moderate\n8x50 fast", dist: 1600 },
+    { body: "10x150 moderate\n6x50 fast", dist: 1800 },
+    { body: "12x100 strong\n12x50 fast", dist: 1800 },
+    { body: "15x100 steady\n10x50 fast", dist: 2000 },
+    { body: "12x100 moderate\n16x50 fast", dist: 2000 }
   ]
 };
 
@@ -360,7 +400,8 @@ function pickTemplate(section, targetDistance, seed, poolLen) {
   const list = SECTION_TEMPLATES[section];
   if (!list) return null;
   
-  // First try: exact match only (critical for drill sections)
+  // EXACT MATCH ONLY - no tolerance, no fallbacks
+  // This prevents distance drift on regeneration
   const exactFits = list.filter(t => {
     if (t.dist !== targetDistance) return false;
     if (poolLen === 25 || poolLen === 50) {
@@ -376,24 +417,8 @@ function pickTemplate(section, targetDistance, seed, poolLen) {
     return shuffled[idx];
   }
   
-  // Second try: templates smaller than or equal to target (for flexible sections)
-  const fits = list.filter(t => {
-    if (t.dist > targetDistance) return false;
-    if (poolLen === 25 || poolLen === 50) {
-      if (!endsAtHomeEnd(t.dist, poolLen)) return false;
-    }
-    return true;
-  });
-  
-  if (!fits.length) return null;
-  
-  // Shuffle fits based on seed + section hash for variety
-  const sectionHash = fnv1a32(section);
-  const shuffled = shuffleWithSeed(fits, (seed ^ sectionHash) >>> 0);
-  
-  // Pick from shuffled list
-  const idx = ((seed * 7919) >>> 0) % shuffled.length;
-  return shuffled[idx];
+  // No inexact matches allowed - return null to trigger dynamic generation
+  return null;
 }
 
 function normalizeSectionKey(label) {
@@ -540,33 +565,38 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     return Math.max(0, r);
   };
 
-  // Find best rep distance - now with seed-based preference shuffling
-  // Applies isAllowedRepCount guard to reject implausible rep counts
+  // Find best rep distance - MUST return exact target distance
+  // No floor division allowed - distance must match exactly
   const findBestFit = (preferredDists, useSeed) => {
     const dists = useSeed ? shuffleWithSeed(preferredDists, seedC) : preferredDists;
-    // First pass: exact fit with allowed rep count
+    
+    // First pass: exact fit (reps × dist = target exactly)
     for (const d of dists) {
       if (d > 0 && target % d === 0) {
         const reps = target / d;
-        if (reps >= 2 && reps <= 20 && isAllowedRepCount(reps, d)) {
+        if (reps >= 2 && reps <= 30) {
           return { reps, dist: d };
         }
       }
     }
-    // Second pass: allow any exact fit (fallback for edge cases)
-    for (const d of dists) {
-      if (d > 0 && target % d === 0) {
-        const reps = target / d;
-        if (reps >= 2 && reps <= 20) return { reps, dist: d };
+    
+    // Second pass: try pool length itself
+    if (base > 0 && target % base === 0) {
+      const reps = target / base;
+      if (reps >= 2 && reps <= 50) {
+        return { reps, dist: base };
       }
     }
-    // Third pass: floor division (last resort)
-    for (const d of dists) {
-      if (d > 0) {
-        const reps = Math.floor(target / d);
-        if (reps >= 2 && isAllowedRepCount(reps, d)) return { reps, dist: d };
+    
+    // Third pass: try 2×base
+    const base2 = base * 2;
+    if (base2 > 0 && target % base2 === 0) {
+      const reps = target / base2;
+      if (reps >= 2 && reps <= 30) {
+        return { reps, dist: base2 };
       }
     }
+    
     return null;
   };
 
@@ -597,12 +627,12 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   ];
   const buildDesc = buildDescs[seedA % buildDescs.length];
 
-  // Preferred distances by set type
-  const d25 = snapToPoolMultipleShared(25, base);
-  const d50 = snapToPoolMultipleShared(50, base);
-  const d75 = snapToPoolMultipleShared(75, base);
-  const d100 = snapToPoolMultipleShared(100, base);
-  const d200 = snapToPoolMultipleShared(200, base);
+  // Preferred rep distances - use single pool length multiples (not 2×poolLen)
+  const d25 = base <= 25 ? base : (base <= 50 ? base : Math.round(25 / base) * base);
+  const d50 = base <= 50 ? (Math.round(50 / base) * base) : base;
+  const d75 = base <= 75 ? (Math.round(75 / base) * base) : base;
+  const d100 = base <= 100 ? (Math.round(100 / base) * base) : (base * 2);
+  const d200 = base <= 200 ? (Math.round(200 / base) * base) : (base * 4);
 
   // ~20% chance of multi-part set for main sets (seed % 5 === 0)
   const wantMultiPart = (seedA % 5) === 0 && target >= 400 && k.includes("main");
@@ -3426,7 +3456,18 @@ app.post("/reroll-set", (req, res) => {
     return base;
   }
 
+  // Universal snapping: 2×poolLen for section totals (home-wall finish)
   function snapToPoolMultiple(dist, poolLen) {
+    const d = Number(dist);
+    if (!Number.isFinite(d) || d <= 0) return 0;
+    const base = Number(poolLen);
+    if (!Number.isFinite(base) || base <= 0) return d;
+    const base2 = base * 2;
+    return Math.round(d / base2) * base2;
+  }
+  
+  // For rep distances, snap to single pool length
+  function snapRepDist(dist, poolLen) {
     const d = Number(dist);
     if (!Number.isFinite(d) || d <= 0) return 0;
     const base = Number(poolLen);
@@ -3951,7 +3992,18 @@ app.post("/generate-workout", (req, res) => {
     return String(fnv1a32(String(workoutText || "")));
   }
 
+  // Universal snapping: 2×poolLen for section totals (home-wall finish)
   function snapToPoolMultiple(dist, poolLen) {
+    const d = Number(dist);
+    if (!Number.isFinite(d) || d <= 0) return 0;
+    const base = Number(poolLen);
+    if (!Number.isFinite(base) || base <= 0) return d;
+    const base2 = base * 2;
+    return Math.round(d / base2) * base2;
+  }
+  
+  // For rep distances, snap to single pool length
+  function snapRepDist(dist, poolLen) {
     const d = Number(dist);
     if (!Number.isFinite(d) || d <= 0) return 0;
     const base = Number(poolLen);
@@ -4139,21 +4191,27 @@ app.post("/generate-workout", (req, res) => {
       return r;
     };
 
-    // Find best rep distance that fits target cleanly
+    // Find best rep distance that fits target EXACTLY - no floor fallback allowed
     const findBestFit = (preferredDists) => {
+      // First pass: exact fit with preferred distances
       for (const d of preferredDists) {
         if (d > 0 && target % d === 0) {
           const reps = target / d;
-          if (reps >= 2 && reps <= 20) return { reps, dist: d };
+          if (reps >= 2 && reps <= 30) return { reps, dist: d };
         }
       }
-      // Fallback: find closest fit
-      for (const d of preferredDists) {
-        if (d > 0) {
-          const reps = Math.floor(target / d);
-          if (reps >= 2) return { reps, dist: d };
-        }
+      // Second pass: try pool length itself
+      if (base > 0 && target % base === 0) {
+        const reps = target / base;
+        if (reps >= 2 && reps <= 50) return { reps, dist: base };
       }
+      // Third pass: try 2×base
+      const base2 = base * 2;
+      if (base2 > 0 && target % base2 === 0) {
+        const reps = target / base2;
+        if (reps >= 2 && reps <= 30) return { reps, dist: base2 };
+      }
+      // No fallback - return null to force exact match
       return null;
     };
 
@@ -4537,9 +4595,11 @@ app.post("/generate-workout", (req, res) => {
           "Finger Drag", "Single Arm", "Torpedo Glide", "Scull Rear", "3-3-3",
           "25 Drill / 25 Swim", "50 Drill / 50 Swim"
         ];
-        const d50 = snapToPoolMultiple(50, poolLen);
-        const d100 = snapToPoolMultiple(100, poolLen);
-        const d25 = snapToPoolMultiple(25, poolLen);
+        // Use pool length multiples for rep distances (not 2×poolLen)
+        const base = poolLen;
+        const d50 = base <= 50 ? (Math.round(50 / base) * base) : base;
+        const d100 = base <= 100 ? (Math.round(100 / base) * base) : (base * 2);
+        const d25 = base <= 25 ? base : (base <= 50 ? base : Math.round(25 / base) * base);
         
         // Find rep distance that divides evenly - MUST be exact fit
         const repOptions = [d100, d50, d25, poolLen].filter(d => d > 0);

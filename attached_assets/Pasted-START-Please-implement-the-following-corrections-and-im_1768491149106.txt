@@ -1,0 +1,36 @@
+START
+
+Please implement the following corrections and improvements based on recent generation issues and detailed user tests:
+
+1. **Fix Drill Set Math (Initial + Regen)**
+   - Ensure all generated and regenerated Drill sets match the assigned distance *exactly*. No partial/floating lines (e.g., 6x50 = 300, not 250 with filler).
+   - Use only templates that align precisely with the snapped target distance.
+   - Every Drill set must include a list of named drills in a numbered format (e.g., "1. Fist", "2. Catch-up").
+   - Preserve structured drill layout and vary templates more widely across generations.
+   - Apply fixes to both initial generation and regeneration logic.
+
+2. **Fix Main Set Math + Eliminate Floating 50s**
+   - Do not use fallback 1x50 or similar filler lines in main sets (e.g., "5x100 + 1x50" is invalid).
+   - Main sets must always match their total allocated distance exactly.
+   - Update snapping + safe fallback logic so sets like 11x50 or 4x75 are used instead of 5x100 + 1x50.
+
+3. **Effort Level Improvements**
+   - Flat effort sets (all one color) should occur frequently, not just gradients.
+   - Mix of gradients and flats should follow a ~30/70 ratio, not 70/30.
+   - Ensure effort coverage includes: blue, green, yellow, orange, and red — not just green/orange as currently appearing most often.
+   - Reinforce drill sets to stay within blue, green, and yellow.
+
+4. **Ensure Greater Variety in Long Workouts**
+   - On workouts >2000m, ensure sets vary on every generation: drill templates, effort levels, rep counts, swim types (pull, free, stroke).
+   - First generation should *never* repeat previous patterns (e.g., same 6x50 every time).
+   - Main sets may optionally be split into two parts if total length allows.
+
+5. **Testing Suggestions**
+   - Try generating 2500m, 4000m, and 5700m workouts at 25m pool.
+   - Confirm no drill or main sets use mismatched totals or partial filler sets.
+   - Regenerate individual blocks 3–4 times and ensure effort levels vary clearly and math remains valid.
+   - Confirm drill set regeneration rotates between at least 8–12 distinct patterns.
+
+No changes are needed to layout or visuals at this time. Text font size for drill list and layout spacing across columns may be optimized separately.
+
+FINISH

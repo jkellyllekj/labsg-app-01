@@ -183,19 +183,19 @@ function isFullGasBody(body) {
   return low.includes("sprint") || low.includes("all out") || low.includes("full gas") || low.includes("max effort");
 }
 
-// Inject one full gas into Main or Kick with ~50% probability
+// Inject one full gas into Main or Kick with ~30% probability (reduced for more flat sets)
 function injectOneFullGas(sections, seed) {
   // If any section already full gas, do nothing
   const already = sections.some(s => isFullGasBody(s.body));
   if (already) return sections;
 
-  // 50% probability, deterministic per generate
-  if (mulberry32(seed >>> 0)() >= 0.5) return sections;
+  // 30% probability for less frequent red cards (was 50%)
+  if (mulberry32(seed >>> 0)() >= 0.3) return sections;
 
-  // Only Main or Kick
+  // Only Main (not Kick - kick should stay moderate/strong)
   const candidates = sections
     .map((s, i) => ({ s, i, k: String(s.label).toLowerCase() }))
-    .filter(x => x.k.includes("main") || x.k.includes("kick"));
+    .filter(x => x.k.includes("main"));
 
   if (!candidates.length) return sections;
 
@@ -208,18 +208,19 @@ function injectOneFullGas(sections, seed) {
 
   if (!lines.length) return sections;
 
-  // Force a full-gas trigger word
+  // Only replace if there's a clear effort word (don't append blindly)
   if (/strong/i.test(lines[0])) {
     lines[0] = lines[0].replace(/strong/i, "sprint");
+    sections[idx].body = lines.join("\n");
   } else if (/fast/i.test(lines[0])) {
     lines[0] = lines[0].replace(/fast/i, "sprint");
+    sections[idx].body = lines.join("\n");
   } else if (/hard/i.test(lines[0])) {
     lines[0] = lines[0].replace(/hard/i, "sprint");
-  } else {
-    lines[0] = lines[0] + " sprint";
+    sections[idx].body = lines.join("\n");
   }
+  // Don't append " sprint" blindly - skip if no clear effort word
 
-  sections[idx].body = lines.join("\n");
   return sections;
 }
 
@@ -236,7 +237,15 @@ const SECTION_TEMPLATES = {
     { body: "200 easy\n2x100 moderate", dist: 400 },
     { body: "500 easy", dist: 500 },
     { body: "2x200 easy", dist: 400 },
-    { body: "10x50 easy", dist: 500 }
+    { body: "10x50 easy", dist: 500 },
+    { body: "600 easy", dist: 600 },
+    { body: "6x100 easy", dist: 600 },
+    { body: "3x200 easy", dist: 600 },
+    { body: "12x50 easy", dist: 600 },
+    { body: "800 easy", dist: 800 },
+    { body: "8x100 easy", dist: 800 },
+    { body: "4x200 easy", dist: 800 },
+    { body: "500 easy\n6x50 easy choice", dist: 800 }
   ],
   build: [
     { body: "4x50 build", dist: 200 },
@@ -265,31 +274,41 @@ const SECTION_TEMPLATES = {
     { body: "6x50 Drill FC\n1. Single Arm\n2. Fist\n3. Catch-up\n4. DPS\n5. Scull Front\n6. Torpedo Glide", dist: 300 },
     { body: "4x75 Drill FC\n1. Catch-up\n2. Fist\n3. DPS\n4. 25 Drill / 25 Swim", dist: 300 },
     { body: "5x50 Drill FC\n1. Jazz Hands\n2. Long Dog\n3. 3-3-3\n4. Finger Drag\n5. Single Arm", dist: 250 },
-    { body: "6x50 Drill FC\n1. DPS\n2. Fist\n3. Catch-up\n4. Single Arm\n5. Finger Drag\n6. Scull Rear", dist: 300 }
+    { body: "6x50 Drill FC\n1. DPS\n2. Fist\n3. Catch-up\n4. Single Arm\n5. Finger Drag\n6. Scull Rear", dist: 300 },
+    { body: "10x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear", dist: 500 },
+    { body: "5x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm", dist: 500 },
+    { body: "12x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear\n11. 3-3-3\n12. 25 Drill / 25 Swim", dist: 600 },
+    { body: "6x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog", dist: 600 },
+    { body: "7x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog\n7. Torpedo Glide", dist: 700 },
+    { body: "14x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear\n11. 3-3-3\n12. 25 Drill / 25 Swim\n13. Fist\n14. Catch-up", dist: 700 }
   ],
   kick: [
-    // Simple flat effort sets
+    // Simple flat effort sets (majority for cleaner variety)
     { body: "4x100 kick steady", dist: 400 },
     { body: "6x50 kick moderate", dist: 300 },
     { body: "4x50 kick moderate", dist: 200 },
     { body: "8x25 kick fast", dist: 200 },
     { body: "8x50 kick steady", dist: 400 },
     { body: "5x50 kick steady", dist: 250 },
-    // Progression sets (strong → sprint)
-    { body: "200 kick strong\n4x50 kick sprint", dist: 400 },
-    { body: "6x50 kick descend", dist: 300 },
-    { body: "6x50 kick build sprint", dist: 300 },
+    { body: "300 kick steady", dist: 300 },
+    { body: "200 kick moderate", dist: 200 },
+    { body: "6x50 kick strong", dist: 300 },
+    { body: "4x50 kick strong", dist: 200 },
+    // Progression sets (multi-line builds)
+    { body: "200 kick moderate\n4x50 kick strong", dist: 400 },
+    { body: "6x50 kick descend 1-3 twice", dist: 300 },
     { body: "4x100 kick build", dist: 400 },
-    { body: "300 kick descend 1-3", dist: 300 },
-    { body: "150 kick strong\n4x25 kick sprint", dist: 250 },
+    { body: "3x100 kick descend 1-3", dist: 300 },
     // Alternating effort sets
     { body: "6x50 kick (25 easy / 25 fast)", dist: 300 },
-    { body: "8x50 kick (25 moderate / 25 sprint)", dist: 400 },
+    { body: "8x50 kick (25 moderate / 25 fast)", dist: 400 },
     { body: "4x100 kick (50 steady / 50 fast)", dist: 400 },
     { body: "5x50 kick (25 easy / 25 fast)", dist: 250 },
-    // Multi-line progression (orange → red)
-    { body: "4x50 kick strong\n4x25 kick sprint", dist: 300 },
-    { body: "200 kick moderate\n6x50 kick fast", dist: 500 }
+    { body: "10x50 kick steady", dist: 500 },
+    { body: "5x100 kick moderate", dist: 500 },
+    { body: "6x100 kick moderate", dist: 600 },
+    { body: "12x50 kick steady", dist: 600 },
+    { body: "4x100 kick moderate\n4x50 kick strong", dist: 600 }
   ],
   cooldown: [
     { body: "200 easy", dist: 200 },
@@ -299,19 +318,41 @@ const SECTION_TEMPLATES = {
     { body: "5x50 easy", dist: 250 },
     { body: "6x50 easy", dist: 300 },
     { body: "300 easy choice", dist: 300 },
-    { body: "2x150 easy", dist: 300 }
+    { body: "2x150 easy", dist: 300 },
+    { body: "400 easy", dist: 400 },
+    { body: "8x50 easy", dist: 400 },
+    { body: "500 easy", dist: 500 },
+    { body: "10x50 easy", dist: 500 },
+    { body: "5x100 easy", dist: 500 },
+    { body: "3x100 easy\n4x50 loosen", dist: 500 }
   ],
   main: [
+    // Flat effort sets (variety of colors)
     { body: "6x100 strong", dist: 600 },
     { body: "8x100 moderate", dist: 800 },
     { body: "4x200 strong", dist: 800 },
-    { body: "5x100 descend", dist: 500 },
-    { body: "3x200 build", dist: 600 },
+    { body: "5x100 hard", dist: 500 },
     { body: "10x100 steady", dist: 1000 },
+    { body: "8x50 fast", dist: 400 },
+    { body: "6x100 threshold", dist: 600 },
+    { body: "4x100 hard", dist: 400 },
+    { body: "12x50 steady", dist: 600 },
+    { body: "5x200 moderate", dist: 1000 },
+    { body: "10x50 fast", dist: 500 },
+    { body: "8x75 strong", dist: 600 },
+    // Progression/build sets
+    { body: "5x100 descend 1-5", dist: 500 },
+    { body: "3x200 build", dist: 600 },
+    { body: "6x100 descend 1-3 twice", dist: 600 },
+    { body: "4x150 build", dist: 600 },
+    { body: "8x100 negative split", dist: 800 },
+    // Multi-part sets
     { body: "8x50 fast\n4x100 moderate", dist: 800 },
-    { body: "400 strong\n4x100 descend", dist: 800 },
+    { body: "400 strong\n4x100 descend 1-4", dist: 800 },
     { body: "6x150 strong", dist: 900 },
-    { body: "4x150 build\n4x50 fast", dist: 800 }
+    { body: "4x150 build\n4x50 fast", dist: 800 },
+    { body: "6x100 steady\n6x50 fast", dist: 900 },
+    { body: "300 easy\n6x100 hard", dist: 900 }
   ]
 };
 
@@ -799,8 +840,10 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     allround: null // Handled specially with effort cycling below
   };
   
-  // For allround focus: cycle through effort levels deliberately
+  // For allround focus: cycle through all 5 effort levels for variety
   const allroundByEffort = {
+    easy: [stroke + " easy", stroke + " recovery", stroke + " relaxed pace", stroke + " loosen up"],
+    moderate: [stroke + " steady", stroke + " smooth", stroke + " aerobic", stroke + " hold pace"],
     strong: [stroke + " build", stroke + " descend 1-4", stroke + " negative split", stroke + " build to strong"],
     hard: [stroke + " hard", stroke + " strong hold", stroke + " threshold", stroke + " fast hold", stroke + " descend to hard"],
     fullgas: [stroke + " sprint", stroke + " max effort", stroke + " race pace", stroke + " all out", stroke + " build to sprint"]
@@ -809,13 +852,13 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   let mainDesc;
   let effortForRest = "hard";
   if (focus === "allround" || !mainDescs[focus]) {
-    // Cycle through 3 effort levels for main sets: strong → hard → fullgas
-    const mainEfforts = ["strong", "hard", "fullgas"];
+    // Cycle through 5 effort levels for main sets: easy → moderate → strong → hard → fullgas
+    const mainEfforts = ["moderate", "strong", "hard", "fullgas", "easy"];
     const effortIdx = rerollNum % mainEfforts.length;
     const effort = mainEfforts[effortIdx];
     const descs = allroundByEffort[effort];
     mainDesc = descs[seedA % descs.length];
-    effortForRest = effort;
+    effortForRest = effort === "easy" ? "easy" : (effort === "moderate" ? "moderate" : "hard");
   } else {
     const descs = mainDescs[focus];
     mainDesc = descs[seedA % descs.length];
@@ -1662,33 +1705,37 @@ app.get("/", (req, res) => {
           return { zones: ["hard"], isStriped: false, isProgressive: false };
         }
         
-        // Build: 50% gradient (moderate→strong or moderate→hard), 50% solid
+        // Build: 30% gradient (moderate→strong), 70% solid for cleaner visuals
         if (labelOnly.includes("build")) {
           const buildGradientRoll = nextRandom();
-          if (buildGradientRoll < 0.5) {
+          if (buildGradientRoll < 0.3) {
             return { zones: ["moderate", "strong"], isStriped: false, isProgressive: true };
           }
-          // Solid color - mostly moderate, sometimes strong
+          // Solid color - variety across blue/green/yellow
           const buildZoneRoll = nextRandom();
-          const zone = buildZoneRoll < 0.75 ? "moderate" : "strong";
-          return { zones: [zone], isStriped: false, isProgressive: false };
+          if (buildZoneRoll < 0.25) return { zones: ["easy"], isStriped: false, isProgressive: false };
+          if (buildZoneRoll < 0.65) return { zones: ["moderate"], isStriped: false, isProgressive: false };
+          return { zones: ["strong"], isStriped: false, isProgressive: false };
         }
         
-        // Main: 50% gradient, 50% solid. Sometimes moderate, sometimes hard
-        // Fullgas ONLY allowed in main sets
+        // Main: 30% gradient, 70% solid for cleaner card appearance
+        // Cover ALL effort levels: blue, green, yellow, orange, red
         if (labelOnly.includes("main")) {
           const mainGradientRoll = nextRandom();
-          if (mainGradientRoll < 0.5) {
-            // Gradient - could go to hard or fullgas
+          if (mainGradientRoll < 0.3) {
+            // Gradient - varied progressions
             const mainEndRoll = nextRandom();
-            const endZone = mainEndRoll < 0.3 ? "fullgas" : "hard";
-            return { zones: fillZoneGap("strong", endZone), isStriped: false, isProgressive: true };
+            const endZone = mainEndRoll < 0.2 ? "fullgas" : "hard";
+            const startZone = mainEndRoll < 0.5 ? "moderate" : "strong";
+            return { zones: fillZoneGap(startZone, endZone), isStriped: false, isProgressive: true };
           }
-          // Solid - variety of effort levels
+          // Solid - even distribution across all 5 zones for variety
           const mainSolidRoll = nextRandom();
-          if (mainSolidRoll < 0.5) return { zones: ["strong"], isStriped: false, isProgressive: false };
-          if (mainSolidRoll < 0.8) return { zones: ["hard"], isStriped: false, isProgressive: false };
-          return { zones: ["moderate"], isStriped: false, isProgressive: false };
+          if (mainSolidRoll < 0.15) return { zones: ["easy"], isStriped: false, isProgressive: false };
+          if (mainSolidRoll < 0.35) return { zones: ["moderate"], isStriped: false, isProgressive: false };
+          if (mainSolidRoll < 0.55) return { zones: ["strong"], isStriped: false, isProgressive: false };
+          if (mainSolidRoll < 0.85) return { zones: ["hard"], isStriped: false, isProgressive: false };
+          return { zones: ["fullgas"], isStriped: false, isProgressive: false };
         }
         
         return { zones: ["moderate"], isStriped: false, isProgressive: false };
@@ -4324,13 +4371,22 @@ app.post("/generate-workout", (req, res) => {
 
     const mainTotal = total - usedAncillary - coolTarget;
 
+    // Snap main distances to multiples of 100 (or nearest clean rep) for better template matching
+    const d100Main = snapToPoolMultiple(100, base);
+    const snapToCleanMain = (dist) => {
+      if (d100Main > 0) {
+        return Math.round(dist / d100Main) * d100Main;
+      }
+      return snapToPoolMultiple(dist, base);
+    };
+
     if (mainTotal >= snapToPoolMultiple(2400, base)) {
-      const m1 = snapToPoolMultiple(Math.round(mainTotal * 0.55), base);
-      const m2 = snapToPoolMultiple(mainTotal - m1, base);
+      const m1 = snapToCleanMain(Math.round(mainTotal * 0.55));
+      const m2 = snapToCleanMain(mainTotal - m1);
       sets.push({ label: "Main 1", dist: m1 });
       sets.push({ label: "Main 2", dist: m2 });
     } else {
-      sets.push({ label: "Main", dist: snapToPoolMultiple(mainTotal, base) });
+      sets.push({ label: "Main", dist: snapToCleanMain(mainTotal) });
     }
 
     sets.push({ label: "Cool down", dist: coolTarget });
@@ -4456,18 +4512,109 @@ app.post("/generate-workout", (req, res) => {
       const k = String(label || "").toLowerCase();
       const rest = (k.includes("main") ? 20 : k.includes("drill") ? 20 : k.includes("build") ? 15 : 0);
 
+      // Effort based on section type - respect warmup/cooldown as easy
+      let effort;
+      if (k.includes("warm") || k.includes("cool")) {
+        effort = "easy";
+      } else if (k.includes("drill")) {
+        // Generate numbered drill set dynamically
+        return generateDrillSetDynamic(dist, base2, seed || 0);
+      } else if (k.includes("kick") || k.includes("pull")) {
+        const kickEfforts = ["moderate", "steady", "strong"];
+        effort = kickEfforts[(dist + (seed || 0)) % kickEfforts.length];
+      } else if (k.includes("main")) {
+        const mainEfforts = ["strong", "hard", "threshold", "fast", "steady", "build"];
+        effort = mainEfforts[(dist + (seed || 0)) % mainEfforts.length];
+      } else {
+        const buildEfforts = ["moderate", "steady", "strong"];
+        effort = buildEfforts[(dist + (seed || 0)) % buildEfforts.length];
+      }
+      
+      // Helper function for dynamic drill generation - preserves distance
+      function generateDrillSetDynamic(drillDist, poolLen, drillSeed) {
+        const drillNames = [
+          "Fist", "Catch-up", "DPS", "Jazz Hands", "Long Dog", "Scull Front",
+          "Finger Drag", "Single Arm", "Torpedo Glide", "Scull Rear", "3-3-3",
+          "25 Drill / 25 Swim", "50 Drill / 50 Swim"
+        ];
+        const d50 = snapToPoolMultiple(50, poolLen);
+        const d100 = snapToPoolMultiple(100, poolLen);
+        const d25 = snapToPoolMultiple(25, poolLen);
+        
+        let reps = 0;
+        let repDist = d50;
+        
+        // Find exact fit that matches drillDist
+        if (d100 > 0 && drillDist % d100 === 0) {
+          reps = drillDist / d100;
+          repDist = d100;
+        } else if (d50 > 0 && drillDist % d50 === 0) {
+          reps = drillDist / d50;
+          repDist = d50;
+        } else if (d25 > 0 && drillDist % d25 === 0) {
+          reps = drillDist / d25;
+          repDist = d25;
+        }
+        
+        // If reps too high for single set, use 100m reps or split into parts
+        if (reps > 16 && d100 > 0) {
+          // Try 100m reps first
+          if (drillDist % d100 === 0) {
+            reps = drillDist / d100;
+            repDist = d100;
+          }
+        }
+        
+        // If still too many, generate multi-part drill
+        if (reps > 16) {
+          const part1Reps = 8;
+          const part1Dist = part1Reps * repDist;
+          const remaining = drillDist - part1Dist;
+          const part2Reps = remaining > 0 && repDist > 0 ? Math.floor(remaining / repDist) : 0;
+          
+          const lines = [];
+          lines.push(String(part1Reps) + "x" + String(repDist) + " Drill FC");
+          for (let i = 0; i < part1Reps; i++) {
+            const drillIdx = (drillSeed + i) % drillNames.length;
+            lines.push((i + 1) + ". " + drillNames[drillIdx]);
+          }
+          if (part2Reps >= 2) {
+            lines.push(String(part2Reps) + "x" + String(repDist) + " Drill FC");
+            for (let i = 0; i < part2Reps; i++) {
+              const drillIdx = (drillSeed + part1Reps + i) % drillNames.length;
+              lines.push((i + 1) + ". " + drillNames[drillIdx]);
+            }
+          }
+          return lines.join("\n");
+        }
+        
+        if (reps < 2) reps = Math.max(4, Math.floor(drillDist / (d50 || 50)));
+        
+        const header = String(reps) + "x" + String(repDist) + " Drill FC";
+        const lines = [header];
+        for (let i = 0; i < reps; i++) {
+          const drillIdx = (drillSeed + i) % drillNames.length;
+          lines.push((i + 1) + ". " + drillNames[drillIdx]);
+        }
+        return lines.join("\n");
+      }
+      
       // Try exact fit first - no filler lines allowed
       const candidates = [d100, d50, d75, d25].filter(d => d > 0);
       for (const repDist of candidates) {
         if (dist % repDist === 0) {
           const reps = dist / repDist;
           if (reps >= 2 && reps <= 20) {
-            return String(reps) + "x" + String(repDist) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
+            return String(reps) + "x" + String(repDist) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
           }
         }
       }
 
       // Two-part fallback: find r1 x d1 + r2 x d2 = dist (no filler)
+      // Use effort variety for both parts
+      const effort2Variants = ["moderate", "strong", "steady"];
+      const effort2 = effort2Variants[(dist + 1) % effort2Variants.length];
+      
       for (const d1 of candidates) {
         for (const d2 of candidates) {
           if (d1 === d2) continue;
@@ -4476,8 +4623,8 @@ app.post("/generate-workout", (req, res) => {
             if (remaining > 0 && remaining % d2 === 0) {
               const r2 = remaining / d2;
               if (r2 >= 2 && r2 <= 12 && r1 * d1 + r2 * d2 === dist) {
-                const line1 = String(r1) + "x" + String(d1) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
-                const line2 = String(r2) + "x" + String(d2) + " easy" + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : "");
+                const line1 = String(r1) + "x" + String(d1) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
+                const line2 = String(r2) + "x" + String(d2) + " " + effort2 + (rest > 0 ? " rest " + String(Math.max(10, rest - 5)) + "s" : "");
                 return line1 + "\n" + line2;
               }
             }
@@ -4490,12 +4637,12 @@ app.post("/generate-workout", (req, res) => {
       if (dist % smallest === 0) {
         const reps = dist / smallest;
         if (reps >= 2) {
-          return String(reps) + "x" + String(smallest) + " steady" + (rest > 0 ? " rest " + String(rest) + "s" : "");
+          return String(reps) + "x" + String(smallest) + " " + effort + (rest > 0 ? " rest " + String(rest) + "s" : "");
         }
       }
 
       // Absolute fallback: single distance line (never 1x filler)
-      return String(dist) + " steady";
+      return String(dist) + " " + effort;
     }
   }
 });

@@ -1,0 +1,143 @@
+Copy this to the agent
+
+START
+
+We will do TWO micro changes in index.js (repo root). Each micro change must be committed separately.
+Do not run tests. Manual testing will be done by the human.
+
+============================================================================
+MICRO CHANGE 1 (UI ONLY)
+Make the BOTTOM Advanced options Generate button look like the Notes capsule:
+- full width like Notes
+- shorter height, less empty space
+- text "Generate" on the left
+- dolphin icon on the right
+Do NOT change the top Generate button.
+============================================================================
+
+Step 1. Open file
+Open index.js in repo root.
+
+Step 2. Find the bottom button markup
+Search for:
+id="generateBtn2"
+
+You will find the HTML for the bottom Generate button inside the Advanced options block.
+
+Step 3. Replace only the generateBtn2 HTML block
+Replace the entire existing generateBtn2 button markup (the <div> wrapper and <button> for generateBtn2) with this exact HTML:
+
+<div style="margin-top:12px;">
+  <button id="generateBtn2" type="button"
+    style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.22); color:#111; cursor:pointer;">
+    <span style="font-weight:700; font-size:16px;">Generate</span>
+    <span class="genDolphin" style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,0.35); border:1px solid rgba(0,0,0,0.08);">
+      <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="" style="width:28px; height:28px;">
+    </span>
+  </button>
+</div>
+
+Notes
+- This is ONLY for generateBtn2.
+- Do not touch generateBtn.
+- Keep it inside advancedWrap.
+
+Step 4. Confirm JS wiring exists
+Search for:
+generateBtn2")?.addEventListener
+If missing, add this wiring in the same place as regenBtn2 wiring (do not change anything else):
+
+document.getElementById("generateBtn2")?.addEventListener("click", () => {
+  document.getElementById("generateBtn")?.click();
+});
+
+Step 5. Commit micro change 1
+Commit message:
+Style bottom Advanced Generate button like Notes capsule
+
+Do not test.
+
+============================================================================
+MICRO CHANGE 2 (LOGIC ONLY)
+Fix rigid section distances. Replace fixed percentage allocation with ranged, profile-based allocation (Free profile only for now).
+Goal: stop generating the same 400/200/300/300/1100/200 pattern.
+Hard rules:
+- warmup + build must be <= 30% of total (free profile)
+- cooldown stays present
+- snap all section distances to 2x pool length via existing snapping
+- allow kick and pull to both exist (no else-if exclusion)
+- no UI changes in this micro change
+============================================================================
+
+Step 6. Find where section distances are allocated
+Search for any of these strings and identify the block that sets distances for sections before set text is generated:
+warmupDist
+buildDist
+drillDist
+kickDist
+pullDist
+mainDist
+coolDownDist
+cooldownDist
+sections.push
+
+You are looking for the code that uses fixed shares like total * 0.12 and then assigns the rest to main.
+
+Step 7. Add a Free profile config near that allocation logic
+Immediately above the allocation block, add this config object (do not move other code):
+
+const FREE_ALLOC_RANGES = {
+  warmupPct: [0.10, 0.25],
+  buildPct:  [0.00, 0.20],
+  drillPct:  [0.00, 0.20],
+  kickPct:   [0.00, 0.20],
+  pullPct:   [0.00, 0.20],
+  mainPct:   [0.15, 0.60],
+  cooldownPct:[0.05, 0.15],
+  warmupPlusBuildMaxPct: 0.30
+};
+
+Step 8. Add helper to pick a random percent in a range using the existing RNG
+Directly under that config, add this helper. Use the same RNG function used elsewhere in the generator (do NOT introduce Math.random unless no RNG exists).
+If there is a function named rand(), rng(), pick(), or similar, use it. If none exists in this scope, use Math.random as a fallback.
+
+function pickPct(range, rngFn) {
+  const a = range[0], b = range[1];
+  const t = typeof rngFn === "function" ? rngFn() : Math.random();
+  return a + (b - a) * t;
+}
+
+Step 9. Replace fixed percent allocation with ranged allocation
+Replace the current fixed allocation statements with this logic (keep variable names aligned to existing code and keep snapping calls the same as current code):
+
+- Choose pct values for warmup, build, drill, kick, pull, cooldown using pickPct and FREE_ALLOC_RANGES.
+- Enforce warmup + build <= FREE_ALLOC_RANGES.warmupPlusBuildMaxPct by scaling build down if needed:
+  if ((warmupPct + buildPct) > max) buildPct = Math.max(0, max - warmupPct);
+
+- Convert pct to raw distances: Math.round(total * pct)
+- Snap each section distance using the existing snap function already used for sections (2x pool length snapping).
+- Only include kick section if includeKick is true and snapped kickDist > 0.
+- Only include pull section if includePull is true and snapped pullDist > 0.
+- IMPORTANT: do not use else-if. Kick and Pull can both be included.
+- Assign mainDist as: total - (sum of other included snapped section distances)
+- Then snap mainDist as well.
+- If snapping causes total mismatch, adjust mainDist by the difference so that final total equals the snapped total target used by your current system. Do NOT add filler lines. Just adjust mainDist within snapping constraints.
+
+Do not change any template selection code in this micro change. Only the allocation amounts.
+
+Step 10. Commit micro change 2
+Commit message:
+Vary section distance allocation (free profile)
+
+Do not test.
+
+Step 11. Report back only
+Reply with:
+- exact line ranges for the micro change 1 HTML replacement
+- exact line ranges for the micro change 2 allocation block replacement
+- confirmation only index.js changed
+- both commit hashes
+
+Do not run the app or test.
+
+FINISH

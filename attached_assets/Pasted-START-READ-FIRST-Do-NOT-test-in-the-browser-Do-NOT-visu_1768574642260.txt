@@ -1,0 +1,96 @@
+START
+
+READ FIRST
+- Do NOT test in the browser.
+- Do NOT visually inspect.
+- Do NOT refactor unrelated code.
+- You will only modify index.js.
+- I (the human) will do all testing manually.
+
+TASK CONTEXT
+We currently have two visible problems and one structural logic problem:
+
+1) The Advanced Options bottom Generate button exists but its layout has NOT been changed.
+2) Workout generation repeatedly produces the same section distances (e.g. 300 / 200 / 200 / 200 / 450 / 200) across regenerations.
+3) Distance math is breaking in STANDARD pools (25m / 50m) more often than in custom pools, which is backwards.
+
+You will fix ALL THREE in one pass.
+
+--------------------------------------------------
+TASK 1 — ADVANCED OPTIONS BOTTOM GENERATE BUTTON (LAYOUT ONLY)
+
+Scope:
+- ONLY the bottom Generate button (generateBtn2)
+- The top Generate button must remain unchanged
+
+Required changes:
+- Change the generateBtn2 container so it visually matches the Notes textarea shape.
+- Same rounded rectangle height profile as Notes.
+- Inside that container:
+  - Left side: text label “Generate”
+  - Right side: the dolphin spinner icon
+- The spinner icon MUST be different from the top Generate button’s dolphin (reuse class is allowed, image must differ).
+- Reduce vertical empty space below Notes by doing this.
+- DO NOT change click wiring logic (generateBtn2 already works).
+- This is layout/styling only.
+
+--------------------------------------------------
+TASK 2 — DISTANCE VARIETY BUG (PRIMARY LOGIC BUG)
+
+Problem:
+Even with seeded randomness, section distances are effectively collapsing to the same snapped values every generation.
+
+Root cause you must address:
+- Percentages are randomized
+- BUT snapToPoolMultiple() + minSectionDist logic collapses variance
+- applySectionMinimums() then re-normalizes everything again
+Result: identical section totals over and over.
+
+Required fix:
+- Introduce ONE variability layer BEFORE snapping:
+  - Allow section targets to vary by ±1 pool-length *pair* (±2 lengths) where safe.
+  - This variability MUST be deterministic from seed.
+- Snapping still applies AFTER this adjustment.
+- This must affect warmup, build, drill, kick, pull.
+- Main remains “remainder-based” but must inherit variability indirectly.
+
+Hard constraints:
+- Total distance must still equal requested total (after final snap).
+- Every section must still end on the home wall.
+- No odd-length endings.
+- No section may drop below its minimum.
+
+--------------------------------------------------
+TASK 3 — STANDARD POOL MATH REGRESSION (CRITICAL)
+
+Observed behaviour:
+- Custom pools (e.g. 27m) behave better than 25m/50m.
+- Standard pools repeatedly misallocate and re-collapse distances.
+
+You must:
+- Audit snapToPoolMultiple(), snapSection(), and applySectionMinimums() interactions.
+- Ensure STANDARD pools do NOT get double-snapped.
+- Ensure snap logic is applied exactly once per section path.
+- Remove any hidden second normalization that only triggers for base = 25 or 50.
+
+Specifically verify:
+- 25m and 50m pools behave identically to custom pools in logic flow.
+- The only difference allowed is rep presentation, not distance math.
+
+--------------------------------------------------
+NON-GOALS (DO NOT DO)
+- Do NOT add new UI controls.
+- Do NOT add new equipment options.
+- Do NOT add sighting sets.
+- Do NOT change effort logic.
+- Do NOT touch templates except where required by math.
+
+--------------------------------------------------
+DELIVERABLE
+
+When finished, respond ONLY with:
+- A bullet list of EXACT code locations changed (line ranges).
+- A one-paragraph explanation of how distance variety is now preserved.
+- Confirmation that index.js is the only modified file.
+
+END

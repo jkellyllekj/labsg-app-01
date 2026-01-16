@@ -1083,12 +1083,12 @@ app.get("/", (req, res) => {
                 ></textarea>
               </div>
 
-              <div style="margin-top:12px;">
+              <div style="margin-top:8px;">
                 <button id="generateBtn2" type="button"
-                  style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.22); color:#111; cursor:pointer;">
-                  <span style="font-weight:700; font-size:16px;">Generate</span>
-                  <span class="genDolphin" style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,0.35); border:1px solid rgba(0,0,0,0.08);">
-                    <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="" style="width:28px; height:28px;">
+                  style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.22); color:#111; cursor:pointer;">
+                  <span style="font-weight:700; font-size:15px;">Generate</span>
+                  <span class="genDolphin" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,0.35); border:1px solid rgba(0,0,0,0.08);">
+                    <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-strong.png" alt="" style="width:24px; height:24px;">
                   </span>
                 </button>
               </div>
@@ -4417,6 +4417,15 @@ app.post("/generate-workout", (req, res) => {
       return a + (b - a) * t;
     }
 
+    // Variability jitter: ±1 pool-length-pair (±2 lengths) applied BEFORE snapping
+    // Returns -2, 0, or +2 lengths worth of distance, deterministically from RNG
+    function jitterLengths() {
+      const r = seededRng();
+      if (r < 0.33) return -2;
+      if (r < 0.67) return 0;
+      return 2;
+    }
+
     // Pick random percentages for each section
     let warmupPct = pickPct(FREE_ALLOC_RANGES.warmupPct);
     let buildPct = wantBuild ? pickPct(FREE_ALLOC_RANGES.buildPct) : 0;
@@ -4431,13 +4440,13 @@ app.post("/generate-workout", (req, res) => {
       buildPct = Math.max(0, warmupPlusBuildMax - warmupPct);
     }
 
-    // Convert percentages to raw distances and snap
-    let warmDist = snapToPoolMultiple(Math.round(total * warmupPct), base);
-    let buildDist = snapToPoolMultiple(Math.round(total * buildPct), base);
-    let drillDist = snapToPoolMultiple(Math.round(total * drillPct), base);
-    let kickDist = snapToPoolMultiple(Math.round(total * kickPct), base);
-    let pullDist = snapToPoolMultiple(Math.round(total * pullPct), base);
-    let coolDist = snapToPoolMultiple(Math.round(total * cooldownPct), base);
+    // Convert percentages to raw distances, apply jitter, then snap (SINGLE snap point)
+    let warmDist = snapToPoolMultiple(Math.round(total * warmupPct) + jitterLengths() * base, base);
+    let buildDist = snapToPoolMultiple(Math.round(total * buildPct) + jitterLengths() * base, base);
+    let drillDist = snapToPoolMultiple(Math.round(total * drillPct) + jitterLengths() * base, base);
+    let kickDist = snapToPoolMultiple(Math.round(total * kickPct) + jitterLengths() * base, base);
+    let pullDist = snapToPoolMultiple(Math.round(total * pullPct) + jitterLengths() * base, base);
+    let coolDist = snapToPoolMultiple(Math.round(total * cooldownPct) + jitterLengths() * base, base);
 
     // Minimum section distances (2 round trips = 4 lengths)
     const minSectionDist = base * 4;
@@ -4503,8 +4512,8 @@ app.post("/generate-workout", (req, res) => {
 
     sets.push({ label: "Cool down", dist: coolDist });
 
-    // Post-process: snap all sections to even lengths and apply minimums
-    applySectionMinimums(sets, total, base);
+    // NOTE: applySectionMinimums removed - distances are already snapped once above
+    // Double-snapping was causing variance collapse in standard pools (25m/50m)
 
     // Add total distance to opts so set builder can check for short workouts
     const optsWithTotal = { ...opts, totalDistance: total };

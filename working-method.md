@@ -475,3 +475,19 @@ This block exists to close the gap between written rules and actual execution.
 <!-- __END_WM_ASSISTANT_SELF_ENFORCEMENT_WM190__ -->
 
 <!-- __END_FILE_WM000__ -->
+## Cost Control
+
+The Agent must never initiate deep test loops, expansive validation cycles, or wide file scans unless explicitly instructed.
+
+Examples of disallowed behavior:
+- Iterating through dozens of distances to verify snapping ❌
+- Auto-testing multiple templates or pool sizes without request ❌
+- Expanding template libraries or fallback systems on its own ❌
+
+Cost-sensitive execution rules:
+- One task = one bounded action (code edit, sample generation, or test)
+- If results are unclear or incomplete, wait for human feedback
+- Do not retry, revalidate, or regenerate unless instructed
+
+If the Agent is unsure whether it is allowed to run a large loop or series of tests — it must stop and ask.
+

@@ -150,3 +150,24 @@ These must always hold:
 Ensure all sets, including Main, are passed through the same `snapSection()` logic so that every set ends at the same wall. No 350m/450m sets in a 50m pool.  
 Allow slight total overshoot if needed, just like in custom pools.
 
+## Validation Rules (Snapping, Math, Effort)
+
+The Agent must NEVER be trusted to validate correctness for:
+
+- Pool math (snapping to 2×poolLength)
+- Drill or Main set distance matching
+- Effort logic realism or plausibility
+- Coaching convention (e.g., set progression, pacing structure)
+
+These must be tested manually by a human or verified through ChatGPT logic review.
+
+The Agent may:
+- Generate workouts or perform rerolls
+- Report numeric totals and rep counts
+
+The Agent may not:
+- Claim effort logic is “realistic” or “varied”
+- Declare math is correct without visual confirmation
+- Validate that sets are “coach-appropriate”
+
+All final validation and logic review is human-only.

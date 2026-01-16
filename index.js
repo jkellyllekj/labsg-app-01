@@ -1082,6 +1082,15 @@ app.get("/", (req, res) => {
                   style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #bbb; border-radius:8px; resize:vertical; font-size:14px;"
                 ></textarea>
               </div>
+
+              <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+                <button id="generateBtn2" type="button" class="generateBox" style="width:100%; max-width:220px;">
+                  <div class="genLabel">Generate</div>
+                  <div class="genDolphin">
+                    <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="">
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2951,6 +2960,9 @@ app.get("/", (req, res) => {
       
       // Wire up workout title area regen and bg buttons
       document.getElementById("regenBtn2")?.addEventListener("click", () => {
+        document.getElementById("generateBtn")?.click();
+      });
+      document.getElementById("generateBtn2")?.addEventListener("click", () => {
         document.getElementById("generateBtn")?.click();
       });
       document.getElementById("bgCycleBtn2")?.addEventListener("click", () => {

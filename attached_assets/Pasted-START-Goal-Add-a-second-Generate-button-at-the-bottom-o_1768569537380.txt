@@ -1,0 +1,69 @@
+START
+
+Goal
+Add a second Generate button at the bottom of Advanced options so the user does not need to scroll back to the top. This is UI wiring only.
+
+Hard constraints
+- Edit index.js in the repo root only
+- One micro change only
+- Do not change generation logic, snapping, tiers, layout, or CSS
+- Do not rename existing ids or classes
+- Do not run tests. Manual testing will be done by the human
+
+Step 0. Open the file
+Open index.js in the repo root.
+
+Step 1. Find the Advanced options HTML section
+Use Find in file for this exact string:
+Advanced options
+
+Confirm you are inside the HTML template string that renders the form and includes the div with id advancedWrap.
+
+Step 2. Find the Notes textarea inside Advanced options
+Within that Advanced options area, find this exact string:
+id="notes"
+
+You should see the Notes textarea block.
+
+Step 3. Insert the bottom Generate button markup
+Immediately after the Notes textarea block, insert this exact HTML. Do not remove or move anything else.
+
+<div style="margin-top:14px; display:flex; justify-content:flex-end;">
+  <button id="generateBtn2" type="button" class="generateBox" style="width:100%; max-width:220px;">
+    <div class="genLabel">Generate</div>
+    <div class="genDolphin">
+      <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="">
+    </div>
+  </button>
+</div>
+
+Step 4. Wire the new button to the existing Generate button
+Now find the existing JS wiring area for the workout title buttons.
+
+Search for this exact string:
+regenBtn2
+
+You should see an event listener that clicks generateBtn.
+
+Directly after the regenBtn2 wiring block, add this exact JS. Do not change any other wiring.
+
+document.getElementById("generateBtn2")?.addEventListener("click", () => {
+  document.getElementById("generateBtn")?.click();
+});
+
+Step 5. Save and commit only
+Save the file.
+
+Commit message:
+Add Generate button at bottom of Advanced options
+
+Step 6. Report back only
+Reply with:
+- line numbers for the HTML insert location
+- line numbers for the JS wiring insert location
+- confirmation that only index.js was changed
+- the commit hash
+
+Do not run the app or test.
+
+FINISH

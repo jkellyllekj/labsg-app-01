@@ -1083,12 +1083,13 @@ app.get("/", (req, res) => {
                 ></textarea>
               </div>
 
-              <div style="margin-top:14px; display:flex; justify-content:flex-end;">
-                <button id="generateBtn2" type="button" class="generateBox" style="width:100%; max-width:220px;">
-                  <div class="genLabel">Generate</div>
-                  <div class="genDolphin">
-                    <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="">
-                  </div>
+              <div style="margin-top:12px;">
+                <button id="generateBtn2" type="button"
+                  style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.22); color:#111; cursor:pointer;">
+                  <span style="font-weight:700; font-size:16px;">Generate</span>
+                  <span class="genDolphin" style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,0.35); border:1px solid rgba(0,0,0,0.08);">
+                    <img class="dolphinIcon dolphinIcon--generate" src="/assets/dolphins/dolphin-base.png" alt="" style="width:28px; height:28px;">
+                  </span>
                 </button>
               </div>
             </div>
@@ -4391,55 +4392,96 @@ app.post("/generate-workout", (req, res) => {
     const wantBuild = total >= snapToPoolMultiple(1000, base);
     const wantDrill = true;
 
-    const minMainPct = 0.30;
-    const minMain = snapToPoolMultiple(Math.round(total * minMainPct), base);
+    // FREE PROFILE: Ranged allocation for variety
+    const FREE_ALLOC_RANGES = {
+      warmupPct: [0.10, 0.25],
+      buildPct:  [0.00, 0.20],
+      drillPct:  [0.00, 0.20],
+      kickPct:   [0.00, 0.20],
+      pullPct:   [0.00, 0.20],
+      mainPct:   [0.15, 0.60],
+      cooldownPct:[0.05, 0.15],
+      warmupPlusBuildMaxPct: 0.30
+    };
 
-    const warmTarget = snapToPoolMultiple(Math.round(total * 0.15), base);
-    const coolTarget = snapToPoolMultiple(Math.round(total * 0.08), base);
+    // Seeded RNG for deterministic variety
+    let rngState = seed;
+    function seededRng() {
+      rngState = ((rngState * 1103515245 + 12345) >>> 0) % 2147483648;
+      return rngState / 2147483648;
+    }
 
-    const availableForAncillary = total - minMain - coolTarget;
+    function pickPct(range) {
+      const a = range[0], b = range[1];
+      const t = seededRng();
+      return a + (b - a) * t;
+    }
 
+    // Pick random percentages for each section
+    let warmupPct = pickPct(FREE_ALLOC_RANGES.warmupPct);
+    let buildPct = wantBuild ? pickPct(FREE_ALLOC_RANGES.buildPct) : 0;
+    let drillPct = wantDrill ? pickPct(FREE_ALLOC_RANGES.drillPct) : 0;
+    let kickPct = includeKick ? pickPct(FREE_ALLOC_RANGES.kickPct) : 0;
+    let pullPct = includePull ? pickPct(FREE_ALLOC_RANGES.pullPct) : 0;
+    let cooldownPct = pickPct(FREE_ALLOC_RANGES.cooldownPct);
+
+    // Enforce warmup + build <= 30%
+    const warmupPlusBuildMax = FREE_ALLOC_RANGES.warmupPlusBuildMaxPct;
+    if ((warmupPct + buildPct) > warmupPlusBuildMax) {
+      buildPct = Math.max(0, warmupPlusBuildMax - warmupPct);
+    }
+
+    // Convert percentages to raw distances and snap
+    let warmDist = snapToPoolMultiple(Math.round(total * warmupPct), base);
+    let buildDist = snapToPoolMultiple(Math.round(total * buildPct), base);
+    let drillDist = snapToPoolMultiple(Math.round(total * drillPct), base);
+    let kickDist = snapToPoolMultiple(Math.round(total * kickPct), base);
+    let pullDist = snapToPoolMultiple(Math.round(total * pullPct), base);
+    let coolDist = snapToPoolMultiple(Math.round(total * cooldownPct), base);
+
+    // Minimum section distances (2 round trips = 4 lengths)
+    const minSectionDist = base * 4;
+    warmDist = Math.max(warmDist, minSectionDist);
+    coolDist = Math.max(coolDist, minSectionDist);
+
+    // Build sections array
     const sets = [];
+    let usedDist = 0;
 
-    const warm = Math.min(warmTarget, snapToPoolMultiple(Math.round(availableForAncillary * 0.35), base));
-    sets.push({ label: "Warm up", dist: Math.max(warm, base * 4) });
-    let usedAncillary = sets[0].dist;
+    sets.push({ label: "Warm up", dist: warmDist });
+    usedDist += warmDist;
 
-    if (wantBuild && usedAncillary + base * 4 <= availableForAncillary) {
-      const build = snapToPoolMultiple(Math.round(total * 0.08), base);
-      const d = Math.min(build, availableForAncillary - usedAncillary);
-      if (d >= base * 4) {
-        sets.push({ label: "Build", dist: d });
-        usedAncillary += d;
-      }
+    if (wantBuild && buildDist >= minSectionDist) {
+      sets.push({ label: "Build", dist: buildDist });
+      usedDist += buildDist;
     }
 
-    if (wantDrill && usedAncillary + base * 4 <= availableForAncillary) {
-      const drill = snapToPoolMultiple(Math.round(total * 0.12), base);
-      const d = Math.min(drill, availableForAncillary - usedAncillary);
-      if (d >= base * 4) {
-        sets.push({ label: "Drill", dist: d });
-        usedAncillary += d;
-      }
+    if (wantDrill && drillDist >= minSectionDist) {
+      sets.push({ label: "Drill", dist: drillDist });
+      usedDist += drillDist;
     }
 
-    if (includeKick && usedAncillary + base * 4 <= availableForAncillary) {
-      const kick = snapToPoolMultiple(Math.round(total * 0.12), base);
-      const d = Math.min(kick, availableForAncillary - usedAncillary);
-      if (d >= base * 4) {
-        sets.push({ label: "Kick", dist: d });
-        usedAncillary += d;
-      }
-    } else if (includePull && usedAncillary + base * 4 <= availableForAncillary) {
-      const pull = snapToPoolMultiple(Math.round(total * 0.12), base);
-      const d = Math.min(pull, availableForAncillary - usedAncillary);
-      if (d >= base * 4) {
-        sets.push({ label: "Pull", dist: d });
-        usedAncillary += d;
-      }
+    // Kick and Pull can BOTH be included (no else-if)
+    if (includeKick && kickDist >= minSectionDist) {
+      sets.push({ label: "Kick", dist: kickDist });
+      usedDist += kickDist;
     }
 
-    const mainTotal = total - usedAncillary - coolTarget;
+    if (includePull && pullDist >= minSectionDist) {
+      sets.push({ label: "Pull", dist: pullDist });
+      usedDist += pullDist;
+    }
+
+    // Main gets the remainder
+    let mainTotal = total - usedDist - coolDist;
+    mainTotal = snapToPoolMultiple(mainTotal, base);
+
+    // Adjust if snapping caused mismatch
+    const currentTotal = usedDist + mainTotal + coolDist;
+    if (currentTotal !== total) {
+      mainTotal = mainTotal + (total - currentTotal);
+      mainTotal = snapToPoolMultiple(mainTotal, base);
+    }
 
     // Snap main distances to multiples of 100 (or nearest clean rep) for better template matching
     const d100Main = snapToPoolMultiple(100, base);
@@ -4459,7 +4501,7 @@ app.post("/generate-workout", (req, res) => {
       sets.push({ label: "Main", dist: snapToCleanMain(mainTotal) });
     }
 
-    sets.push({ label: "Cool down", dist: coolTarget });
+    sets.push({ label: "Cool down", dist: coolDist });
 
     // Post-process: snap all sections to even lengths and apply minimums
     applySectionMinimums(sets, total, base);

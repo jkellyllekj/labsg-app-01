@@ -4562,7 +4562,18 @@ app.post("/generate-workout", (req, res) => {
       }
 
       if (!body) {
-        body = safeSimpleSetBody(setLabel, setDist, poolLen, opts);
+        const labelLower = String(setLabel).toLowerCase();
+        if (labelLower.includes("warm") || labelLower.includes("cool")) {
+          body = setDist + " easy";
+        } else if (labelLower.includes("drill")) {
+          body = setDist + " choice drill easy";
+        } else if (labelLower.includes("kick") || labelLower.includes("pull")) {
+          body = setDist + " moderate";
+        } else if (labelLower.includes("main")) {
+          body = setDist + " strong";
+        } else {
+          body = setDist + " steady";
+        }
       }
 
       s.body = body;

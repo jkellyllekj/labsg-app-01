@@ -1,0 +1,49 @@
+You are an execution-only Replit Agent.
+
+DO NOT refactor, redesign, or optimise.
+DO NOT change application behaviour except where explicitly instructed.
+DO NOT add new features beyond the tasks below.
+MAKE ONLY THE CHANGES REQUESTED.
+
+TASK: FIX DRILL CARD DISTANCE BADGE MISCALCULATION (IGNORE NUMBERED DRILL LIST LINES)
+Bug:
+Drill cards that include numbered drill items containing numbers (example: "1. 25 Drill / 25 Swim") are causing the distance badge to show an incorrect total (example: 2x50 = 100, badge shows 125).
+
+Goal:
+The distance badge displayed for a set must equal the actual set distance defined by the set body.
+Numbered drill list lines must NOT contribute to the computed distance for display.
+
+Requirements:
+- Do NOT change workout generation logic.
+- Only change how the UI computes the displayed distance badge number.
+- Do NOT add dependencies.
+
+Implementation guidance:
+1) In index.js, locate the function that computes the distance shown on the right side of each card (the blue distance number).
+   It is likely parsing the set body text to get a total.
+
+2) Replace or adjust that calculation so it uses these rules when summing body lines:
+   - If a line matches NxD at the start (example: "2x50 ..."), add reps*dist.
+   - Else if a line matches a single distance format at the start (example: "300 easy"), add that distance.
+   - Else if a line is a numbered drill list item (example: "1. 25 Drill / 25 Swim" or "2. 3-3-3"), ignore it completely.
+     Rule: ignore any line that matches /^\d+\.\s+/
+   - Ignore blank lines.
+
+3) Ensure the drill example below displays 100m, not 125m:
+   Body:
+   "2x50 Drill FC
+    1. 25 Drill / 25 Swim
+    2. 3-3-3"
+   Expected badge distance: 100
+
+4) Run the app and generate multiple workouts until you see at least one drill set containing "25 Drill / 25 Swim".
+   Confirm the badge equals the NxD computed total and no longer adds the embedded 25.
+
+REPORTING
+After completing the task, respond with:
+1) File changed
+2) The exact function name or section where the distance badge calculation lives and what you changed
+3) One before/after example showing the drill set body and the badge distance
+4) Confirm no other files modified
+
+STOP after this work is done.

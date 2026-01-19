@@ -2119,6 +2119,12 @@ app.get("/", (req, res) => {
         const lines = t.split(/\\n/);
         
         for (const line of lines) {
+          // Skip numbered drill list items (e.g., "1. 25 Drill / 25 Swim", "2. 3-3-3")
+          if (/^\\d+\\.\\s+/.test(line.trim())) continue;
+          
+          // Skip blank lines
+          if (!line.trim()) continue;
+          
           // Support x and × for NxD format (8x50, 4×100, etc)
           const re = /(\\d+)\\s*[x×]\\s*(\\d+)\\s*(m|yd)?/gi;
           let m;

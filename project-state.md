@@ -315,3 +315,26 @@ may not:
 - Validate that sets are “coach-appropriate”
 
 All final validation and logic review is human-only.
+## Deferred UI Ideas (Post v1 Visual Options)
+
+Solid colour backgrounds as alternatives to rotating image backgrounds.
+
+Presets: pure white, sepia tone, soft pastels.
+
+Pure black is allowed only if text remains readable on the glass effect.
+
+Optional colour picker background next to the existing background icon control.
+
+Restrict selection to light colours only.
+
+Enforce a luminance threshold so text on glass remains readable.
+
+Placement: this control appears in both locations where the background symbol exists today.
+
+Rule: no visual layout redesign during v1. This item is deferred and only becomes eligible when we formally switch phases.
+
+Priority note
+
+Add this under the section as a final bullet:
+
+Priority after v1: This is a motivating quick win. When we finish the next logic milestones, we can schedule a short v1.1 visual polish pass starting with solid backgrounds first, then the colour picker.

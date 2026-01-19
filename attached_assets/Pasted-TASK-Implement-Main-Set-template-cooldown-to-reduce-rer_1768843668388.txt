@@ -1,0 +1,99 @@
+TASK
+Implement Main Set template cooldown to reduce reroll repetition.
+Scope is logic only. Do not touch UI or styles.
+File: index.js only.
+Commit message: "Logic: main set template cooldown"
+
+CONTEXT IN THIS REPO (CONFIRMED)
+- POST /reroll-set calls buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) :contentReference[oaicite:1]{index=1}
+- buildOneSetBodyShared uses per-label pattern arrays called options and selects them using seed based indexing, like options[seed % options.length]() (this is why rerolls repeat patterns) :contentReference[oaicite:2]{index=2}
+
+GOAL
+For label "Main" (and also "Main 1" and "Main 2" if they share the same branch),
+ensure that the chosen pattern index does NOT equal the previous 1 to 2 pattern indices derived from rerollCount.
+We cannot store server session state. We must do this deterministically from rerollCount alone.
+
+DEFINITION
+Cooldown N = 2 (avoid repeating last 2 Main pattern indices).
+
+IMPLEMENTATION PLAN
+
+1) Add a small helper function near the other helpers in index.js
+Name: pickIndexWithCooldown
+Inputs:
+- len (number of options)
+- seed (number)
+- rerollCount (number)
+- cooldownN (number)
+
+Logic:
+- If len <= 1 return 0
+- Compute a "base" index for this reroll:
+  idx = ( (rerollCount * 7) + (seed % 9973) ) % len
+- Compute the prior indices using the SAME formula but with rerollCount - 1, rerollCount - 2, up to cooldownN:
+  prev1 = (((rerollCount - 1) * 7) + (seed % 9973)) % len
+  prev2 = (((rerollCount - 2) * 7) + (seed % 9973)) % len
+- If idx matches any prev, bump forward until it does not (bounded):
+  for step from 0 to len-1:
+    cand = (idx + step) % len
+    if cand not in prevs: return cand
+- Fallback return idx (should not happen unless len is tiny)
+
+Notes:
+- This is deterministic per request.
+- Uses rerollCount to give a stable "walk" through options.
+- Avoids immediate repeats even if seed changes slightly.
+
+2) Modify buildOneSetBodyShared ONLY in the Main branch
+In buildOneSetBodyShared, locate the branch that handles Main sets.
+It will be something like:
+- if (k.includes("main")) { ... const options = [ ... ]; options[seed % options.length](); ... }
+or equivalent.
+
+Change ONLY the selection line:
+- Replace options[seed % options.length]() with:
+  const idx = pickIndexWithCooldown(options.length, seed, rerollCount, 2);
+  options[idx]();
+
+Important:
+- Do not change any of the option functions content.
+- Do not change how remaining distance is filled.
+- Only change how the option index is chosen.
+
+3) Ensure rerollCount is available in that scope
+buildOneSetBodyShared already receives rerollCount from the endpoint payload. :contentReference[oaicite:3]{index=3}
+If you see rerollCount not destructured, add it safely:
+- const rerollCount = Number(args.rerollCount) || 1;
+Use the existing argument style in this file. Keep minimal.
+
+4) Apply to "Main 1" and "Main 2" if they share the same options array
+If the logic branches separately for "main 1" or "main 2", apply the same change in those branches too.
+If they reuse the same k.includes("main") check, you are done.
+
+5) Manual test (required)
+Run locally.
+
+A) Use 25m
+- Generate a workout.
+- Click reroll on a Main set 10 times.
+Expected:
+- The pattern structure (rep scheme) does not repeat within the last 2 rerolls.
+
+B) Repeat for 50m.
+
+C) Repeat for a 33m custom pool if available.
+
+Also confirm:
+- Set distance still matches targetDistance each reroll.
+- No new odd length endings appear.
+
+6) Commit
+- Only index.js changed.
+Commit message exactly:
+"Logic: main set template cooldown"
+
+REPORT BACK
+Reply with:
+- The exact Main branch condition you edited (the if condition line).
+- The number of options in the Main options array.
+- Confirmation that rerolls avoided repeating last 2 patterns in quick manual test.

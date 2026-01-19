@@ -493,6 +493,24 @@ function applySectionMinimums(sets, total, poolLen) {
   return sets;
 }
 
+// Helper: pick pattern index with cooldown to avoid repeating last N patterns
+function pickIndexWithCooldown(len, seed, rerollCount, cooldownN) {
+  if (len <= 1) return 0;
+  const rc = Number(rerollCount) || 0;
+  const idx = (((rc * 7) + (seed % 9973)) >>> 0) % len;
+  const prevs = [];
+  for (let i = 1; i <= cooldownN; i++) {
+    if (rc - i >= 0) {
+      prevs.push(((((rc - i) * 7) + (seed % 9973)) >>> 0) % len);
+    }
+  }
+  for (let step = 0; step < len; step++) {
+    const cand = (idx + step) % len;
+    if (!prevs.includes(cand)) return cand;
+  }
+  return idx;
+}
+
 // ENHANCED SET BUILDER - Coach-like sets with variety + ~20% multi-part
 function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opts, seed, rerollCount }) {
   const base = poolLen;
@@ -3777,7 +3795,8 @@ app.post("/reroll-set", (req, res) => {
         if (d50 > 0 && remaining >= d50 * 8) add(8, d50, stroke + " focus stroke count", restSecondsFor("main", d50, opts));
       } else {
         // All round - 8 different coach-quality patterns with varied structures and zones
-        const patternChoice = seed % 8;
+        // Use cooldown to avoid repeating last 2 patterns on reroll
+        const patternChoice = pickIndexWithCooldown(8, seed, rerollCount, 2);
         if (patternChoice === 0) {
           // Build to sprint finish
           if (d100 > 0 && remaining >= d100 * 6) add(6, d100, stroke + " build", restSecondsFor("main", d100, opts));

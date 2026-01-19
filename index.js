@@ -2040,6 +2040,9 @@ app.get("/", (req, res) => {
           f.push(intensityStrip);
         }
         
+        // Copyright notice
+        f.push("<div style=\\"margin-top:12px; text-align:center; font-size:12px; opacity:0.7;\\">\\u00A9 Creative Arts Global LTD. All rights reserved.</div>");
+        
         footerBox.innerHTML = f.join("");
         footerBox.style.opacity = "0";
         footerBox.style.transform = "translateY(16px)";
@@ -3018,6 +3021,9 @@ ${HOME_JS_CLOSE}
   res.send(fullHtml);
   });
 app.get("/viewport-lab", (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).send("Not found");
+  }
   const VIEWPORT_LAB_HTML = `<!doctype html>
 <html lang="en">
 <head>

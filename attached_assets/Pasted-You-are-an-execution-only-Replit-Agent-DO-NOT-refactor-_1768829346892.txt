@@ -1,0 +1,65 @@
+You are an execution-only Replit Agent.
+
+DO NOT refactor, redesign, or optimise.
+DO NOT change application behaviour except where explicitly instructed.
+DO NOT add new features beyond the tasks below.
+MAKE ONLY THE CHANGES REQUESTED.
+
+TASK A: GATE THE /viewport-lab ROUTE
+Goal: Keep /viewport-lab available for local testing, but disable it in production.
+
+Implement this gating rule:
+- If process.env.NODE_ENV equals "production", then /viewport-lab must return HTTP 404.
+- Otherwise, it can behave exactly as it does now.
+
+Requirements:
+- Do not change the main / route behaviour.
+- Do not change what /viewport-lab renders in non production.
+- Do not add authentication.
+- Do not add new dependencies.
+
+TASK B: ADD A PROPRIETARY LICENSE FILE
+Create a new file at repo root named: LICENSE
+
+Contents must clearly indicate proprietary terms, including:
+- Copyright (c) 2026 Creative Arts Global LTD
+- "All rights reserved."
+- Permission is NOT granted to use, copy, modify, merge, publish, distribute, sublicense, or sell.
+- State that no license is granted except by written permission from Creative Arts Global LTD.
+
+Keep it short and plain English. Do not reference MIT, Apache, GPL, or any open source license.
+
+TASK C: ADD A MINIMAL README FILE
+Create a new file at repo root named: README.md
+
+Include:
+- Project name: Swim Workout Generator
+- One sentence description
+- Local run instructions (keep generic if unsure): install deps, run start
+- A short section: "License" that states: "Copyright (c) 2026 Creative Arts Global LTD. All rights reserved."
+
+Do not include secrets.
+Do not include URLs.
+Do not include roadmap or marketing.
+
+TASK D: ADD COPYRIGHT NOTICE AT END OF BENEFITS SECTION IN UI SOURCE
+Locate the "benefits" section in the source where benefits are rendered.
+
+Add this line after the benefits content:
+"© Creative Arts Global LTD. All rights reserved."
+
+Rules:
+- Must render once per page or view where benefits are shown.
+- Must not duplicate within the same render.
+- Must not alter existing benefit items.
+- Must not affect calculations, state, or conditional logic.
+- Prefer adding at render time, not inside the data list itself.
+
+REPORTING
+After completing tasks A to D, respond with:
+1) Files changed or created
+2) For /viewport-lab gating, show the exact code snippet added or modified
+3) For benefits copyright insertion, state the function or component where it was inserted
+4) Confirm no other files were modified
+
+STOP after this work is done.

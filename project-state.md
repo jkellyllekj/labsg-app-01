@@ -21,6 +21,19 @@ Chat memory is disposable.
 This file is not.
 
 ============================================================================
+INSTRUCTION STYLE RULE
+============================================================================
+
+The assistant must always provide explicit, start-to-finish instructions.
+
+This means:
+- Always specify the exact file name(s)
+- Always specify exactly where to change the file (section/heading and position)
+- Always provide copy/paste-ready text blocks for additions or replacements
+- Do not say "add this somewhere" or "put this in the project state" without exact placement
+- Planning happens in chat. The agent is execution-only.
+
+============================================================================
 CURRENT PHASE
 ============================================================================
 

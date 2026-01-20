@@ -1,0 +1,61 @@
+AGENT BRIEF (DOCS ONLY)
+
+TASK
+Add an explicit project rule to project-state.md:
+"The assistant must always give explicit instructions (what/where/how), start-to-finish, with copy-paste blocks."
+
+Scope:
+- docs only
+- edit project-state.md only
+- do NOT touch index.js or styles.css
+- do NOT reformat or rewrite other sections
+- add the smallest possible text block
+
+Commit message:
+Docs: enforce explicit instruction style
+
+FILE
+project-state.md
+
+WHERE TO ADD
+In project-state.md, locate the section:
+
+============================================================================
+READ THIS FIRST
+============================================================================
+
+Immediately AFTER the existing paragraph that ends with:
+"Chat memory is disposable. This file is not."
+
+Add the block below on its own lines, keeping the same plain formatting style.
+
+TEXT TO INSERT (COPY/PASTE EXACTLY)
+
+============================================================================
+INSTRUCTION STYLE RULE
+============================================================================
+
+The assistant must always provide explicit, start-to-finish instructions.
+
+This means:
+- Always specify the exact file name(s)
+- Always specify exactly where to change the file (section/heading and position)
+- Always provide copy/paste-ready text blocks for additions or replacements
+- Do not say "add this somewhere" or "put this in the project state" without exact placement
+- Planning happens in chat. The agent is execution-only.
+
+END INSERT
+
+SAVE CHECK
+- Confirm no other content changed
+- Confirm the new section appears under READ THIS FIRST and before CURRENT PHASE
+
+COMMIT
+- Commit only project-state.md
+- Commit message exactly:
+Docs: enforce explicit instruction style
+
+REPORT BACK
+Reply with:
+- Confirmation you inserted the block under READ THIS FIRST
+- The line or snippet directly above and below the inserted block (2-3 lines each) to prove placement

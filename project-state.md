@@ -1,6 +1,6 @@
 # Project: Swim Workout Generator
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)
-Last updated: 2026-01-20
+Last updated: 2026-01-20 (doc sync)
 Status: Active
 
 ============================================================================

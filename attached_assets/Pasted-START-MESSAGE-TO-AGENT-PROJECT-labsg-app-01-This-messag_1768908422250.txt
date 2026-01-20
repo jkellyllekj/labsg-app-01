@@ -1,0 +1,105 @@
+START MESSAGE TO AGENT
+
+PROJECT: labsg-app-01
+
+This message supersedes any prior instructions. Follow it exactly.
+One commit only. No UI changes. No scope creep.
+
+====================================
+SECTION A — WHAT TO UPDATE IN CODE
+====================================
+
+FILE: index.js
+
+TASK: Fix invalid bailout token and ensure deterministic regeneration.
+
+1. Search for the exact text:
+   Return null.
+
+2. This appears inside the remainder filler logic near the comment:
+   // If stuck, do not output weirdness.
+
+3. Replace ONLY that line with valid JavaScript:
+
+   return null;
+
+4. Identify the immediate caller of this remainder filler.
+   If the filler returns null, the caller MUST also return null so that:
+   - The section build is aborted
+   - The generator retries with a new seed
+   - No partial or odd-length output is emitted
+
+5. Do NOT:
+   - Inject filler distances
+   - Approximate totals
+   - Force snapping
+   - Change snapping math
+   - Touch UI, CSS, or HTML
+
+This is a minimal correctness fix only.
+
+====================================
+SECTION B — TESTING REQUIRED
+====================================
+
+After the change:
+
+1. Restart the app.
+2. Generate at least 20 workouts for each pool:
+   - 25m
+   - 50m
+   - 25yd
+   - Custom 33m
+3. Verify:
+   - Every section distance is divisible by (2 × pool length)
+   - Every set ends on the same wall
+   - No console errors
+   - Reroll does not loop identical structures
+
+====================================
+SECTION C — COMMIT RULES
+====================================
+
+- One commit only.
+- Commit message exactly:
+  Fix remainder bailout return null
+
+====================================
+SECTION D — WHAT TO REPORT BACK
+====================================
+
+Reply with:
+1. Confirmation that `Return null.` no longer exists anywhere
+2. One example generated workout for custom 33m
+3. Any remaining failure case with exact input payload if observed
+
+====================================
+SECTION E — WORKING METHOD UPDATE
+====================================
+
+FILE: WORKING-METHOD-REPLIT.md
+
+Add the following explicit rule under execution instructions:
+
+- ALL instructions sent from ChatGPT to the agent MUST:
+  - Be enclosed in a single code block
+  - Begin with "START MESSAGE TO AGENT"
+  - End with "FINISH MESSAGE TO AGENT"
+  - Contain all actions, tests, and reporting requirements inline
+  - Never rely on prose outside the code block
+
+This rule is mandatory and overrides informal instructions.
+
+====================================
+SECTION F — PROJECT STATE UPDATE
+====================================
+
+FILE: project-state.md
+
+Under OBSERVED FAILURES or KNOWN ISSUES, add:
+
+- Observed: index.js contained an invalid `Return null.` token inside remainder filler logic near “If stuck, do not output weirdness.”
+  This may cause section build failure or odd-length leaks in edge cases.
+  Fix is to replace with valid `return null;` and propagate null upward to force regeneration.
+
+FINISH MESSAGE TO AGENT

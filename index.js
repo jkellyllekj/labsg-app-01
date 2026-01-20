@@ -3686,7 +3686,7 @@ app.post("/reroll-set", (req, res) => {
       }
 
       // Fill remaining with easy swim in 100s or 50s, not weird singles.
-      fillEasy();
+      if (fillEasy() === null) return null;
       return lines.join("\n");
     }
 
@@ -3724,7 +3724,7 @@ app.post("/reroll-set", (req, res) => {
         if (d50 > 0 && remaining >= d50 * 8) add(8, d50, desc, restSecondsFor("build", d50, opts));
       }
 
-      fillEasy("build");
+      if (fillEasy("build") === null) return null;
       return lines.join("\n");
     }
 
@@ -3758,7 +3758,7 @@ app.post("/reroll-set", (req, res) => {
         if (reps >= 4) add(reps, d25, desc2, restSecondsFor("drill", d25, opts));
       }
 
-      fillEasy("drill");
+      if (fillEasy("drill") === null) return null;
       return lines.join("\n");
     }
 
@@ -3790,7 +3790,7 @@ app.post("/reroll-set", (req, res) => {
         if (reps >= 2) add(reps, d50, kickDescriptions[(seed + 2) % kickDescriptions.length] + finNote, restSecondsFor("kick", d50, opts));
       }
 
-      fillEasy("kick");
+      if (fillEasy("kick") === null) return null;
       return lines.join("\n");
     }
 
@@ -3815,7 +3815,7 @@ app.post("/reroll-set", (req, res) => {
         if (reps >= 2) add(reps, d50, pullDescriptions[(seed + 1) % pullDescriptions.length] + padNote, restSecondsFor("pull", d50, opts));
       }
 
-      fillEasy("pull");
+      if (fillEasy("pull") === null) return null;
       return lines.join("\n");
     }
 
@@ -3825,7 +3825,7 @@ app.post("/reroll-set", (req, res) => {
       const d100 = snapToPoolMultiple(100, base);
       if (d200 > 0 && remaining >= d200) add(1, d200, stroke + " easy", 0);
       if (d100 > 0 && remaining >= d100) add(1, d100, "easy mixed", 0);
-      fillEasy("cool");
+      if (fillEasy("cool") === null) return null;
       return lines.join("\n");
     }
 
@@ -3902,7 +3902,7 @@ app.post("/reroll-set", (req, res) => {
         }
       }
 
-      fillEasy("main");
+      if (fillEasy("main") === null) return null;
       return lines.join("\n");
     }
 

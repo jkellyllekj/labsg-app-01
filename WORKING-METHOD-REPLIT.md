@@ -69,6 +69,16 @@ The Agent must only do what it is explicitly instructed to do in the current mes
 
 If the Agent is asked to run tests, it must run exactly the specified test and report only the requested output.
 
+## Instruction format rule
+ALL instructions sent from ChatGPT to the agent MUST:
+- Be enclosed in a single code block
+- Begin with "START MESSAGE TO AGENT"
+- End with "FINISH MESSAGE TO AGENT"
+- Contain all actions, tests, and reporting requirements inline
+- Never rely on prose outside the code block
+
+This rule is mandatory and overrides informal instructions.
+
 ## Session start rule
 At the start of every Agent session, the Agent must do this in order.
 1. Wait for explicit instructions.

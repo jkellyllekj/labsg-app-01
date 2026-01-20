@@ -235,6 +235,9 @@ KNOWN ISSUES
 - Rare odd-length leaks still observed in edge cases
 - Effort gradients slightly overrepresented
 - Full Gas still underrepresented in some runs
+- Observed: index.js contained an invalid `Return null.` token inside remainder filler logic near "If stuck, do not output weirdness."
+  This may cause section build failure or odd-length leaks in edge cases.
+  Fix is to replace with valid `return null;` and propagate null upward to force regeneration.
 
 ============================================================================
 END OF FILE

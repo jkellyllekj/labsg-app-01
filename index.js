@@ -112,6 +112,77 @@ function isValidKickLine(text, repDistance) {
   return true;
 }
 
+// EVEN REP SCHEME PICKER - Enforces even rep counts for Drill/Kick sets
+// Returns { reps, repDist } or null if no valid scheme found
+function pickEvenRepScheme(targetDistance, poolLen, kind) {
+  const target = Number(targetDistance);
+  const base = Number(poolLen);
+  if (!target || target <= 0 || !base || base <= 0) return null;
+  
+  // Snap rep distance to pool multiple
+  const snapRepDist = (d) => {
+    if (d <= 0 || base <= 0) return 0;
+    return Math.round(d / base) * base || base;
+  };
+  
+  // Preferred rep distances by kind (in priority order)
+  const prefDists = kind === "drill" 
+    ? [50, 25, 75, 100] 
+    : [50, 25, 100]; // kick
+  
+  // Allowed even rep counts (coach-plausible)
+  const allowedReps = [4, 6, 8, 10, 12, 16, 20];
+  
+  // First pass: try preferred distances with allowed rep counts
+  for (const pref of prefDists) {
+    const repDist = snapRepDist(pref);
+    if (repDist <= 0) continue;
+    if (target % repDist !== 0) continue;
+    const reps = target / repDist;
+    if (!Number.isInteger(reps)) continue;
+    if (reps % 2 === 0 && allowedReps.includes(reps)) {
+      return { reps, repDist };
+    }
+  }
+  
+  // Second pass: accept any even reps between 4 and 24 (for odd pool edge cases)
+  for (const pref of prefDists) {
+    const repDist = snapRepDist(pref);
+    if (repDist <= 0) continue;
+    if (target % repDist !== 0) continue;
+    const reps = target / repDist;
+    if (!Number.isInteger(reps)) continue;
+    if (reps >= 4 && reps <= 24 && reps % 2 === 0) {
+      return { reps, repDist };
+    }
+  }
+  
+  // Third pass: try pool length multiples directly
+  for (let mult = 1; mult <= 4; mult++) {
+    const repDist = base * mult;
+    if (target % repDist !== 0) continue;
+    const reps = target / repDist;
+    if (!Number.isInteger(reps)) continue;
+    if (reps >= 4 && reps <= 24 && reps % 2 === 0) {
+      return { reps, repDist };
+    }
+  }
+  
+  // Fourth pass: accept even reps 2-30 as last resort
+  for (const pref of prefDists) {
+    const repDist = snapRepDist(pref);
+    if (repDist <= 0) continue;
+    if (target % repDist !== 0) continue;
+    const reps = target / repDist;
+    if (!Number.isInteger(reps)) continue;
+    if (reps >= 2 && reps <= 30 && reps % 2 === 0) {
+      return { reps, repDist };
+    }
+  }
+  
+  return null;
+}
+
 // Parse a line to extract NxD format
 function parseNxD(line) {
   const match = String(line || "").match(/^(\d+)x(\d+)/i);
@@ -277,17 +348,17 @@ const SECTION_TEMPLATES = {
     { body: "8x25 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm", dist: 200 },
     { body: "4x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist", dist: 400 },
     { body: "6x50 Drill FC\n1. Jazz Hands\n2. 3-3-3\n3. Single Arm\n4. Finger Drag\n5. Torpedo Glide\n6. Long Dog", dist: 300 },
-    { body: "5x50 Drill FC\n1. Fist\n2. DPS\n3. Catch-up\n4. Scull Front\n5. 25 Drill / 25 Swim", dist: 250 },
+    { body: "4x50 Drill FC\n1. Fist\n2. DPS\n3. Catch-up\n4. Scull Front", dist: 200 },
     { body: "4x50 Drill FC\n1. Long Dog\n2. Finger Drag\n3. 3-3-3\n4. Jazz Hands", dist: 200 },
     { body: "6x50 Drill FC\n1. Single Arm\n2. Fist\n3. Catch-up\n4. DPS\n5. Scull Front\n6. Torpedo Glide", dist: 300 },
     { body: "4x75 Drill FC\n1. Catch-up\n2. Fist\n3. DPS\n4. 25 Drill / 25 Swim", dist: 300 },
-    { body: "5x50 Drill FC\n1. Jazz Hands\n2. Long Dog\n3. 3-3-3\n4. Finger Drag\n5. Single Arm", dist: 250 },
+    { body: "6x50 Drill FC\n1. Jazz Hands\n2. Long Dog\n3. 3-3-3\n4. Finger Drag\n5. Single Arm\n6. Fist", dist: 300 },
     { body: "6x50 Drill FC\n1. DPS\n2. Fist\n3. Catch-up\n4. Single Arm\n5. Finger Drag\n6. Scull Rear", dist: 300 },
     { body: "10x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear", dist: 500 },
-    { body: "5x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm", dist: 500 },
+    { body: "6x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog", dist: 600 },
     { body: "12x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear\n11. 3-3-3\n12. 25 Drill / 25 Swim", dist: 600 },
     { body: "6x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog", dist: 600 },
-    { body: "7x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog\n7. Torpedo Glide", dist: 700 },
+    { body: "8x100 Drill FC\n1. 50 Drill / 50 Swim\n2. Catch-up\n3. DPS\n4. Fist\n5. Single Arm\n6. Long Dog\n7. Torpedo Glide\n8. Scull Front", dist: 800 },
     { body: "14x50 Drill FC\n1. Fist\n2. Catch-up\n3. DPS\n4. Jazz Hands\n5. Long Dog\n6. Scull Front\n7. Finger Drag\n8. Single Arm\n9. Torpedo Glide\n10. Scull Rear\n11. 3-3-3\n12. 25 Drill / 25 Swim\n13. Fist\n14. Catch-up", dist: 700 }
   ],
   kick: [
@@ -297,7 +368,7 @@ const SECTION_TEMPLATES = {
     { body: "4x50 kick moderate", dist: 200 },
     { body: "8x25 kick fast", dist: 200 },
     { body: "8x50 kick steady", dist: 400 },
-    { body: "5x50 kick steady", dist: 250 },
+    { body: "6x50 kick steady", dist: 300 },
     { body: "300 kick steady", dist: 300 },
     { body: "200 kick moderate", dist: 200 },
     { body: "6x50 kick strong", dist: 300 },
@@ -306,14 +377,13 @@ const SECTION_TEMPLATES = {
     { body: "200 kick moderate\n4x50 kick strong", dist: 400 },
     { body: "6x50 kick descend 1-3 twice", dist: 300 },
     { body: "4x100 kick build", dist: 400 },
-    { body: "3x100 kick descend 1-3", dist: 300 },
+    { body: "4x100 kick descend 1-4", dist: 400 },
     // Alternating effort sets
     { body: "6x50 kick (25 easy / 25 fast)", dist: 300 },
     { body: "8x50 kick (25 moderate / 25 fast)", dist: 400 },
     { body: "4x100 kick (50 steady / 50 fast)", dist: 400 },
-    { body: "5x50 kick (25 easy / 25 fast)", dist: 250 },
+    { body: "6x50 kick (25 easy / 25 fast)", dist: 300 },
     { body: "10x50 kick steady", dist: 500 },
-    { body: "5x100 kick moderate", dist: 500 },
     { body: "6x100 kick moderate", dist: 600 },
     { body: "12x50 kick steady", dist: 600 },
     { body: "4x100 kick moderate\n4x50 kick strong", dist: 600 }
@@ -686,7 +756,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // DRILL: Structured numbered drill list (coach-style)
-  // Guard: drill reps must be clean numbers (no 7, 9, 11, 13)
+  // EVEN REPS ONLY: Enforces even rep counts (no 7x50, 9x50, 17x50)
   // CRITICAL: Must match target distance exactly
   if (k.includes("drill")) {
     const drillPool = [
@@ -695,36 +765,15 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
       "3-3-3", "Finger Drag", "25 Drill / 25 Swim"
     ];
     
-    // Find exact fit that matches target distance
-    const candidates = [d50, d25, d75, d100].filter(x => x > 0);
-    let fit = null;
-    for (const repDist of candidates) {
-      if (target % repDist === 0) {
-        const reps = target / repDist;
-        if (reps >= 2 && reps <= 12 && isValidDrillLine(reps)) {
-          fit = { reps, dist: repDist };
-          break;
-        }
-      }
-    }
+    // Use even rep scheme picker to enforce even reps only
+    const evenScheme = pickEvenRepScheme(target, base, "drill");
     
-    // Fallback: try any valid rep count
-    if (!fit) {
-      for (const repDist of candidates) {
-        if (target % repDist === 0) {
-          const reps = target / repDist;
-          if (reps >= 2 && reps <= 20) {
-            fit = { reps, dist: repDist };
-            break;
-          }
-        }
-      }
-    }
-    
-    if (!fit) {
-      // Last resort: single line format
+    if (!evenScheme) {
+      // Last resort: single line format (rare edge case)
       return target + " drill easy";
     }
+    
+    const fit = { reps: evenScheme.reps, dist: evenScheme.repDist };
     
     // Build numbered drill list
     const shuffledDrills = shuffleWithSeed([...drillPool], seedA);
@@ -738,7 +787,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   }
 
   // KICK: Kick set with variety across effort levels
-  // Use rerollNum to CYCLE through effort levels deliberately
+  // EVEN REPS ONLY: Enforces even rep counts (no 7x50, 9x50, 17x50)
   // Guard: no "relaxed" or "easy" with short reps (25-50)
   if (k.includes("kick")) {
     const finNote = hasFins ? " with fins" : "";
@@ -753,8 +802,12 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
     const effort = effortLevels[effortIdx];
     const descs = kickByEffort[effort];
     let kickDesc = descs[seedA % descs.length];
-    const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0), true);
-    if (!fit) return makeLine(1, target, "kick" + finNote, 0);
+    
+    // Use even rep scheme picker to enforce even reps only
+    const evenScheme = pickEvenRepScheme(target, base, "kick");
+    if (!evenScheme) return makeLine(1, target, "kick" + finNote, 0);
+    
+    const fit = { reps: evenScheme.reps, dist: evenScheme.repDist };
     
     if (!isValidKickLine(kickDesc, fit.dist)) {
       kickDesc = "kick steady" + finNote;
@@ -3692,13 +3745,16 @@ app.post("/reroll-set", (req, res) => {
       const desc1 = namedDrills[seed % namedDrills.length];
       const desc2 = namedDrills[(seed + 7) % namedDrills.length];
 
+      // EVEN REPS ONLY: Round down to nearest even number
+      const toEven = (n) => n - (n % 2);
+      
       // Try to fill with reasonable reps based on what fits
       if (d50 > 0 && remaining >= d50 * 2) {
-        const reps = Math.min(8, Math.floor(remaining / d50));
+        const reps = toEven(Math.min(8, Math.floor(remaining / d50)));
         if (reps >= 2) add(reps, d50, desc1, restSecondsFor("drill", d50, opts));
       }
       if (d25 > 0 && remaining >= d25 * 4) {
-        const reps = Math.min(12, Math.floor(remaining / d25));
+        const reps = toEven(Math.min(12, Math.floor(remaining / d25)));
         if (reps >= 4) add(reps, d25, desc2, restSecondsFor("drill", d25, opts));
       }
 
@@ -3717,17 +3773,20 @@ app.post("/reroll-set", (req, res) => {
       ];
       const desc = kickDescriptions[seed % kickDescriptions.length] + finNote;
 
+      // EVEN REPS ONLY: Round down to nearest even number
+      const toEven = (n) => n - (n % 2);
+      
       // Try to fill with reasonable reps based on what fits
       if (d100 > 0 && remaining >= d100 * 2) {
-        const reps = Math.min(6, Math.floor(remaining / d100));
+        const reps = toEven(Math.min(6, Math.floor(remaining / d100)));
         if (reps >= 2) add(reps, d100, desc, restSecondsFor("kick", d100, opts));
       }
       if (d75 > 0 && remaining >= d75 * 2) {
-        const reps = Math.min(4, Math.floor(remaining / d75));
+        const reps = toEven(Math.min(4, Math.floor(remaining / d75)));
         if (reps >= 2) add(reps, d75, kickDescriptions[(seed + 1) % kickDescriptions.length] + finNote, restSecondsFor("kick", d75, opts));
       }
       if (d50 > 0 && remaining >= d50 * 2) {
-        const reps = Math.min(8, Math.floor(remaining / d50));
+        const reps = toEven(Math.min(8, Math.floor(remaining / d50)));
         if (reps >= 2) add(reps, d50, kickDescriptions[(seed + 2) % kickDescriptions.length] + finNote, restSecondsFor("kick", d50, opts));
       }
 
@@ -4293,21 +4352,21 @@ app.post("/generate-workout", (req, res) => {
       return makeLine(fit.reps, fit.dist, stroke + " " + buildDesc, restFor(fit.dist));
     }
 
-    // DRILL: Named drill
+    // DRILL: Named drill - EVEN REPS ONLY
     if (k.includes("drill")) {
-      const fit = findBestFit([d50, d25, d75].filter(x => x > 0));
-      if (!fit) return makeLine(1, target, drill, 0);
-      return makeLine(fit.reps, fit.dist, drill, restFor(fit.dist));
+      const evenScheme = pickEvenRepScheme(target, base, "drill");
+      if (!evenScheme) return makeLine(1, target, drill, 0);
+      return makeLine(evenScheme.reps, evenScheme.repDist, drill, restFor(evenScheme.repDist));
     }
 
-    // KICK: Simple kick set
+    // KICK: Simple kick set - EVEN REPS ONLY
     if (k.includes("kick")) {
       const finNote = hasFins ? " with fins" : "";
       const kickDescs = ["kick " + buildDesc + finNote, "kick steady" + finNote, "kick fast" + finNote];
       const kickDesc = kickDescs[seed % kickDescs.length];
-      const fit = findBestFit([d100, d50, d75, d25].filter(x => x > 0));
-      if (!fit) return makeLine(1, target, "kick" + finNote, 0);
-      return makeLine(fit.reps, fit.dist, kickDesc, restFor(fit.dist));
+      const evenScheme = pickEvenRepScheme(target, base, "kick");
+      if (!evenScheme) return makeLine(1, target, "kick" + finNote, 0);
+      return makeLine(evenScheme.reps, evenScheme.repDist, kickDesc, restFor(evenScheme.repDist));
     }
 
     // PULL: Simple pull set

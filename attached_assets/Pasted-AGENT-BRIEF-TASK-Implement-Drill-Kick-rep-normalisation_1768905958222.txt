@@ -1,0 +1,139 @@
+AGENT BRIEF
+
+TASK
+Implement Drill + Kick rep normalisation (even rep counts only) to eliminate odd/prime rep counts like:
+- 7x50 drill (350)
+- 9x50 kick (450)
+- 17x50 drill (850)
+
+Scope: logic only. Do not touch UI or styles.
+File: index.js only.
+Commit message: "Logic: drill/kick rep normalisation"
+
+CONTEXT (FROM CURRENT index.js)
+- There is already a validation helper isValidDrillLine(repCount) that rejects odd random numbers like 7, 9, 11, 13, 17, etc. :contentReference[oaicite:0]{index=0}
+- Yet the generator still produces odd Drill/Kick reps in real output, which means either:
+  A) Drill/Kick bodies are being constructed dynamically (not purely from static templates), or
+  B) Validation is not being applied to all Drill/Kick constructions, or
+  C) Some templates still encode odd counts and are being used.
+- parseNxD() and validateSetBody() exist and are used to validate line totals and home-wall finish. :contentReference[oaicite:1]{index=1}
+
+GOAL
+For any generated set whose label is Drill or Kick:
+- If the primary work line is NxD, enforce an even rep count (coach-plausible).
+- Prefer conventional counts and distances so totals remain exact.
+- Never “fix” by changing targetDistance. We must still hit targetDistance exactly and keep home-wall finish.
+
+IMPORTANT CONSTRAINT
+We cannot just change reps after the fact because that breaks distance matching.
+Instead we must CHOOSE a rep scheme (repDistance and reps) that exactly multiplies to targetDistance AND yields an even rep count.
+
+DEFINITION (FREE TIER RULE)
+Allowed rep counts (default): 4, 6, 8, 10, 12, 16, 20
+Disallowed: any odd number > 1 (3 may be allowed only for some 75/150 patterns, but NOT for Drill/Kick in v1)
+For this commit: enforce EVEN ONLY.
+
+IMPLEMENTATION PLAN
+
+1) Add a helper to choose an even rep scheme
+Add a function near the existing validation helpers:
+
+function pickEvenRepScheme(targetDistance, poolLen, kind)
+- kind is "drill" or "kick" (string)
+- Returns either:
+  { reps, repDist } (both numbers)
+  or null if no scheme found
+
+Algorithm (deterministic, no randomness needed):
+- Build candidate rep distances in this preference order:
+  For drill: [50, 25, 75, 100] (then filter by poolLen multiple using snapRepDistToPool)
+  For kick:  [50, 25, 100] (kick commonly 25/50/100)
+- For each repDist candidate:
+  repDist = snapRepDistToPool(candidate, poolLen)
+  if repDist <= 0 continue
+  if targetDistance % repDist !== 0 continue
+  reps = targetDistance / repDist
+  if reps is not integer continue
+  if reps is even AND reps is in allowed set [4,6,8,10,12,16,20] then return it
+- If none match allowed set, do a fallback:
+  accept any even reps between 4 and 24 inclusive (still even) for odd pool edge cases
+  (This keeps the workout possible while still eliminating 7,9,17 style reps)
+- If still none, return null
+
+2) Apply this scheme in buildOneSetBodyShared for Drill and Kick
+Locate buildOneSetBodyShared (used by POST /reroll-set). :contentReference[oaicite:2]{index=2}
+Inside, find the branch where label includes "drill" and "kick".
+
+For Drill branch:
+- If the body is being built dynamically (NxD line + numbered list), change the reps/repDist calculation to use pickEvenRepScheme(targetDistance, poolLen, "drill").
+- If a template is selected from SECTION_TEMPLATES.drill:
+  - Filter templates to only those that pass:
+    - total dist == targetDistance (already implied by selection)
+    - AND the first NxD line (if present) has an even rep count
+  - If filtering leaves none, fall back to dynamic construction using pickEvenRepScheme.
+
+For Kick branch:
+- Same idea:
+  - Filter kick templates to even reps only
+  - If none, construct dynamically using pickEvenRepScheme(targetDistance, poolLen, "kick")
+  - Ensure isValidKickLine(text, repDistance) is still respected. :contentReference[oaicite:3]{index=3}
+
+3) Make the dynamic Drill FC list length match reps (and stay sensible)
+If constructing a Drill FC set with a numbered list:
+- You must output exactly N numbered drills where N == reps
+- If you only have a base list shorter than reps, cycle through it, but:
+  - Avoid duplicates in immediate succession if cycling (simple check: don’t repeat the same drill name back-to-back)
+- This is what prevents 17 drills from happening accidentally because reps will now be even (16 or 20), not 17.
+
+4) Add a final validation gate inside buildOneSetBodyShared for Drill/Kick rerolls
+After generating a candidate body for Drill or Kick:
+- Parse first NxD line (parseNxD)
+- If reps is odd, reject and try another candidate (or rebuild using 25s)
+This is a belt-and-braces guard and should rarely trigger once scheme selection is correct.
+
+5) Do NOT change other sections
+No changes to:
+- Warm up / Build / Main / Cool down logic
+- Effort cycling
+- UI rendering
+- CSS
+Only Drill/Kick construction and/or template filtering and helper addition.
+
+6) Manual tests (required)
+Run locally and confirm:
+
+A) Pool 25m, Total 2000
+- Generate 10 workouts
+- Confirm:
+  - Drill section reps are never odd (no 7x50 etc)
+  - Kick section reps are never odd (no 9x50 etc)
+  - Totals still exactly 2000
+  - No “odd number of lengths” regressions
+
+B) Pool 50m, Total 2000
+- Generate 10 workouts
+- Same checks
+
+C) Pool custom 33m, Total requested 2000 (app snaps to 1980)
+- Generate 10 workouts
+- Same checks, focusing on:
+  - Drill and Kick using 33m multiples
+  - No odd reps
+  - Total remains exactly 1980 (or whatever the app displays consistently)
+
+7) Commit
+Only index.js changed.
+Commit message exactly:
+"Logic: drill/kick rep normalisation"
+
+REPORT BACK
+Reply with:
+- The exact if-condition lines for Drill and Kick branches you edited (copy/paste)
+- Examples of before/after behaviour:
+  - Confirm you no longer see 7x50 Drill or 9x50 Kick in 25m 2000m runs
+- Any case where pickEvenRepScheme returned null (should be none; if it happens, report targetDistance and poolLen)
+
+WORKING METHOD NOTE
+This repo uses block-tagged edits. Do NOT do line edits.
+Replace whole blocks between the existing __START__/__END__ markers as per WORKING-METHOD-REPLIT.md.
+If buildOneSetBodyShared is not block-tagged, STOP and report before changing anything.

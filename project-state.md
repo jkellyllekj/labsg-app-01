@@ -156,6 +156,12 @@ RECENTLY COMPLETED (v1)
 - Drill and Kick rep normalisation
   Odd and prime rep counts eliminated
   Drill and Kick now use coach-plausible even counts
+- Post generation validator (2026-01-21)
+  Now rejects workouts that violate: pool-length repeat multiples, unrealistic
+  rep counts, full gas caps (swim max 600m, kick max 300m), and build labeling
+  sanity (min 4 reps). Invalid workouts trigger a retry with a new seed.
+  Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked
+  on generator template updates that currently produce 25m repeats.
 
 ============================================================================
 NEXT SINGLE STEP (ACTIVE)

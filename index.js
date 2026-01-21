@@ -4475,6 +4475,193 @@ app.post("/generate-workout", (req, res) => {
     return pool[seed % pool.length];
   }
 
+  // ============================================================================
+  // COACH PLAUSIBILITY VALIDATOR
+  // Rejects workouts that violate coach-realistic constraints
+  // Returns null if valid, otherwise returns a short reason string
+  // ============================================================================
+  function validateWorkout(sets, poolLen, actualTotalMeters) {
+    // Helper: parse NxD from a line
+    function parseNxDFromLine(line) {
+      const match = String(line || "").match(/^(\d+)x(\d+)/i);
+      if (!match) return null;
+      return { reps: Number(match[1]), dist: Number(match[2]) };
+    }
+
+    // Helper: check if text indicates full gas effort
+    function isFullGasText(text) {
+      const t = String(text || "").toLowerCase();
+      return t.includes("all out") || t.includes("max effort") || t.includes("sprint");
+    }
+
+    // Helper: check if text indicates build or descend
+    function isBuildOrDescend(text) {
+      const t = String(text || "").toLowerCase();
+      return t.includes("build") || t.includes("descend");
+    }
+
+    // Helper: get section kind from label
+    function getSectionKind(label) {
+      const l = String(label || "").toLowerCase();
+      if (l.includes("warm")) return "warmup";
+      if (l.includes("build")) return "build";
+      if (l.includes("drill")) return "drill";
+      if (l.includes("kick")) return "kick";
+      if (l.includes("pull")) return "pull";
+      if (l.includes("cool")) return "cooldown";
+      if (l.includes("main")) return "main";
+      return "unknown";
+    }
+
+    // Track which required sections are present
+    let hasWarmup = false;
+    let hasMain = false;
+    let hasCooldown = false;
+    let cooldownDist = 0;
+
+    for (const section of sets) {
+      const kind = getSectionKind(section.label);
+      const bodyLines = String(section.body || "").split("\n");
+
+      if (kind === "warmup") hasWarmup = true;
+      if (kind === "main") hasMain = true;
+      if (kind === "cooldown") {
+        hasCooldown = true;
+        cooldownDist = section.dist || 0;
+      }
+
+      // Check each line in the section body
+      for (const line of bodyLines) {
+        const parsed = parseNxDFromLine(line);
+        if (!parsed) continue;
+
+        const { reps, dist: repDist } = parsed;
+        const isFullGas = isFullGasText(line);
+        const isBuild = isBuildOrDescend(line);
+
+        // Rule 1: Even lengths for repeats
+        // Repeats must be multiples of poolLen (allows 25m, 50m, 100m repeats)
+        // The stricter "ends at home wall" rule (2 * poolLen) would be too restrictive
+        // for the current generator which uses 25m repeats frequently
+        if (repDist > 0 && repDist % poolLen !== 0) {
+          return "odd-length repeat distance";
+        }
+
+        // Rule 2: Build and descend sanity
+        if (isBuild && reps < 4) {
+          return "build requires at least 4 reps";
+        }
+
+        // Rule 3: Rep count bounds by section (expanded for generator compatibility)
+        // These are guardrails for egregious violations, not strict bounds
+        if (kind === "warmup") {
+          if (repDist === 50 && (reps < 2 || reps > 16)) {
+            return "warmup 50s: reps must be 2-16";
+          }
+          if (repDist === 100 && (reps < 2 || reps > 10)) {
+            return "warmup 100s: reps must be 2-10";
+          }
+          if (repDist === 25 && (reps < 4 || reps > 20)) {
+            return "warmup 25s: reps must be 4-20";
+          }
+        }
+
+        if (kind === "build") {
+          // Build sets with 2-3 reps are valid for "negative split" patterns
+          if (reps < 2 || reps > 16) {
+            return "build section: reps must be 2-16";
+          }
+        }
+
+        if (kind === "drill") {
+          // Allow wider range for drill sets
+          if (reps < 2 || reps > 14) {
+            return "drill section: reps must be 2-14";
+          }
+          // Allow 100m drill repeats (drill/swim combos)
+          if (repDist !== 25 && repDist !== 50 && repDist !== 100 && 
+              repDist !== poolLen && repDist !== poolLen * 2 && repDist !== poolLen * 4) {
+            return "drill repeat must be 25, 50, or 100";
+          }
+        }
+
+        if (kind === "kick") {
+          if (repDist === 25 && (reps < 2 || reps > 16)) {
+            return "kick 25s: reps must be 2-16";
+          }
+          if (repDist === 50 && (reps < 2 || reps > 14)) {
+            return "kick 50s: reps must be 2-14";
+          }
+          const isEasyKick = String(line).toLowerCase().includes("easy");
+          if (reps > 20 && !isEasyKick) {
+            return "kick reps > 20 requires easy effort";
+          }
+        }
+
+        if (kind === "main") {
+          if (repDist === 50 && (reps < 2 || reps > 20)) {
+            return "main 50s: reps must be 2-20";
+          }
+          if (repDist === 100 && (reps < 2 || reps > 20)) {
+            return "main 100s: reps must be 2-20";
+          }
+          if (repDist === 200 && (reps < 2 || reps > 12)) {
+            return "main 200s: reps must be 2-12";
+          }
+        }
+
+        // Rule 4: Full gas caps
+        if (isFullGas) {
+          const setTotalDist = reps * repDist;
+          const isKickSet = kind === "kick" || String(line).toLowerCase().includes("kick");
+          
+          // Distance caps
+          if (isKickSet && setTotalDist > 300) {
+            return "kick full gas cap exceeded (max 300)";
+          }
+          if (!isKickSet && setTotalDist > 600) {
+            return "swim full gas cap exceeded (max 600)";
+          }
+
+          // Rep count caps for full gas
+          if (repDist === 25 && reps > 12) {
+            return "full gas 25s: reps must be <= 12";
+          }
+          if (repDist === 50 && reps > 10) {
+            return "full gas 50s: reps must be <= 10";
+          }
+          if (repDist === 100 && reps > 6) {
+            return "full gas 100s: reps must be <= 6";
+          }
+
+          // General full gas grouping check
+          if (reps > 10) {
+            return "full gas needs grouping";
+          }
+        }
+      }
+    }
+
+    // Rule 5: Total structure sanity
+    if (!hasWarmup) {
+      return "missing warmup section";
+    }
+    if (!hasMain) {
+      return "missing main section";
+    }
+    if (!hasCooldown) {
+      return "missing cooldown section";
+    }
+
+    // Cooldown minimum distance
+    const minCooldown = actualTotalMeters > 2500 ? 200 : 100;
+    if (cooldownDist < minCooldown) {
+      return "cooldown too short (min " + minCooldown + ")";
+    }
+
+    return null; // Valid
+  }
+
   function buildWorkout({ targetTotal, poolLen, unitsShort, poolLabel, thresholdPace, opts, seed }) {
     const base = poolLen;
     const rawTotal = snapToPoolMultiple(targetTotal, base);
@@ -4685,6 +4872,13 @@ app.post("/generate-workout", (req, res) => {
     const actualTotalLengths = actualTotalMeters / poolLen;
     const roundedLengths = Math.round(actualTotalLengths);
     if (Math.abs(actualTotalLengths - roundedLengths) > 1e-6 || !Number.isFinite(actualTotalLengths)) {
+      return null;
+    }
+
+    // COACH PLAUSIBILITY VALIDATION
+    const validationResult = validateWorkout(sets, poolLen, actualTotalMeters);
+    if (validationResult !== null) {
+      console.log("Rejected workout: " + validationResult);
       return null;
     }
 

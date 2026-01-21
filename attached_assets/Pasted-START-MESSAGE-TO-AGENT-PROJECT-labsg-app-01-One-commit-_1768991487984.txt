@@ -1,0 +1,153 @@
+START MESSAGE TO AGENT
+
+PROJECT: labsg-app-01
+
+One commit only. No UI redesign. Logic only.
+
+Goal:
+Add a post generation coach plausibility validator that rejects workouts that are off the reservation, then retries generation with a new seed. This is to prevent outputs like 22x25 kick max effort, 2x75 build with last one sprint, huge rep count blocks that do not feel coach real, and any repeat distances that violate our even length rule.
+
+FILES:
+- index.js
+- project-state.md
+
+====================================
+A) ADD VALIDATOR
+====================================
+
+FILE: index.js
+
+Add a function:
+
+validateWorkout(workout, opts) -> returns null if valid, otherwise returns a short string reason.
+
+This validator runs after a candidate workout has been generated and snapped, and before it is displayed.
+
+Assumptions:
+- workout contains sections in order (warmup, build, drill, kick, pull optional, main, cooldown)
+- each section has at least: kind, meters (section distance), and the rendered set description that includes reps and repeat distance when formatted like "NxD"
+- pool length is available in opts
+
+If your data structure differs, adapt the extraction logic but keep the validation rules.
+
+------------------------------------
+Validation Rules v1
+------------------------------------
+
+Rule 1. Even lengths for repeats
+We are enforcing the "same wall per repeat" invariant.
+For any set expressed as NxD in metres or yards:
+- require D % (2 * poolLen) == 0
+In 25m, repeats must be multiples of 50m.
+In 50m, repeats must be multiples of 100m.
+In 25yd, repeats must be multiples of 50yd.
+If this fails, reject with reason "odd-length repeat distance".
+
+Rule 2. Build and descend sanity
+If the set label or description includes build or descend:
+- require reps >= 4
+If not, reject with reason "build requires at least 4 reps".
+
+Rule 3. Rep count bounds by section (coach plausible defaults)
+These are guardrails for v1. They can be expanded later for long distance modes.
+Reject if outside bounds.
+
+Warm up:
+- if repeat is 50: reps 4 to 10
+- if repeat is 100: reps 2 to 6
+- if repeat is 25: reps 6 to 16 (only if warmup is drills or very easy)
+
+Build:
+- reps 4 to 12
+- repeat must be 25, 50, or 100 only
+
+Drill:
+- reps 4 to 10
+- drill repeat must be 25 or 50 only
+
+Kick:
+- reps 4 to 12 for 25 repeats
+- reps 4 to 10 for 50 repeats
+- reject if reps > 16 for kick in any case unless effort is easy
+
+Main:
+- if repeat is 50: reps 4 to 16
+- if repeat is 100: reps 3 to 12
+- if repeat is 200: reps 2 to 10
+
+Cool down:
+- if workout total > 2500m, cooldown must be at least 200m
+- otherwise cooldown at least 100m
+
+If a section has no NxD format, do not reject on rep rules for that section. Only apply what you can reliably parse.
+
+Rule 4. Max effort and all out caps (allow short full gas, forbid endless full gas)
+Interpret a set as full gas if the text includes any of:
+- "all out"
+- "max effort"
+- "sprint" (when used as an effort label, not just a word inside an instruction)
+
+For any full gas set:
+- cap by total distance:
+  - swim full gas cap: <= 600m
+  - kick full gas cap: <= 300m
+
+- cap by rep count:
+  - 25 repeats: reps <= 12
+  - 50 repeats: reps <= 10
+  - 100 repeats: reps <= 6
+
+Additionally:
+- If full gas and reps > 10, reject with reason "full gas needs grouping". Do not attempt to auto group into rounds in v1.
+
+Note:
+We are not blocking long strong or hard work. We are blocking full gas volume that is unrealistic as a default generator output. In longer sessions like 6k, intensity can be sustained as strong or hard, but full gas should still be short and structured.
+
+Rule 5. Total structure sanity
+Reject if:
+- main section is missing
+- warmup is missing
+- cooldown is missing
+
+This ensures we do not ship truncated workouts.
+
+====================================
+B) INTEGRATE VALIDATOR WITH RETRY
+====================================
+
+FILE: index.js
+
+Find where the workout is built and where you already added retry logic.
+
+After a candidate workout is built and snapped:
+- run validateWorkout(workout, opts)
+- if it returns a reason, treat the workout as invalid and retry with a different seed variation
+
+Keep max attempts at 10.
+
+Console logging only:
+When rejecting, log:
+"Rejected workout: <reason>"
+
+Do not add UI changes.
+
+====================================
+C) UPDATE project-state.md
+====================================
+
+FILE: project-state.md
+
+Add a note under the current phase or known issues describing the validator and what it enforces:
+
+- Post generation validator now rejects workouts that violate even length repeats, unrealistic rep counts, full gas caps, and build labeling sanity. Invalid workouts trigger a retry with a new seed.
+
+====================================
+D) COMMIT
+====================================
+
+One commit only.
+
+Commit message:
+Add coach plausibility validator and retry
+
+FINISH MESSAGE TO AGENT

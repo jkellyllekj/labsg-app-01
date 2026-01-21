@@ -67,10 +67,9 @@ function isAllowedRepCount(repCount, repDistance) {
   if (r === 1) return true;
 
   // Coach-plausible rep counts only.
-  // Reject oddball counts that feel mathy, not coach-written.
+  // These are the common shapes a real coach writes.
   const allowed = new Set([2, 3, 4, 5, 6, 8, 9, 10, 12, 16, 20]);
 
-  // 9 is allowed mainly to permit common shapes like 9x50 and 9x100.
   return allowed.has(r);
 }
 
@@ -211,6 +210,9 @@ function validateSetBody(body, targetDistance, poolLen) {
         continue;
       }
       return { valid: false, reason: "unparseable line: " + line };
+    }
+    if (!isAllowedRepCount(parsed.reps, parsed.dist)) {
+      return { valid: false, reason: "rep count not allowed: " + parsed.reps + "x" + parsed.dist };
     }
     totalParsed += parsed.reps * parsed.dist;
   }

@@ -1,0 +1,100 @@
+GOAL
+Fix full gas injection so it actually triggers at the intended frequency.
+Current issue: injectOneFullGas only edits lines[0] and only if it contains strong, fast, or hard.
+Update it to search all lines and to handle build or descend lines.
+Do not change the probability number in this commit.
+
+FILE TO EDIT
+index.js
+
+SCOPE
+Only edit function injectOneFullGas(sections, seed).
+
+STEP 1
+Open index.js.
+
+STEP 2
+Find this function:
+function injectOneFullGas(sections, seed) {
+
+STEP 3
+Inside it, find the block that currently starts with:
+const lines = String(sections[idx].body).split("\n");
+
+and currently contains logic like:
+if (/strong/i.test(lines[0])) { ... }
+else if (/fast/i.test(lines[0])) { ... }
+else if (/hard/i.test(lines[0])) { ... }
+return sections;
+
+STEP 4
+Replace ONLY that whole block (from the line that declares lines through to the return sections at the end of the function) with the exact block below.
+
+PASTE THIS EXACT REPLACEMENT BLOCK
+
+const lines = String(sections[idx].body).split("\n").filter(Boolean);
+if (!lines.length) return sections;
+
+// Prefer to replace an existing effort word on any line, not just line 0.
+let changed = false;
+for (let i = 0; i < lines.length; i++) {
+  if (/strong/i.test(lines[i])) {
+    lines[i] = lines[i].replace(/strong/i, "sprint");
+    changed = true;
+    break;
+  }
+  if (/fast/i.test(lines[i])) {
+    lines[i] = lines[i].replace(/fast/i, "sprint");
+    changed = true;
+    break;
+  }
+  if (/hard/i.test(lines[i])) {
+    lines[i] = lines[i].replace(/hard/i, "sprint");
+    changed = true;
+    break;
+  }
+}
+
+// If there was no explicit effort word, allow build or descend to become sprint focused.
+// This keeps it coach shaped without appending sprint blindly.
+if (!changed) {
+  for (let i = 0; i < lines.length; i++) {
+    if (/\bbuild\b/i.test(lines[i]) && !/sprint/i.test(lines[i])) {
+      lines[i] = lines[i].replace(/\bbuild\b/i, "build to sprint");
+      changed = true;
+      break;
+    }
+    if (/\bdescend\b/i.test(lines[i]) && !/sprint/i.test(lines[i])) {
+      // If it already has "to X", overwrite X with sprint
+      if (/\bdescend\b.*\bto\b/i.test(lines[i])) {
+        lines[i] = lines[i].replace(/\bto\b\s+\w+/i, "to sprint");
+      } else {
+        lines[i] = lines[i].replace(/\bdescend\b/i, "descend to sprint");
+      }
+      changed = true;
+      break;
+    }
+  }
+}
+
+if (!changed) return sections;
+
+sections[idx].body = lines.join("\n");
+return sections;
+
+STEP 5
+Save the file.
+
+STEP 6
+Manual test (25m, 3300) generate 15 times.
+Expected:
+You should now see sprint appear sometimes in Main, including in multi line Main sets, not only when the first line contains fast or hard.
+
+STEP 7
+Commit with this exact message:
+
+fix(red): make full gas injection effective across multi line main sets
+
+STOP
+Do not change any other code.
+Do not change probability in this commit.

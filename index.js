@@ -296,23 +296,54 @@ function injectOneFullGas(sections, seed) {
   ];
 
   const idx = pick.i;
-  const lines = String(sections[idx].body).split("\n");
-
+  const lines = String(sections[idx].body).split("\n").filter(Boolean);
   if (!lines.length) return sections;
 
-  // Only replace if there's a clear effort word (don't append blindly)
-  if (/strong/i.test(lines[0])) {
-    lines[0] = lines[0].replace(/strong/i, "sprint");
-    sections[idx].body = lines.join("\n");
-  } else if (/fast/i.test(lines[0])) {
-    lines[0] = lines[0].replace(/fast/i, "sprint");
-    sections[idx].body = lines.join("\n");
-  } else if (/hard/i.test(lines[0])) {
-    lines[0] = lines[0].replace(/hard/i, "sprint");
-    sections[idx].body = lines.join("\n");
+  // Prefer to replace an existing effort word on any line, not just line 0.
+  let changed = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (/strong/i.test(lines[i])) {
+      lines[i] = lines[i].replace(/strong/i, "sprint");
+      changed = true;
+      break;
+    }
+    if (/fast/i.test(lines[i])) {
+      lines[i] = lines[i].replace(/fast/i, "sprint");
+      changed = true;
+      break;
+    }
+    if (/hard/i.test(lines[i])) {
+      lines[i] = lines[i].replace(/hard/i, "sprint");
+      changed = true;
+      break;
+    }
   }
-  // Don't append " sprint" blindly - skip if no clear effort word
 
+  // If there was no explicit effort word, allow build or descend to become sprint focused.
+  // This keeps it coach shaped without appending sprint blindly.
+  if (!changed) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/\bbuild\b/i.test(lines[i]) && !/sprint/i.test(lines[i])) {
+        lines[i] = lines[i].replace(/\bbuild\b/i, "build to sprint");
+        changed = true;
+        break;
+      }
+      if (/\bdescend\b/i.test(lines[i]) && !/sprint/i.test(lines[i])) {
+        // If it already has "to X", overwrite X with sprint
+        if (/\bdescend\b.*\bto\b/i.test(lines[i])) {
+          lines[i] = lines[i].replace(/\bto\b\s+\w+/i, "to sprint");
+        } else {
+          lines[i] = lines[i].replace(/\bdescend\b/i, "descend to sprint");
+        }
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  if (!changed) return sections;
+
+  sections[idx].body = lines.join("\n");
   return sections;
 }
 

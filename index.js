@@ -65,12 +65,16 @@ function isAllowedRepCount(repCount, repDistance) {
   
   // Single rep is always allowed
   if (r === 1) return true;
-  
-  // Allow any rep count 2-20 for flexibility with odd pools
-  // This prevents drift when templates don't match exactly
-  if (r >= 2 && r <= 20) return true;
-  
-  return false;
+
+  // Coach-plausible rep counts.
+  // Block 18 and 19 style counts that feel "mathy" not coach-written.
+  // Keep a small, realistic set of options.
+  const allowed = new Set([2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 20]);
+
+  // Special case: 9x50 is common and realistic.
+  if (d === 50 && r === 9) return true;
+
+  return allowed.has(r);
 }
 
 // Check if total distance ends at home end (even number of lengths)

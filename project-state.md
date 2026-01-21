@@ -192,28 +192,33 @@ TESTING / TOOLING
 - Smoke test suites:
   - Suite A: crash / retry hardening
   - Suite B: rep count sanity (25m)
-  - Suite C: intensity detection (skipped)
+  - Suite C: intensity detection (enabled)
   - Suite D: 25yd parity
 - Latest results (2026-01-21):
   - Suite A: PASS
   - Suite B: PASS
-  - Suite C: SKIPPED (text-only API)
+  - Suite C: TODO (enable assertions for sections, sectionMeta, workoutMeta)
   - Suite D: PASS
 
 ============================================================================
 KNOWN LIMITATIONS
 ============================================================================
 
-- API returns text-only workouts (workoutText)
-- No structured sections or intensity metadata returned
-- Blocks automated detection of red/full-gas frequency, colour–label mismatches, and striations
-- Future work: return structured section objects alongside text
+- API returns workouts with workoutText plus structured metadata
+- /generate-workout success response includes:
+  - sections: array of { label, dist, body }
+  - sectionMeta: array of { zone, isStriated }
+  - workoutMeta: { hasRed, redSectionsCount }
+- This enables automated detection of:
+  - red or full gas frequency
+  - label and colour mismatches
+  - striation patterns (odds and evens, descend, build)
 
 ============================================================================
 NEXT SINGLE STEP (ACTIVE)
 ============================================================================
 
-- (Completed) Enforce exact target totals for slider distance
+- Enable Suite C assertions for metadata contract and red presence tracking
 
 ============================================================================
 IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED)

@@ -1,0 +1,82 @@
+GOAL
+Sync project-state.md to reflect the new API response fields from /generate-workout.
+Do not change any generator logic or UI.
+Only edit project-state.md.
+
+FILE TO EDIT
+project-state.md
+
+EDIT RULE
+This file has no block markers. Do not refactor the whole doc.
+Do only the exact text replacements described below.
+
+STEP 1
+Open project-state.md.
+
+STEP 2
+Find the section headed:
+KNOWN LIMITATIONS
+
+It currently contains bullets that say the API returns text only and does not return structured sections or intensity metadata.
+
+Replace ONLY the following block, from the line that starts with:
+- API returns text-only workouts (workoutText)
+down to and including the line that starts with:
+- Future work: return structured section objects alongside text
+
+REPLACE THAT WHOLE BLOCK WITH THIS EXACT TEXT
+
+- API returns workouts with workoutText plus structured metadata
+- /generate-workout success response includes:
+  - sections: array of { label, dist, body }
+  - sectionMeta: array of { zone, isStriated }
+  - workoutMeta: { hasRed, redSectionsCount }
+- This enables automated detection of:
+  - red or full gas frequency
+  - label and colour mismatches
+  - striation patterns (odds and evens, descend, build)
+
+STEP 3
+Find the section headed:
+TESTING / TOOLING
+
+Locate the line that currently says:
+- Suite C: intensity detection (skipped)
+and the line in latest results that says:
+- Suite C: SKIPPED (text-only API)
+
+Replace those TWO lines only, as follows.
+
+Replace:
+- Suite C: intensity detection (skipped)
+With:
+- Suite C: intensity detection (enabled)
+
+Replace:
+- Suite C: SKIPPED (text-only API)
+With:
+- Suite C: TODO (enable assertions for sections, sectionMeta, workoutMeta)
+
+STEP 4
+Find the section headed:
+NEXT SINGLE STEP (ACTIVE)
+
+It currently contains:
+- (Completed) Enforce exact target totals for slider distance
+
+Replace ONLY that single line with:
+
+- Enable Suite C assertions for metadata contract and red presence tracking
+
+STEP 5
+Save the file.
+
+STEP 6
+Commit with this exact message:
+
+docs(project-state): record structured intensity metadata and unblock Suite C
+
+STOP
+Do not edit index.js.
+Do not add new ideas.
+Do not change any other parts of project-state.md.

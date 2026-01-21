@@ -1,6 +1,6 @@
 # Project: Swim Workout Generator
 Working title(s): SwimDice / SetRoll / PacePalette (TBD)
-Last updated: 2026-01-20 (doc sync)
+Last updated: 2026-01-21 (doc sync)
 Status: Active
 
 ============================================================================
@@ -168,6 +168,46 @@ RECENTLY COMPLETED (v1)
   value (e.g., 3000m = 3000m, not 3050m). Achieved via "final balance" logic
   that uses cooldown to absorb snapping drift, plus target lock correction
   for edge cases. Tests: 30/30 pass for all pool types at 3000m and 2000m.
+
+============================================================================
+RECENT FIXES / RESOLVED (2026-01-21)
+============================================================================
+
+- Intermittent generation crash resolved:
+  - Root cause: undefined references in regenerateSectionBody (sectionTemplates, helper fns)
+  - Fix: corrected references to SECTION_TEMPLATES, replaced undefined helpers with inline fallbacks
+  - Endpoint /generate-workout now always returns HTTP 200 with fallback workout instead of 500
+
+- 25m / 25yd rep explosion prevented:
+  - Validator caps added:
+    - Main sets: Nx50 capped at N ≤ 16 for 25m / 25yd pools
+    - Drill sets: 25s ≤ 12 reps, 50s ≤ 10 reps
+  - Eliminates recurring 22x50, 26x50, and 14x25 drill patterns
+
+============================================================================
+TESTING / TOOLING
+============================================================================
+
+- Added automated smoke test script: scripts/gen_smoke_test.js
+- Smoke test suites:
+  - Suite A: crash / retry hardening
+  - Suite B: rep count sanity (25m)
+  - Suite C: intensity detection (skipped)
+  - Suite D: 25yd parity
+- Latest results (2026-01-21):
+  - Suite A: PASS
+  - Suite B: PASS
+  - Suite C: SKIPPED (text-only API)
+  - Suite D: PASS
+
+============================================================================
+KNOWN LIMITATIONS
+============================================================================
+
+- API returns text-only workouts (workoutText)
+- No structured sections or intensity metadata returned
+- Blocks automated detection of red/full-gas frequency, colour–label mismatches, and striations
+- Future work: return structured section objects alongside text
 
 ============================================================================
 NEXT SINGLE STEP (ACTIVE)

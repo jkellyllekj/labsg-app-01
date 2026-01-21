@@ -3971,9 +3971,12 @@ app.post("/reroll-set", (req, res) => {
     }
   }
 });
+let _generateReqCounter = 0;
 app.post("/generate-workout", (req, res) => {
+  const reqId = ++_generateReqCounter;
+  const reqBody = req.body || {};
   try {
-    const body = req.body || {};
+    const body = reqBody;
 
     const distance = Number(body.distance);
     const poolLength = body.poolLength;
@@ -4053,6 +4056,10 @@ app.post("/generate-workout", (req, res) => {
 
     return res.json({ ok: true, workoutText: workout.text, workoutName: workout.name || "" });
   } catch (e) {
+    console.error(`[ERROR] ReqId=${reqId} Time=${new Date().toISOString()}`);
+    console.error(`[ERROR] Message: ${e && e.message ? e.message : e}`);
+    console.error(`[ERROR] Request body: ${JSON.stringify(reqBody)}`);
+    console.error(`[ERROR] Stack:\n${e && e.stack ? e.stack : "(no stack)"}`);
     return res.status(500).json({ ok: false, error: String(e && e.message ? e.message : e) });
   }
 

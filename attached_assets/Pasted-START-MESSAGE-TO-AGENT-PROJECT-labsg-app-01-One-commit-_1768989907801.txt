@@ -1,0 +1,80 @@
+START MESSAGE TO AGENT
+
+PROJECT: labsg-app-01
+
+One commit only. No UI redesign. Logic and display correctness only.
+
+====================================
+SECTION A — FIX TOTALS TO MATCH REAL SECTIONS
+====================================
+
+FILE: index.js
+
+Problem:
+In 25m and 25yd, the UI shows a planned total (eg 1500m, 60 lengths) even when the rendered sections sum to a different total (eg 1550m). This creates the “extra 50” bug.
+
+Task:
+Make the displayed TOTAL and total lengths come from the actual generated sections, not from the planned target.
+
+Implementation requirements:
+1. Identify where the workout is assembled into sections (warmup, build, drill, kick, pull, main, cooldown) and where each section distance is computed.
+2. After all sections are generated and snapped, compute:
+   actualTotalMeters = sum(section.distanceMeters)
+3. Use actualTotalMeters for:
+   - the displayed TOTAL label
+   - total lengths = actualTotalMeters / poolLen (must be an integer)
+4. Add a hard validity check:
+   - actualTotalMeters % poolLen === 0
+   - If not valid, return null so the caller retries generation.
+5. Add a second check:
+   - displayedTotalMeters must equal actualTotalMeters always
+   - Remove any separate “planned total” display that can diverge.
+
+Do not:
+- change styling
+- change layout
+- change the section ordering rules
+- add new features
+
+====================================
+SECTION B — TESTS
+====================================
+
+Run these tests after change:
+
+1) Pool 25m
+- Generate 10 workouts
+- For each: sum the section metres and confirm it equals the displayed TOTAL.
+- Confirm total lengths equals TOTAL / 25 and matches displayed lengths.
+
+2) Pool 25yd
+- Same as above (TOTAL / 25yd converted units as your app displays, but it must be internally consistent and lengths must be integer).
+
+3) Pool 50m
+- Generate 10 workouts
+- Confirm no mismatch between displayed TOTAL and summed sections.
+
+Report back with:
+- One screenshot where TOTAL equals section sum for 25m
+- One for 25yd
+- One for 50m
+
+====================================
+SECTION C — DOC UPDATE
+====================================
+
+FILE: project-state.md
+
+Under KNOWN ISSUES, replace any vague mention of “extra 50” with a precise statement:
+
+- Bug: displayed TOTAL and total lengths were using planned target values and could diverge from actual generated section sums after snapping and fill. Fix is to compute totals from rendered sections and retry generation if totals are not divisible by pool length.
+
+====================================
+SECTION D — COMMIT
+====================================
+
+One commit only.
+Commit message:
+Fix displayed totals to match generated section sums
+
+FINISH MESSAGE TO AGENT

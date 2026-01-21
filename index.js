@@ -4006,16 +4006,23 @@ app.post("/generate-workout", (req, res) => {
 
     const targetTotal = snapToPoolMultiple(distance, poolLen);
 
-    const seed = nowSeed();
-    const workout = buildWorkout({
-      targetTotal,
-      poolLen,
-      unitsShort,
-      poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
-      thresholdPace: String(body.thresholdPace || ""),
-      opts,
-      seed
-    });
+    // Retry loop for workout generation (handles null returns from validity check)
+    const maxRetries = 10;
+    let workout = null;
+    let usedSeed = nowSeed();
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      workout = buildWorkout({
+        targetTotal,
+        poolLen,
+        unitsShort,
+        poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
+        thresholdPace: String(body.thresholdPace || ""),
+        opts,
+        seed: usedSeed + attempt
+      });
+      if (workout && workout.text) break;
+    }
 
     if (!workout || !workout.text) {
       return res.status(500).json({ ok: false, error: "Failed to build workout." });
@@ -4023,16 +4030,20 @@ app.post("/generate-workout", (req, res) => {
 
     const fp = fingerprintWorkoutText(workout.text);
     if (lastWorkoutFp && fp === lastWorkoutFp) {
-      const seed2 = nowSeed();
-      const workout2 = buildWorkout({
-        targetTotal,
-        poolLen,
-        unitsShort,
-        poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
-        thresholdPace: String(body.thresholdPace || ""),
-        opts,
-        seed: seed2
-      });
+      let workout2 = null;
+      const seed2Base = nowSeed();
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        workout2 = buildWorkout({
+          targetTotal,
+          poolLen,
+          unitsShort,
+          poolLabel: isCustomPool ? (String(poolLen) + unitsShort + " custom") : String(poolLength),
+          thresholdPace: String(body.thresholdPace || ""),
+          opts,
+          seed: seed2Base + attempt
+        });
+        if (workout2 && workout2.text) break;
+      }
 
       if (workout2 && workout2.text) {
         return res.json({ ok: true, workoutText: workout2.text, workoutName: workout2.name || "" });
@@ -4666,6 +4677,17 @@ app.post("/generate-workout", (req, res) => {
     // RED INJECTION: Inject full gas at workout level with ~50% probability
     injectOneFullGas(sets, seed);
 
+    // COMPUTE ACTUAL TOTAL from generated sections (fixes "extra 50" bug)
+    const actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+
+    // VALIDITY CHECK: actual total must be divisible by pool length
+    // Use tolerance-based check for floating-point safety with custom pool lengths
+    const actualTotalLengths = actualTotalMeters / poolLen;
+    const roundedLengths = Math.round(actualTotalLengths);
+    if (Math.abs(actualTotalLengths - roundedLengths) > 1e-6 || !Number.isFinite(actualTotalLengths)) {
+      return null;
+    }
+
     // Format sections to lines
     const lines = [];
     for (const s of sets) {
@@ -4681,13 +4703,10 @@ app.post("/generate-workout", (req, res) => {
     footer.push("");
     footer.push("Requested: " + String(targetTotal) + String(unitsShort));
 
-    if (total % poolLen === 0) {
-      const totalLengths = total / poolLen;
-      footer.push("Total lengths: " + String(totalLengths) + " lengths");
-      footer.push("Ends at start end: " + (totalLengths % 2 === 0 ? "yes" : "no"));
-    }
+    footer.push("Total lengths: " + String(roundedLengths) + " lengths");
+    footer.push("Ends at start end: " + (roundedLengths % 2 === 0 ? "yes" : "no"));
 
-    footer.push("Total distance: " + String(total) + String(unitsShort) + " (pool: " + String(poolLabel) + ")");
+    footer.push("Total distance: " + String(actualTotalMeters) + String(unitsShort) + " (pool: " + String(poolLabel) + ")");
 
     if (Number.isFinite(paceSec) && paceSec > 0) {
       const estTotal = estimateWorkoutTotalSeconds(lines.join("\n"), paceSec);

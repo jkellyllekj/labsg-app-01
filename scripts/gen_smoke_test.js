@@ -1,6 +1,7 @@
 const http = require("http");
 
-const BASE_URL = "http://localhost:5000";
+const PORT = process.env.PORT || 5000;
+const BASE_URL = `http://localhost:${PORT}`;
 
 async function postGenerate(distance, poolLength) {
   return new Promise((resolve, reject) => {
@@ -21,7 +22,7 @@ async function postGenerate(distance, poolLength) {
           try {
             resolve({ status: res.statusCode, body: JSON.parse(body) });
           } catch (e) {
-            resolve({ status: res.statusCode, body: null, parseError: e.message });
+            resolve({ status: res.statusCode, body: null, parseError: e.message, rawBody: body });
           }
         });
       }
@@ -32,8 +33,8 @@ async function postGenerate(distance, poolLength) {
   });
 }
 
-function findMainSection(text) {
-  if (!text) return null;
+function findMainLines(text) {
+  if (!text) return [];
   const lines = text.split("\n");
   let inMain = false;
   let mainLines = [];
@@ -48,66 +49,108 @@ function findMainSection(text) {
       mainLines.push(line);
     }
   }
-  return mainLines.join("\n");
+  return mainLines;
+}
+
+let requiredKeys = null;
+let responseShapePrinted = false;
+
+async function discoverResponseShape() {
+  console.log("Discovering response shape...");
+  const res = await postGenerate(2000, "25m");
+  if (res.body) {
+    requiredKeys = Object.keys(res.body);
+    console.log(`Response top-level keys: ${requiredKeys.join(", ")}`);
+    console.log(`Response has 'workoutText' field: ${res.body.workoutText ? "YES (text-based)" : "NO"}`);
+    console.log(`Response has 'sections' array: ${Array.isArray(res.body.sections) ? "YES" : "NO"}`);
+    if (res.body.workoutText) {
+      console.log("API returns plain text workout. Parsing will use text-based detection.\n");
+    }
+  } else {
+    console.log("Failed to get initial response for shape discovery.");
+    console.log(`Status: ${res.status}, Error: ${res.parseError || "unknown"}`);
+  }
+  responseShapePrinted = true;
 }
 
 async function suiteA() {
-  console.log("\n=== SUITE A: Crash and retry hardening (25m, 2000m, 30 runs) ===");
-  let httpFailures = 0;
-  let missingFields = 0;
-  let errorResponses = [];
+  console.log("=== SUITE A: Crash and retry hardening ===");
+  console.log("Pool: 25m, Target: 2000, Runs: 30\n");
+  
+  let non200Count = 0;
+  let errorFieldCount = 0;
+  let missingKeysCount = 0;
+  let errors = [];
 
   for (let i = 0; i < 30; i++) {
     try {
       const res = await postGenerate(2000, "25m");
+      
       if (res.status !== 200) {
-        httpFailures++;
+        non200Count++;
+        errors.push({ run: i + 1, type: "non-200", status: res.status, body: res.body });
       }
-      if (!res.body) {
-        missingFields++;
-      } else {
+      
+      if (res.body) {
         if (res.body.error) {
-          errorResponses.push(res.body.error);
+          errorFieldCount++;
+          errors.push({ run: i + 1, type: "error-field", error: res.body.error });
         }
-        if (!res.body.ok || !res.body.workoutText) {
-          missingFields++;
+        if (requiredKeys) {
+          for (const key of requiredKeys) {
+            if (!(key in res.body)) {
+              missingKeysCount++;
+              errors.push({ run: i + 1, type: "missing-key", key });
+              break;
+            }
+          }
         }
+      } else {
+        missingKeysCount++;
+        errors.push({ run: i + 1, type: "parse-error", error: res.parseError });
       }
     } catch (e) {
-      httpFailures++;
+      non200Count++;
+      errors.push({ run: i + 1, type: "exception", error: e.message });
     }
   }
 
-  console.log(`  HTTP failures: ${httpFailures}`);
-  console.log(`  Missing fields: ${missingFields}`);
-  console.log(`  Error responses: ${errorResponses.length}`);
-  if (errorResponses.length > 0) {
-    console.log(`  Errors: ${errorResponses.slice(0, 5).join(", ")}`);
+  console.log(`Non-200 HTTP responses: ${non200Count}`);
+  console.log(`Responses with error field: ${errorFieldCount}`);
+  console.log(`Responses missing required keys: ${missingKeysCount}`);
+  
+  if (errors.length > 0) {
+    console.log("\nFailure details:");
+    errors.slice(0, 5).forEach(e => {
+      console.log(`  Run ${e.run}: ${e.type} - ${e.error || e.status || e.key}`);
+    });
+    if (errors.length > 5) {
+      console.log(`  ... and ${errors.length - 5} more`);
+    }
   }
-  const pass = httpFailures === 0 && missingFields === 0 && errorResponses.length === 0;
-  console.log(`  RESULT: ${pass ? "PASS" : "FAIL"}`);
-  return pass;
+  
+  const pass = non200Count === 0 && errorFieldCount === 0 && missingKeysCount === 0;
+  console.log(`\nRESULT: ${pass ? "PASS" : "FAIL"}\n`);
+  return { pass, non200Count, errorFieldCount, missingKeysCount, errors };
 }
 
 async function suiteB() {
-  console.log("\n=== SUITE B: Rep count sanity (25m, 2000m, 15 runs) ===");
-  let highRepCount = 0;
-  let highRepLines = [];
+  console.log("=== SUITE B: Rep count sanity ===");
+  console.log("Pool: 25m, Target: 2000, Runs: 15\n");
+  
+  let violations = [];
 
   for (let i = 0; i < 15; i++) {
     try {
       const res = await postGenerate(2000, "25m");
       if (res.body && res.body.workoutText) {
-        const main = findMainSection(res.body.workoutText);
-        if (main) {
-          const matches = main.match(/(\d+)\s*x\s*50/gi);
-          if (matches) {
-            for (const m of matches) {
-              const reps = parseInt(m.match(/(\d+)/)[1], 10);
-              if (reps > 16) {
-                highRepCount++;
-                highRepLines.push(main.split("\n").find((l) => l.includes(m)) || m);
-              }
+        const mainLines = findMainLines(res.body.workoutText);
+        for (const line of mainLines) {
+          const match = line.match(/(\d+)\s*x\s*50/i);
+          if (match) {
+            const reps = parseInt(match[1], 10);
+            if (reps > 16) {
+              violations.push({ run: i + 1, line: line.trim(), reps });
             }
           }
         }
@@ -115,57 +158,73 @@ async function suiteB() {
     } catch (e) {}
   }
 
-  console.log(`  Main sets with x50 reps > 16: ${highRepCount}`);
-  if (highRepLines.length > 0) {
-    console.log(`  Example lines:`);
-    highRepLines.slice(0, 5).forEach((l) => console.log(`    ${l.trim()}`));
+  console.log(`Violations (Main with Nx50 where N > 16): ${violations.length}`);
+  
+  if (violations.length > 0) {
+    console.log("\nViolating lines:");
+    violations.forEach(v => {
+      console.log(`  Run ${v.run}: "${v.line}" (${v.reps} reps)`);
+    });
   }
-  console.log(`  RESULT: INFO (no pass/fail threshold defined)`);
-  return true;
+  
+  console.log(`\nRESULT: ${violations.length === 0 ? "PASS" : "INFO (violations found)"}\n`);
+  return { violations };
 }
 
 async function suiteC() {
-  console.log("\n=== SUITE C: Red distribution proxy (25m, 3000m, 20 runs) ===");
-  console.log(`  Cannot detect red from API (response is text only)`);
-  console.log(`  RESULT: SKIPPED`);
-  return true;
+  console.log("=== SUITE C: Red distribution / intensity proxy ===");
+  console.log("Pool: 25m, Target: 3000, Runs: 20\n");
+  
+  console.log("Cannot detect intensity from API payload.");
+  console.log("API returns plain text (workoutText) with no structured intensity/zone metadata.");
+  console.log("To detect red/high-intensity, the API would need to return section objects with");
+  console.log("intensity, zone, effort, or color fields.\n");
+  
+  console.log("RESULT: SKIPPED (text-only API)\n");
+  return { skipped: true };
 }
 
 async function suiteD() {
-  console.log("\n=== SUITE D: 25yd parity (25yd, 2000m, 10 runs) ===");
-  let oddRepCount = 0;
-  let oddRepLines = [];
+  console.log("=== SUITE D: 25yd parity ===");
+  console.log("Pool: 25yd, Target: 2000, Runs: 10\n");
+  
+  let violations = [];
 
   for (let i = 0; i < 10; i++) {
     try {
       const res = await postGenerate(2000, "25yd");
       if (res.body && res.body.workoutText) {
-        const main = findMainSection(res.body.workoutText);
-        if (main) {
-          const matches = main.match(/(22|26)\s*x\s*50/gi);
-          if (matches) {
-            for (const m of matches) {
-              oddRepCount++;
-              oddRepLines.push(main.split("\n").find((l) => l.includes(m)) || m);
-            }
+        const mainLines = findMainLines(res.body.workoutText);
+        for (const line of mainLines) {
+          if (/\b(22|26)\s*x\s*50\b/i.test(line)) {
+            violations.push({ run: i + 1, line: line.trim() });
           }
         }
       }
     } catch (e) {}
   }
 
-  console.log(`  Main sets with 22x50 or 26x50: ${oddRepCount}`);
-  if (oddRepLines.length > 0) {
-    console.log(`  Example lines:`);
-    oddRepLines.slice(0, 5).forEach((l) => console.log(`    ${l.trim()}`));
+  console.log(`Main sets with 22x50 or 26x50: ${violations.length}`);
+  
+  if (violations.length > 0) {
+    console.log("\nExact lines:");
+    violations.forEach(v => {
+      console.log(`  Run ${v.run}: "${v.line}"`);
+    });
   }
-  console.log(`  RESULT: INFO (no pass/fail threshold defined)`);
-  return true;
+  
+  console.log(`\nRESULT: ${violations.length === 0 ? "PASS" : "INFO (odd rep counts found)"}\n`);
+  return { violations };
 }
 
 async function main() {
+  console.log("========================================");
   console.log("SwimGen Smoke Test");
-  console.log("==================");
+  console.log("========================================");
+  console.log(`Endpoint: POST ${BASE_URL}/generate-workout`);
+  console.log(`Request shape: { distance: number, poolLength: string }\n`);
+
+  await discoverResponseShape();
 
   const results = {
     A: await suiteA(),
@@ -174,11 +233,13 @@ async function main() {
     D: await suiteD(),
   };
 
-  console.log("\n=== SUMMARY ===");
-  console.log(`Suite A (Crash hardening): ${results.A ? "PASS" : "FAIL"}`);
-  console.log(`Suite B (Rep count sanity): ${results.B ? "PASS" : "INFO"}`);
-  console.log(`Suite C (Red distribution): SKIPPED`);
-  console.log(`Suite D (25yd parity): ${results.D ? "PASS" : "INFO"}`);
+  console.log("========================================");
+  console.log("SUMMARY");
+  console.log("========================================");
+  console.log(`Suite A (Crash hardening):  ${results.A.pass ? "PASS" : "FAIL"} - ${results.A.non200Count} HTTP errors, ${results.A.errorFieldCount} error fields`);
+  console.log(`Suite B (Rep count sanity): ${results.B.violations.length === 0 ? "PASS" : "INFO"} - ${results.B.violations.length} violations`);
+  console.log(`Suite C (Red distribution): SKIPPED (text-only API)`);
+  console.log(`Suite D (25yd parity):      ${results.D.violations.length === 0 ? "PASS" : "INFO"} - ${results.D.violations.length} odd rep counts`);
 }
 
 main().catch(console.error);

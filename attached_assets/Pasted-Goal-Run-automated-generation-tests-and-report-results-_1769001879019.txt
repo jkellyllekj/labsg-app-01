@@ -1,0 +1,116 @@
+Goal: Run automated generation tests and report results. No refactors. No exploratory reading. No changes unless I explicitly ask after you report.
+
+Hard rules:
+
+Do not edit index.js or any existing file in this pass.
+
+Only create one new file: scripts/gen_smoke_test.js
+
+Only inspect the minimum code needed to locate the generation endpoint and request shape.
+
+Stop after you paste the script output into chat.
+
+Context:
+We need automated generation testing for SwimGen. We want to detect any generation failures, and measure how often certain coach implausible patterns appear. The UI toast "Request failed: sectionTemplates is not defined" must never appear. Since you cannot see the UI toast, detect proxy signals: non-200 HTTP responses, error fields in JSON, missing required JSON fields, server console errors, server exceptions, and unhandled promise rejections.
+
+Work steps:
+
+A) Create a new file:
+scripts/gen_smoke_test.js
+
+B) The script must:
+
+B1) Discover how the UI calls generation:
+Find the exact endpoint path, method, and request shape used by the UI for generating a workout. Mirror it exactly.
+
+B2) Call the local server:
+Use localhost and the port used by the running repl. If the port is not obvious, read it from environment, for example process.env.PORT, or default to 3000 only if needed.
+
+B3) Define what a valid response looks like:
+After one successful call, print the top level keys of the response once, then treat these as required for the rest of the run:
+
+The response must include a workout object or similar that contains a list of sections.
+
+The response must include total distance and pool metadata, if present in the API.
+If the API response shape does not include sections, then report that and skip the parsing suites that require sections.
+
+B4) Run these suites:
+
+Suite A. Crash and retry hardening proxy:
+
+pool: 25m, target: 2000
+
+generate 30 times
+
+record:
+
+count of non-200 HTTP responses
+
+count of JSON responses that contain an error field or error message field
+
+count of responses missing the required keys you detected in B3
+
+capture any server console errors or exception output during the run, if available
+
+Suite B. Rep count sanity proxy:
+
+pool: 25m, target: 2000
+
+generate 15 times
+
+parse the returned workout sections and find the Main section text lines
+
+detect any Main line matching something like "Nx50" where N is a number greater than 16
+
+report:
+
+count of violations
+
+list the exact Main line text for each violation
+If you cannot reliably parse "Main", report that and print one example of the sections array shape.
+
+Suite C. Red distribution proxy:
+
+pool: 25m, target: 3000
+
+generate 20 times
+
+attempt to detect high intensity or full gas using the API payload fields that drive colour or intensity. Examples: zone, intensity, effort, color, label, or similar.
+
+report:
+
+workouts with any high intensity section
+
+workouts with any max effort or full gas section
+If the API only returns plain text with no intensity metadata, report: cannot detect intensity from API payload.
+
+Suite D. 25yd parity:
+
+pool: 25yd, target: 2000
+
+generate 10 times
+
+count how many Main sets are exactly 22x50 or 26x50
+
+report the count and the exact Main lines
+
+C) Output format:
+Print a clear summary with one section per suite:
+
+Suite name
+
+total runs
+
+failures count
+
+key metrics
+
+example violating lines
+Then print any server errors with stack traces. If seeds or request params are available in the response, print them for failures.
+
+D) Run:
+node scripts/gen_smoke_test.js
+
+Then paste the full console output into chat.
+
+STOP after reporting results.

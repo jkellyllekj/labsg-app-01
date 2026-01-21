@@ -4032,6 +4032,99 @@ app.post("/generate-workout", (req, res) => {
       return res.status(500).json({ ok: false, error: "Failed to build workout." });
     }
 
+    function parseWorkoutTextToSections(text) {
+      const raw = String(text || "");
+      const lines = raw.split("\n");
+
+      const sections = [];
+      let current = null;
+
+      const flush = () => {
+        if (!current) return;
+        current.body = current.bodyLines.join("\n").trim();
+        delete current.bodyLines;
+        sections.push(current);
+        current = null;
+      };
+
+      // Heuristic: section headers are lines ending with ":" like "Warm up:" or "Main:"
+      // Distance may appear on the same line like "Main: 800" or in brackets, but we keep dist best-effort only.
+      const headerRe = /^([A-Za-z][A-Za-z0-9 \-]*?)\s*:\s*(.*)$/;
+
+      for (const line of lines) {
+        const m = line.match(headerRe);
+        if (m) {
+          flush();
+          const label = String(m[1] || "").trim();
+          const tail = String(m[2] || "").trim();
+
+          // Best-effort distance extraction from the header tail
+          let dist = null;
+          const distMatch = tail.match(/(^|\s)(\d{2,5})(\s|$)/);
+          if (distMatch) dist = Number(distMatch[2]);
+
+          current = { label, dist, bodyLines: [] };
+          if (tail) current.bodyLines.push(tail);
+          continue;
+        }
+
+        if (!current) {
+          // Ignore leading junk until first header
+          continue;
+        }
+
+        current.bodyLines.push(line);
+      }
+
+      flush();
+
+      // If we failed to find headers, fall back to a single section
+      if (!sections.length && raw.trim()) {
+        return {
+          sections: [
+            { label: "Workout", dist: null, body: raw.trim() }
+          ]
+        };
+      }
+
+      return { sections };
+    }
+
+    function inferZoneFromText(body) {
+      const t = String(body || "").toLowerCase();
+
+      if (t.includes("full gas") || t.includes("fullgas") || t.includes("all out") || t.includes("max effort") || t.includes("sprint")) {
+        return "full_gas";
+      }
+
+      if (t.includes("threshold") || t.includes("race pace") || t.includes("hard")) {
+        return "hard";
+      }
+
+      if (t.includes("strong") || t.includes("fast")) {
+        return "strong";
+      }
+
+      if (t.includes("moderate") || t.includes("steady")) {
+        return "moderate";
+      }
+
+      return "easy";
+    }
+
+    function inferIsStriatedFromText(body) {
+      const t = String(body || "").toLowerCase();
+
+      // Coach style striation cues
+      if (t.includes("odds") && t.includes("evens")) return true;
+      if (t.includes("descend")) return true;
+      if (t.includes("build")) return true;
+      if (t.includes("negative split")) return true;
+      if (t.match(/\b(\d+)\s*to\s*(\d+)\b/)) return true;
+
+      return false;
+    }
+
     const fp = fingerprintWorkoutText(workout.text);
     if (lastWorkoutFp && fp === lastWorkoutFp) {
       let workout2 = null;
@@ -4050,11 +4143,55 @@ app.post("/generate-workout", (req, res) => {
       }
 
       if (workout2 && workout2.text) {
-        return res.json({ ok: true, workoutText: workout2.text, workoutName: workout2.name || "" });
+        const parsed2 = parseWorkoutTextToSections(workout2.text);
+
+        const sectionMeta2 = parsed2.sections.map((s) => {
+          const zone = inferZoneFromText(s.body);
+          const isStriated = inferIsStriatedFromText(s.body);
+          return { zone, isStriated };
+        });
+
+        const workoutMeta2 = (() => {
+          const zones = sectionMeta2.map((m) => m.zone);
+          const hasRed = zones.includes("full_gas");
+          const redSectionsCount = zones.filter((z) => z === "full_gas").length;
+          return { hasRed, redSectionsCount };
+        })();
+
+        return res.json({
+          ok: true,
+          workoutText: workout2.text,
+          workoutName: workout2.name || "",
+          sections: parsed2.sections,
+          sectionMeta: sectionMeta2,
+          workoutMeta: workoutMeta2
+        });
       }
     }
 
-    return res.json({ ok: true, workoutText: workout.text, workoutName: workout.name || "" });
+    const parsed = parseWorkoutTextToSections(workout.text);
+
+    const sectionMeta = parsed.sections.map((s) => {
+      const zone = inferZoneFromText(s.body);
+      const isStriated = inferIsStriatedFromText(s.body);
+      return { zone, isStriated };
+    });
+
+    const workoutMeta = (() => {
+      const zones = sectionMeta.map((m) => m.zone);
+      const hasRed = zones.includes("full_gas");
+      const redSectionsCount = zones.filter((z) => z === "full_gas").length;
+      return { hasRed, redSectionsCount };
+    })();
+
+    return res.json({
+      ok: true,
+      workoutText: workout.text,
+      workoutName: workout.name || "",
+      sections: parsed.sections,
+      sectionMeta,
+      workoutMeta
+    });
   } catch (e) {
     console.error(`[ERROR] ReqId=${reqId} Time=${new Date().toISOString()}`);
     console.error(`[ERROR] Message: ${e && e.message ? e.message : e}`);

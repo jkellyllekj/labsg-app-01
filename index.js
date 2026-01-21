@@ -200,9 +200,19 @@ function validateSetBody(body, targetDistance, poolLen) {
     const parsed = parseNxD(line);
     if (!parsed) {
       // Check for single distance format (e.g., "200 easy")
-      const singleMatch = line.match(/^(\d+)\s+/);
+      const singleMatch = line.match(/^(\d+)\s+(.+)$/);
       if (singleMatch) {
-        totalParsed += Number(singleMatch[1]);
+        const distOnly = Number(singleMatch[1]);
+        const tail = String(singleMatch[2] || "").toLowerCase();
+
+        // Single-distance lines are only allowed for genuinely easy swimming.
+        // Reject moderate or harder single-distance lines like "350 moderate".
+        const harderWords = ["moderate", "strong", "hard", "fast", "sprint", "threshold", "race pace"];
+        if (harderWords.some(w => tail.includes(w))) {
+          return { valid: false, reason: "single-distance line too hard: " + line };
+        }
+
+        totalParsed += distOnly;
         continue;
       }
       // Skip numbered drill list lines (e.g., "1. Fist", "2. Catch-up")

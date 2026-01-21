@@ -1,0 +1,111 @@
+GOAL
+Coach realism enforcement:
+1) Enforce rep count whitelist by calling isAllowedRepCount in validateSetBody.
+2) Tighten isAllowedRepCount so 7 and 14 are not allowed.
+3) Disallow single-distance lines that claim moderate or harder effort (prevents Kick: 350 moderate).
+4) Increase full gas injection frequency.
+
+FILE TO EDIT
+index.js
+
+SCOPE
+Only edit these functions:
+- isAllowedRepCount
+- validateSetBody
+- injectOneFullGas
+Do not change UI or CSS.
+Do not refactor anything else.
+
+STEP 1
+Open index.js.
+
+STEP 2
+Find:
+function isAllowedRepCount(repCount, repDistance) {
+
+Inside it, replace only the permissive range rule:
+
+  // Allow any rep count 2-20 for flexibility with odd pools
+  // This prevents drift when templates don't match exactly
+  if (r >= 2 && r <= 20) return true;
+
+WITH this exact whitelist:
+
+  // Coach-plausible rep counts only
+  const allowed = new Set([2, 3, 4, 5, 6, 8, 9, 10, 12, 16, 20]);
+  if (allowed.has(r)) return true;
+
+Leave the rest of the function unchanged.
+
+STEP 3
+Find:
+function validateSetBody(body, targetDistance, poolLen) {
+
+Inside the loop where it handles NxD lines, locate:
+
+  totalParsed += parsed.reps * parsed.dist;
+
+Insert this exact block immediately BEFORE that line:
+
+  if (!isAllowedRepCount(parsed.reps, parsed.dist)) {
+    return { valid: false, reason: "rep count not allowed: " + parsed.reps + "x" + parsed.dist };
+  }
+
+STEP 4
+Still inside validateSetBody, locate the single distance handling:
+
+  const singleMatch = line.match(/^(\d+)\s+/);
+  if (singleMatch) {
+    totalParsed += Number(singleMatch[1]);
+    continue;
+  }
+
+Replace ONLY that inner if-block with this exact version:
+
+  const singleMatch = line.match(/^(\d+)\s+(.+)$/);
+  if (singleMatch) {
+    const distOnly = Number(singleMatch[1]);
+    const tail = String(singleMatch[2] || "").toLowerCase();
+
+    // Single-distance lines are only allowed for genuinely easy swimming.
+    // Reject moderate or harder single-distance lines like "350 moderate".
+    const harderWords = ["moderate", "strong", "hard", "fast", "sprint", "threshold", "race pace"];
+    if (harderWords.some(w => tail.includes(w))) {
+      return { valid: false, reason: "single-distance line too hard: " + line };
+    }
+
+    totalParsed += distOnly;
+    continue;
+  }
+
+STEP 5
+Find:
+function injectOneFullGas(sections, seed) {
+
+Locate these two lines:
+
+  // 30% probability for less frequent red cards (was 50%)
+  if (mulberry32(seed >>> 0)() >= 0.3) return sections;
+
+Replace ONLY those two lines with:
+
+  // 60% probability so red appears regularly
+  if (mulberry32(seed >>> 0)() >= 0.6) return sections;
+
+STEP 6
+Save the file.
+
+STEP 7
+Manual test (25m, 2000), generate 15 times:
+Confirm you do not see:
+- 14x25 anywhere
+- 7x50 anywhere
+- Kick line like "350 moderate"
+Also confirm red appears more often.
+
+STEP 8
+Commit with this exact message:
+fix(realism): enforce rep counts and reject hard single-distance lines
+
+STOP
+Do not change any other code.

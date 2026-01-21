@@ -1,0 +1,80 @@
+GOAL
+Improve coach realism by:
+1) Restricting rep counts so oddball counts like 11, 14, 17, 18, 19 do not appear.
+2) Increasing full gas injection frequency so red appears more often.
+
+FILE TO EDIT
+index.js
+
+SCOPE
+Only make two small edits:
+- Update isAllowedRepCount
+- Update the probability threshold in injectOneFullGas
+Do not change UI or CSS.
+Do not refactor.
+
+STEP 1
+Open index.js.
+
+STEP 2
+Find this function:
+function isAllowedRepCount(repCount, repDistance) {
+
+Inside it, locate the block:
+
+  // Single rep is always allowed
+  if (r === 1) return true;
+
+  // Allow any rep count 2-20 for flexibility with odd pools
+  // This prevents drift when templates don't match exactly
+  if (r >= 2 && r <= 20) return true;
+
+  return false;
+
+Replace ONLY that whole block with this exact block:
+
+  // Single rep is always allowed
+  if (r === 1) return true;
+
+  // Coach-plausible rep counts only.
+  // Reject oddball counts that feel mathy, not coach-written.
+  const allowed = new Set([2, 3, 4, 5, 6, 8, 9, 10, 12, 16, 20]);
+
+  // 9 is allowed mainly to permit common shapes like 9x50 and 9x100.
+  return allowed.has(r);
+
+STEP 3
+Find this function:
+function injectOneFullGas(sections, seed) {
+
+Inside it, locate this existing line and comment:
+
+  // 30% probability for less frequent red cards (was 50%)
+  if (mulberry32(seed >>> 0)() >= 0.3) return sections;
+
+Replace ONLY those two lines with these exact two lines:
+
+  // 60% probability to ensure red appears regularly in realistic workouts
+  if (mulberry32(seed >>> 0)() >= 0.6) return sections;
+
+STEP 4
+Save the file.
+
+STEP 5
+Manual test in browser (25m, 2600):
+Generate 15 times and confirm you do NOT see any of these patterns anywhere:
+11x50
+14x25
+17x100
+18x25
+19x100
+
+Also confirm you see sprint or full gas style efforts in Main more often than before.
+
+STEP 6
+Commit with this exact message:
+
+fix(realism): restrict rep counts and increase full gas frequency
+
+STOP
+Do not change any other code.

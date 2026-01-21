@@ -66,14 +66,11 @@ function isAllowedRepCount(repCount, repDistance) {
   // Single rep is always allowed
   if (r === 1) return true;
 
-  // Coach-plausible rep counts.
-  // Block 18 and 19 style counts that feel "mathy" not coach-written.
-  // Keep a small, realistic set of options.
-  const allowed = new Set([2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 20]);
+  // Coach-plausible rep counts only.
+  // Reject oddball counts that feel mathy, not coach-written.
+  const allowed = new Set([2, 3, 4, 5, 6, 8, 9, 10, 12, 16, 20]);
 
-  // Special case: 9x50 is common and realistic.
-  if (d === 50 && r === 9) return true;
-
+  // 9 is allowed mainly to permit common shapes like 9x50 and 9x100.
   return allowed.has(r);
 }
 
@@ -272,8 +269,8 @@ function injectOneFullGas(sections, seed) {
   const already = sections.some(s => isFullGasBody(s.body));
   if (already) return sections;
 
-  // 30% probability for less frequent red cards (was 50%)
-  if (mulberry32(seed >>> 0)() >= 0.3) return sections;
+  // 60% probability to ensure red appears regularly in realistic workouts
+  if (mulberry32(seed >>> 0)() >= 0.6) return sections;
 
   // Only Main (not Kick - kick should stay moderate/strong)
   const candidates = sections

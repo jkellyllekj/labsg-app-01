@@ -1,0 +1,121 @@
+GOAL
+Add reality anchors:
+1) Enforce coach-normal section distance buckets for Warm up, Kick, Cool down.
+2) Enforce sprint volume caps so "2100 sprint" cannot appear.
+Do not change UI or CSS.
+Do not refactor generator.
+Only add small validation checks.
+
+FILE TO EDIT
+index.js
+
+SCOPE
+Only modify validateSetBody, plus pass section label into validateSetBody call sites.
+
+STEP 1
+Open index.js.
+
+STEP 2
+Find:
+function validateSetBody(body, targetDistance, poolLen) {
+
+Change the signature to:
+
+function validateSetBody(body, targetDistance, poolLen, sectionLabel) {
+
+STEP 3
+At the top of validateSetBody, immediately after:
+let totalParsed = 0;
+
+Insert this exact block:
+
+  const label = String(sectionLabel || "").toLowerCase();
+
+  // Coach-normal section totals for 25m and 25yd pools
+  // These are not the only possible totals in the world, but they prevent constant weirdness.
+  const bucketWarmCool = new Set([200, 300, 400, 500, 600, 800, 1000]);
+  const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
+
+  if (label.includes("warm") || label.includes("cool")) {
+    if (!bucketWarmCool.has(Number(targetDistance))) {
+      return { valid: false, reason: "section distance not coach-normal: " + targetDistance };
+    }
+  }
+
+  if (label.includes("kick")) {
+    if (!bucketKick.has(Number(targetDistance))) {
+      return { valid: false, reason: "kick distance not coach-normal: " + targetDistance };
+    }
+  }
+
+STEP 4
+Inside the for-loop, locate the single distance handling block that currently begins:
+
+const singleMatch = line.match(/^(\d+)\s+/);
+
+Replace that logic with this exact version:
+
+      const singleMatch = line.match(/^(\d+)\s+(.+)$/);
+      if (singleMatch) {
+        const distOnly = Number(singleMatch[1]);
+        const tail = String(singleMatch[2] || "").toLowerCase();
+
+        // Ban single distance sprint style lines outright
+        // Nobody writes "2100 sprint" as a single effort.
+        if (tail.includes("sprint") || tail.includes("all out") || tail.includes("full gas") || tail.includes("max effort")) {
+          return { valid: false, reason: "single distance cannot be sprint: " + line };
+        }
+
+        totalParsed += distOnly;
+        continue;
+      }
+
+STEP 5
+Inside the NxD parsing path, after parsed is created and before adding distance,
+insert a sprint volume cap based on the line text.
+
+Locate:
+totalParsed += parsed.reps * parsed.dist;
+
+Immediately BEFORE that line, insert:
+
+      const lineLower = String(line).toLowerCase();
+      const lineDist = parsed.reps * parsed.dist;
+
+      // Sprint volume cap per line
+      if (lineLower.includes("sprint") && lineDist > 600) {
+        return { valid: false, reason: "sprint volume too large: " + line };
+      }
+
+STEP 6
+Update all call sites that call validateSetBody to pass the section label.
+Search for:
+validateSetBody(
+
+For each call that currently looks like:
+validateSetBody(section.body, section.dist, poolLen)
+
+Change it to:
+validateSetBody(section.body, section.dist, poolLen, section.label)
+
+Do not change anything else around it.
+
+STEP 7
+Save the file.
+
+STEP 8
+Manual test:
+Pool 25m, Distance 3300, Generate 15 times.
+Confirm you do not see:
+- Warm up 650
+- Kick 350
+- Any single line like "XXXX sprint"
+- Any sprint line over 600 total distance
+
+STEP 9
+Commit with this exact message:
+
+fix(realism): enforce section distance buckets and sprint volume caps
+
+STOP
+Do not change any other code.

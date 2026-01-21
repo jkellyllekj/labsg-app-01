@@ -191,11 +191,30 @@ function parseNxD(line) {
 }
 
 // Validate a set body: all lines must parse, total must match target
-function validateSetBody(body, targetDistance, poolLen) {
+function validateSetBody(body, targetDistance, poolLen, sectionLabel) {
   const lines = String(body || "").split("\n").filter(l => l.trim());
   if (lines.length === 0) return { valid: false, reason: "empty body" };
   
   let totalParsed = 0;
+
+  const label = String(sectionLabel || "").toLowerCase();
+
+  // Coach-normal section totals for 25m and 25yd pools
+  // These are not the only possible totals in the world, but they prevent constant weirdness.
+  const bucketWarmCool = new Set([200, 300, 400, 500, 600, 800, 1000]);
+  const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
+
+  if (label.includes("warm") || label.includes("cool")) {
+    if (!bucketWarmCool.has(Number(targetDistance))) {
+      return { valid: false, reason: "section distance not coach-normal: " + targetDistance };
+    }
+  }
+
+  if (label.includes("kick")) {
+    if (!bucketKick.has(Number(targetDistance))) {
+      return { valid: false, reason: "kick distance not coach-normal: " + targetDistance };
+    }
+  }
   for (const line of lines) {
     const parsed = parseNxD(line);
     if (!parsed) {
@@ -205,11 +224,10 @@ function validateSetBody(body, targetDistance, poolLen) {
         const distOnly = Number(singleMatch[1]);
         const tail = String(singleMatch[2] || "").toLowerCase();
 
-        // Single-distance lines are only allowed for genuinely easy swimming.
-        // Reject moderate or harder single-distance lines like "350 moderate".
-        const harderWords = ["moderate", "strong", "hard", "fast", "sprint", "threshold", "race pace"];
-        if (harderWords.some(w => tail.includes(w))) {
-          return { valid: false, reason: "single-distance line too hard: " + line };
+        // Ban single distance sprint style lines outright
+        // Nobody writes "2100 sprint" as a single effort.
+        if (tail.includes("sprint") || tail.includes("all out") || tail.includes("full gas") || tail.includes("max effort")) {
+          return { valid: false, reason: "single distance cannot be sprint: " + line };
         }
 
         totalParsed += distOnly;
@@ -223,6 +241,13 @@ function validateSetBody(body, targetDistance, poolLen) {
     }
     if (!isAllowedRepCount(parsed.reps, parsed.dist)) {
       return { valid: false, reason: "rep count not allowed: " + parsed.reps + "x" + parsed.dist };
+    }
+    const lineLower = String(line).toLowerCase();
+    const lineDist = parsed.reps * parsed.dist;
+
+    // Sprint volume cap per line
+    if (lineLower.includes("sprint") && lineDist > 600) {
+      return { valid: false, reason: "sprint volume too large: " + line };
     }
     totalParsed += parsed.reps * parsed.dist;
   }
@@ -5044,7 +5069,7 @@ app.post("/generate-workout", (req, res) => {
         }
         
         // Validate the generated body
-        const validation = validateSetBody(candidateBody, setDist, poolLen);
+        const validation = validateSetBody(candidateBody, setDist, poolLen, setLabel);
         if (validation.valid) {
           body = candidateBody;
           break;

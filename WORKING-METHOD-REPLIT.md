@@ -42,6 +42,39 @@ Standard flow:
 
 Chat is for planning, reasoning, review, and decisions. The Agent is an execution tool, not the primary thinker.
 
+## AGENT COST CONTROL AND SCOPE LOCK
+
+Purpose
+The agent is execution only. The architect does all analysis, planning, and design in chat. The agent never explores, refactors, or decides on its own.
+
+Hard scope rules
+1. The agent may only edit the exact files explicitly listed in the message to agent.
+2. The agent may only change the exact blocks or exact line ranges explicitly provided by the architect.
+3. One commit per message unless the architect explicitly asks for more.
+4. If the agent discovers a deeper issue, it must STOP and report. It must not continue with new ideas or additional changes.
+
+Forbidden without explicit permission
+1. Increasing retry counts.
+2. Relaxing validators or constraints.
+3. Expanding test coverage beyond what is requested.
+4. Any large refactor, cleanup, or rewrite.
+5. Adding new helper systems or new logic layers.
+
+Budget rules
+1. Default budget is 2 minutes of agent time.
+2. Default limit is 1 file change.
+3. If the work cannot be completed inside the budget, stop and report what is missing.
+
+Required message format for tasks
+The architect must provide:
+1. Goal in one sentence.
+2. File list.
+3. Exact code to insert or exact blocks to replace.
+4. Exact tests to run.
+5. Commit message.
+
+If any of these are missing, the agent must ask for the missing item and stop.
+
 ## Documents
 We keep three documents only.
 

@@ -1,0 +1,62 @@
+START MESSAGE TO AGENT:
+
+Goal: Run automated generation tests and report results. No refactors. No exploratory reading. No changes unless I explicitly ask after you report.
+
+Context:
+We need automated generation testing for SwimGen. We want to detect any generation failures, and measure how often certain “coach implausible” patterns appear. The UI toast “Request failed: sectionTemplates is not defined” must never appear, but since you cannot see mobile UI, we will detect server failures and console errors instead.
+
+Scope:
+1) Add a small Node test script in the repo, run it, and report results.
+2) If you see any server exceptions or unhandled promise rejections in logs, capture the exact stack trace lines and the seed / request params if available.
+3) Do not modify index.js in this pass.
+
+Work steps:
+A) Create a new file at:
+scripts/gen_smoke_test.js
+
+B) The script must:
+1) Call the local endpoint that the UI uses for generation. If it is GET, use GET. If it is POST, use POST. Use localhost and the running port.
+2) Run these test suites:
+
+Suite A. Crash and retry hardening proxy:
+- pool: 25m, target: 2000
+- generate 30 times
+- record:
+  - number of HTTP failures
+  - number of responses missing expected fields
+  - any response containing an error field
+  - any console errors printed by the server during the run
+
+Suite B. Rep count sanity proxy:
+- pool: 25m, target: 2000
+- generate 15 times
+- parse the returned workout sections and find the Main section description.
+- count how many Main sets contain “x50” with reps > 16.
+- report the count and list the exact Main lines for those cases.
+
+Suite C. Red distribution proxy:
+- pool: 25m, target: 3000
+- generate 20 times
+- count workouts with any red section. Use whatever field drives colour, for example an intensity label, zone, or colour name. If the response only returns text, then skip this and report “cannot detect red from API”.
+
+Suite D. 25yd parity:
+- pool: 25yd, target: 2000
+- generate 10 times
+- count how many Main sets are 22x50 or 26x50. Report the count and the exact Main lines.
+
+C) After running, print a clear summary:
+- pass fail for each suite
+- counts and example lines
+- any server errors with stack traces
+
+D) Run:
+node scripts/gen_smoke_test.js
+
+Then paste the output into chat.
+
+Note:
+If the endpoint is not obvious, inspect the existing UI call site and mirror it, but do not do broad reading. Find only what you need to call the endpoint correctly.
+
+STOP after reporting results.
+
+FINISH MESSAGE TO AGENT

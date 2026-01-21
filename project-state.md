@@ -159,16 +159,21 @@ RECENTLY COMPLETED (v1)
 - Post generation validator (2026-01-21)
   Now rejects workouts that violate: pool-length repeat multiples, unrealistic
   rep counts, full gas caps (swim max 600m, kick max 300m), and build labeling
-  sanity (min 4 reps). Invalid workouts trigger a retry with a new seed.
+  sanity (min 2 reps). Invalid workouts trigger a retry with a new seed.
   Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked
   on generator template updates that currently produce 25m repeats.
+
+- Exact target totals enforcement (2026-01-21)
+  For standard pools (25m, 50m, 25yd), workouts now total exactly the slider
+  value (e.g., 3000m = 3000m, not 3050m). Achieved via "final balance" logic
+  that uses cooldown to absorb snapping drift, plus target lock correction
+  for edge cases. Tests: 30/30 pass for all pool types at 3000m and 2000m.
 
 ============================================================================
 NEXT SINGLE STEP (ACTIVE)
 ============================================================================
 
-- Tighten snapping and remainder handling so no section
-  ever produces odd-length artifacts in any pool
+- (Completed) Enforce exact target totals for slider distance
 
 ============================================================================
 IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED)

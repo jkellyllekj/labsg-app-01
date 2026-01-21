@@ -1,0 +1,95 @@
+START MESSAGE TO AGENT
+
+PROJECT: labsg-app-01
+
+Goal (one change, one commit):
+When the UI distance slider is set to an exact target (eg 2000, 3000), the generated workout MUST total exactly that target for standard pools (25m, 50m, 25yd). No more 3050/2050 “near misses”.
+
+Scope:
+- index.js only
+- No CSS/UI layout changes
+- No new features
+
+====================================
+A) WHAT IS BROKEN
+====================================
+
+We now compute “actual total” from section sums correctly, but the generator still accepts totals that do not equal the UI-selected target (examples: target 3000 -> output 3050, target 2000 -> output 2050).
+
+This is not a display bug anymore. It is a generation acceptance bug.
+
+Requirement:
+- For pool types 25m, 50m, 25yd: actualTotal MUST equal targetTotal exactly.
+- If it cannot be achieved with a small safe adjustment, return null and retry.
+
+====================================
+B) IMPLEMENTATION PLAN
+====================================
+
+1) Identify where:
+- targetTotal is read from the UI options
+- sections are generated and snapped
+- actualTotal is computed (already exists)
+- buildWorkout returns the final object
+
+2) Add a “target lock” check after snapping and after actualTotal is computed:
+
+delta = targetTotal - actualTotal
+
+If delta == 0:
+- accept
+
+If delta != 0:
+- attempt a minimal coach-safe correction using only easy swimming appended to cooldown, then warmup (in that order), while preserving structural minimums.
+
+Correction rules:
+- Only adjust in multiples of poolLen (or 2*poolLen if that is how repeats are represented internally).
+- Prefer adding/removing easy 50s (or easy 100s in 50m pool) by modifying the cooldown set distance/reps.
+- Do not reduce cooldown below its minimum (set a minimum of 200m for 3k sessions and 150m for 2k sessions, unless a smaller minimum is already defined in the code).
+- If cooldown cannot absorb the correction, apply to warmup next with the same constraints.
+- Do not change main set or drill/kick counts in this first fix.
+
+If correction succeeds:
+- recompute actualTotal and accept only if it matches target exactly.
+
+If correction fails:
+- return null so the existing retry logic can regenerate with a new seed.
+
+3) Keep the existing divisibility validation and plausibility validator.
+
+====================================
+C) TESTS
+====================================
+
+Add or extend a lightweight test routine (no new dependencies) to generate 30 workouts for each pool type:
+- 25m target 3000
+- 50m target 3000
+- 25yd target 3000
+
+For each workout verify:
+- Sum of section distances == targetTotal exactly
+- Display total equals targetTotal
+- No console errors
+
+Report results in a small table.
+
+Also manually generate in UI:
+- 25m 3000: 10 rerolls, confirm no 3050
+- 25yd 2000: 10 rerolls, confirm no 2050
+
+====================================
+D) COMMIT
+====================================
+
+One commit only.
+
+Commit message:
+Enforce exact target totals for slider distance
+
+Report back with:
+- Commit hash
+- Lines/blocks changed
+- Test table
+- Any edge cases observed
+
+FINISH MESSAGE TO AGENT

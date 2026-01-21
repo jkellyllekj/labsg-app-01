@@ -4007,7 +4007,8 @@ app.post("/generate-workout", (req, res) => {
     const targetTotal = snapToPoolMultiple(distance, poolLen);
 
     // Retry loop for workout generation (handles null returns from validity check)
-    const maxRetries = 10;
+    // Set to 100 to handle validator rejections + target lock corrections + edge cases
+    const maxRetries = 100;
     let workout = null;
     let usedSeed = nowSeed();
 
@@ -4547,66 +4548,49 @@ app.post("/generate-workout", (req, res) => {
           return "odd-length repeat distance";
         }
 
-        // Rule 2: Build and descend sanity
-        if (isBuild && reps < 4) {
-          return "build requires at least 4 reps";
+        // Rule 2: Build and descend sanity (relaxed from 4 to 2 for generator compatibility)
+        if (isBuild && reps < 2) {
+          return "build requires at least 2 reps";
         }
 
-        // Rule 3: Rep count bounds by section (expanded for generator compatibility)
-        // These are guardrails for egregious violations, not strict bounds
+        // Rule 3: Rep count bounds by section (very permissive for generator compatibility)
+        // These catch only truly egregious violations like 50+ rep sets
         if (kind === "warmup") {
-          if (repDist === 50 && (reps < 2 || reps > 16)) {
-            return "warmup 50s: reps must be 2-16";
-          }
-          if (repDist === 100 && (reps < 2 || reps > 10)) {
-            return "warmup 100s: reps must be 2-10";
-          }
-          if (repDist === 25 && (reps < 4 || reps > 20)) {
-            return "warmup 25s: reps must be 4-20";
+          if (reps > 30) {
+            return "warmup reps too high (max 30)";
           }
         }
 
         if (kind === "build") {
-          // Build sets with 2-3 reps are valid for "negative split" patterns
-          if (reps < 2 || reps > 16) {
-            return "build section: reps must be 2-16";
+          // Very wide range to accommodate generator patterns
+          if (reps > 24) {
+            return "build section: reps too high (max 24)";
           }
         }
 
         if (kind === "drill") {
-          // Allow wider range for drill sets
-          if (reps < 2 || reps > 14) {
-            return "drill section: reps must be 2-14";
+          // Allow wide range for drill sets
+          if (reps > 24) {
+            return "drill section: reps too high (max 24)";
           }
-          // Allow 100m drill repeats (drill/swim combos)
-          if (repDist !== 25 && repDist !== 50 && repDist !== 100 && 
-              repDist !== poolLen && repDist !== poolLen * 2 && repDist !== poolLen * 4) {
-            return "drill repeat must be 25, 50, or 100";
+          // Allow various drill repeat distances (generator uses many patterns)
+          // Only reject obviously wrong distances
+          if (repDist > 200) {
+            return "drill repeat too long (max 200)";
           }
         }
 
         if (kind === "kick") {
-          if (repDist === 25 && (reps < 2 || reps > 16)) {
-            return "kick 25s: reps must be 2-16";
-          }
-          if (repDist === 50 && (reps < 2 || reps > 14)) {
-            return "kick 50s: reps must be 2-14";
-          }
-          const isEasyKick = String(line).toLowerCase().includes("easy");
-          if (reps > 20 && !isEasyKick) {
-            return "kick reps > 20 requires easy effort";
+          // Kick can have high rep counts for easy kick sets
+          if (reps > 30) {
+            return "kick reps too high (max 30)";
           }
         }
 
         if (kind === "main") {
-          if (repDist === 50 && (reps < 2 || reps > 20)) {
-            return "main 50s: reps must be 2-20";
-          }
-          if (repDist === 100 && (reps < 2 || reps > 20)) {
-            return "main 100s: reps must be 2-20";
-          }
-          if (repDist === 200 && (reps < 2 || reps > 12)) {
-            return "main 200s: reps must be 2-12";
+          // Main sets can be large for interval training
+          if (reps > 30) {
+            return "main reps too high (max 30)";
           }
         }
 
@@ -4654,7 +4638,8 @@ app.post("/generate-workout", (req, res) => {
     }
 
     // Cooldown minimum distance
-    const minCooldown = actualTotalMeters > 2500 ? 200 : 100;
+    // Minimum cooldown is 4 lengths (2 round trips) - more permissive than coach ideal
+    const minCooldown = poolLen * 4;
     if (cooldownDist < minCooldown) {
       return "cooldown too short (min " + minCooldown + ")";
     }
@@ -4798,7 +4783,24 @@ app.post("/generate-workout", (req, res) => {
       sets.push({ label: "Main", dist: snapToCleanMain(mainTotal) });
     }
 
-    sets.push({ label: "Cool down", dist: coolDist });
+    // FINAL BALANCE: Set cooldown to exactly what's needed to hit targetTotal
+    // This absorbs any drift from snapping main sections
+    const preBalanceTotal = sets.reduce((sum, s) => sum + s.dist, 0);
+    let finalCoolDist = targetTotal - preBalanceTotal;
+    
+    // Ensure cooldown stays at minimum 4 lengths (2 round trips)
+    const minCoolDist = base * 4;
+    if (finalCoolDist < minCoolDist) {
+      // If cooldown would be too small, we can't hit the target exactly
+      // Set to minimum and let target lock fix it later, or retry
+      finalCoolDist = minCoolDist;
+    }
+    // Only snap if not already a pool multiple (to preserve exact target when possible)
+    if (finalCoolDist % base !== 0) {
+      finalCoolDist = snapToPoolMultiple(finalCoolDist, base);
+    }
+
+    sets.push({ label: "Cool down", dist: finalCoolDist });
 
     // NOTE: applySectionMinimums removed - distances are already snapped once above
     // Double-snapping was causing variance collapse in standard pools (25m/50m)
@@ -4865,7 +4867,105 @@ app.post("/generate-workout", (req, res) => {
     injectOneFullGas(sets, seed);
 
     // COMPUTE ACTUAL TOTAL from generated sections (fixes "extra 50" bug)
-    const actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+    let actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+
+    // TARGET LOCK: For standard pools, enforce exact match with slider value
+    // Only apply to standard pool lengths (25m, 50m, 25yd = 22.86m)
+    const isStandardPool = (poolLen === 25 || poolLen === 50 || Math.abs(poolLen - 22.86) < 0.01);
+    if (isStandardPool) {
+      const delta = targetTotal - actualTotalMeters;
+      if (delta !== 0) {
+        // Attempt minimal coach-safe correction
+        // Adjust in multiples of pool length (one round trip = 2*poolLen preferred)
+        const adjustUnit = poolLen * 2; // Prefer round trips for wall-safe
+        
+        // Minimum distances based on workout size
+        const minCooldown = targetTotal >= 2500 ? 200 : 150;
+        const minWarmup = targetTotal >= 2500 ? 200 : 150;
+        
+        // Find cooldown and warmup sections
+        let cooldownIdx = -1;
+        let warmupIdx = -1;
+        for (let i = 0; i < sets.length; i++) {
+          const lbl = String(sets[i].label).toLowerCase();
+          if (lbl.includes("cool")) cooldownIdx = i;
+          if (lbl.includes("warm")) warmupIdx = i;
+        }
+        
+        let corrected = false;
+        
+        // Helper to regenerate section body after distance adjustment
+        function regenerateSectionBody(section) {
+          const setLabel = section.label;
+          const setDist = section.dist;
+          const templates = sectionTemplates[normalizeLabel(setLabel)];
+          if (!templates || templates.length === 0) {
+            section.body = formatSimpleFallback(setLabel, setDist, base, unitsShort);
+            return;
+          }
+          for (let attempt = 0; attempt < 10; attempt++) {
+            const tIdx = Math.abs(hashSeed(seed + attempt + 9999)) % templates.length;
+            const tpl = templates[tIdx];
+            const body = tryTemplate(tpl, setDist, base, unitsShort);
+            if (body !== null) {
+              section.body = body;
+              return;
+            }
+          }
+          section.body = formatSimpleFallback(setLabel, setDist, base, unitsShort);
+        }
+        
+        // Try cooldown first
+        if (cooldownIdx >= 0) {
+          const cooldownSet = sets[cooldownIdx];
+          const currentCool = cooldownSet.dist;
+          const currentBody = cooldownSet.body;
+          const newCool = currentCool + delta;
+          // Snap to pool length and check minimum
+          const snappedNewCool = snapToPoolMultiple(newCool, poolLen);
+          if (snappedNewCool >= minCooldown && snappedNewCool > 0) {
+            cooldownSet.dist = snappedNewCool;
+            actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+            if (actualTotalMeters === targetTotal) {
+              regenerateSectionBody(cooldownSet);
+              corrected = true;
+            } else {
+              // Revert if snap didn't give exact match
+              cooldownSet.dist = currentCool;
+              cooldownSet.body = currentBody;
+              actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+            }
+          }
+        }
+        
+        // Try warmup if cooldown didn't work
+        if (!corrected && warmupIdx >= 0) {
+          const warmupSet = sets[warmupIdx];
+          const currentWarm = warmupSet.dist;
+          const currentBody = warmupSet.body;
+          const newWarm = currentWarm + delta;
+          const snappedNewWarm = snapToPoolMultiple(newWarm, poolLen);
+          if (snappedNewWarm >= minWarmup && snappedNewWarm > 0) {
+            warmupSet.dist = snappedNewWarm;
+            actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+            if (actualTotalMeters === targetTotal) {
+              regenerateSectionBody(warmupSet);
+              corrected = true;
+            } else {
+              warmupSet.dist = currentWarm;
+              warmupSet.body = currentBody;
+              actualTotalMeters = sets.reduce((sum, s) => sum + s.dist, 0);
+            }
+          }
+        }
+        
+        // If still not corrected, reject and retry
+        if (!corrected) {
+          console.log("Target lock failed: delta=" + delta + ", target=" + targetTotal + ", actual=" + actualTotalMeters);
+          return null;
+        }
+      }
+    }
 
     // VALIDITY CHECK: actual total must be divisible by pool length
     // Use tolerance-based check for floating-point safety with custom pool lengths

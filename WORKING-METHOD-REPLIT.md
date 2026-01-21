@@ -28,7 +28,7 @@ Pinning for stability:
 - On a GitHub file page, pressing `y` converts the URL to a commit pinned permalink.
 
 Standard flow:
-1. ChatGPT opens and inspects the specific target file(s) on GitHub and decides the next change. ChatGPT must not issue agent code edit instructions based on assumptions.
+1. ChatGPT opens project-state.md first and follows its links to inspect the specific target file(s) before deciding the next change. ChatGPT must not issue agent code edit instructions based on assumptions.
 2. ChatGPT writes an execution only prompt for the Replit Agent, or the human edits manually.
 3. Replit Agent makes the change and tests exactly what was requested.
 4. Commit and push to GitHub.

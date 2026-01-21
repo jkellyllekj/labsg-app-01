@@ -4548,6 +4548,25 @@ app.post("/generate-workout", (req, res) => {
         const isFullGas = isFullGasText(line);
         const isBuild = isBuildOrDescend(line);
 
+        // PoolLen-specific caps for common 25m/25yd oddities
+        // These should NOT affect 50m pools where 20x50 can be normal.
+        const pLen = Number(poolLen);
+
+        if (pLen === 25) {
+          // Main sets: prevent very common but coach-implausible 22x50 / 26x50 in 25m pools
+          if (kind === "main" && repDist === 50 && reps > 16) {
+            return "main 50s reps cap exceeded (max 16 for 25m/25yd)";
+          }
+
+          // Drill sets: cap short-repeat drill rep counts
+          if (kind === "drill" && repDist === 25 && reps > 12) {
+            return "drill 25s reps cap exceeded (max 12 for 25m/25yd)";
+          }
+          if (kind === "drill" && repDist === 50 && reps > 10) {
+            return "drill 50s reps cap exceeded (max 10 for 25m/25yd)";
+          }
+        }
+
         // Rule 1: Even lengths for repeats
         // Repeats must be multiples of poolLen (allows 25m, 50m, 100m repeats)
         // The stricter "ends at home wall" rule (2 * poolLen) would be too restrictive

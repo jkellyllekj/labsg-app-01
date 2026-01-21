@@ -1,0 +1,67 @@
+START MESSAGE TO AGENT:
+
+PROJECT: labsg-app-01
+
+Goal (one commit): Add poolLen-specific rep caps in validateWorkout to prevent 22x50 and 26x50 mains in 25m/25yd pools, and cap drill short-repeat reps. No refactors. No other changes.
+
+Hard scope:
+- Edit index.js only.
+- Modify ONLY function validateWorkout(sets, poolLen, actualTotalMeters).
+- Do not change SECTION_TEMPLATES, regenerateSectionBody, retry loop, or endpoint shape.
+- Keep all existing validator rules. Only add new ones.
+- After change, run node scripts/gen_smoke_test.js and paste output.
+
+Where to edit:
+In index.js, find the function:
+function validateWorkout(sets, poolLen, actualTotalMeters) {
+
+Inside it, there is a loop:
+for (const section of sets) {
+  ...
+  for (const line of bodyLines) {
+    const parsed = parseNxDFromLine(line);
+    if (!parsed) continue;
+
+    const { reps, dist: repDist } = parsed;
+    const isFullGas = isFullGasText(line);
+    const isBuild = isBuildOrDescend(line);
+
+Add this new block immediately AFTER those three const lines (after isBuild), before the existing “Rule 1” comment, so it runs early:
+
+----- INSERT START -----
+        // PoolLen-specific caps for common 25m/25yd oddities
+        // These should NOT affect 50m pools where 20x50 can be normal.
+        const pLen = Number(poolLen);
+
+        if (pLen === 25) {
+          // Main sets: prevent very common but coach-implausible 22x50 / 26x50 in 25m pools
+          if (kind === "main" && repDist === 50 && reps > 16) {
+            return "main 50s reps cap exceeded (max 16 for 25m/25yd)";
+          }
+
+          // Drill sets: cap short-repeat drill rep counts
+          if (kind === "drill" && repDist === 25 && reps > 12) {
+            return "drill 25s reps cap exceeded (max 12 for 25m/25yd)";
+          }
+          if (kind === "drill" && repDist === 50 && reps > 10) {
+            return "drill 50s reps cap exceeded (max 10 for 25m/25yd)";
+          }
+        }
+----- INSERT END -----
+
+Do not alter any other logic.
+
+Then run:
+node scripts/gen_smoke_test.js
+
+Expected:
+- Suite A remains PASS (no crashes).
+- Suite B should show fewer or ideally zero “Nx50 where N > 16” violations for 25m 2000.
+- Suite D should remain PASS or improve further.
+
+Commit message:
+Add 25m-specific rep caps in validator
+
+STOP after pasting the smoke test output.
+
+FINISH MESSAGE TO AGENT

@@ -1,0 +1,69 @@
+START MESSAGE TO AGENT
+
+Goal
+Update project-state.md so it accurately reflects the verified Reality Anchors now present in index.js.
+
+File to edit
+- project-state.md
+
+Constraints
+- Do not change UI freeze rules.
+- Do not delete existing content.
+- Make minimal, explicit additions and one small edit to an existing bullet.
+- Do not add new ad hoc bans or enumerations.
+- Use simple hyphens only. Do not add em dash or en dash characters.
+
+Edits
+
+1) LOCKED INVARIANTS
+Find the heading line:
+"============================================================================ LOCKED INVARIANTS ============================================================================"
+
+Under the existing bullets:
+- No UI changes during v1
+- index.js is the runtime authority
+- Generator never returns null or fails silently
+- Reroll must always produce a valid workout
+
+Insert this new block immediately after those existing bullets:
+
+- Reality Anchors are active constraints:
+  - Section distance buckets enforced for Warm up, Kick, Cool down
+  - Sprint volume caps enforced, with single line sprint blocks rejected
+  - Validation is section aware via validateSetBody(body, targetDistance, poolLen, sectionLabel)
+
+2) RECENTLY COMPLETED (v1)
+Find the bullet that begins:
+"- Post generation validator (2026-01-21)"
+
+It currently lists what the validator rejects and mentions full gas caps.
+
+Edit that bullet to include Reality Anchors explicitly, without removing any existing items.
+Replace only the middle list portion so it reads like this (keep the rest of the bullet intact):
+
+Now rejects workouts that violate:
+pool-length repeat multiples, unrealistic rep counts, section distance buckets (Warm up, Kick, Cool down), sprint rules (no single line sprint blocks, sprint volume caps), full gas caps (swim max 600m, kick max 300m), and build labeling sanity (min 2 reps).
+
+Do not change the date tag. Do not change surrounding bullets.
+
+3) RECENT FIXES / RESOLVED (2026-01-21)
+In the section:
+"============================================================================ RECENT FIXES / RESOLVED (2026-01-21) ============================================================================"
+
+Add a new bullet at the top of that section (before "Intermittent generation crash resolved"):
+
+- Reality Anchors enforced by validator:
+  - Blocks non coach normal section totals in Warm up, Kick, Cool down
+  - Blocks single line sprint blocks
+  - Enforces sprint volume caps by section
+
+Keep it short. Do not add long lists of weird examples. You may include this single example line if you want, but keep it to one line only:
+Prevents outputs like 350 kick, 650 warm up, or 2100 sprint.
+
+4) No other sections
+Do not change CURRENT PHASE, NEXT SINGLE STEP, IDEA PARKING LOT, or KNOWN ISSUES.
+
+Finish
+After edits, re-open project-state.md and confirm the new bullets are present under LOCKED INVARIANTS and RECENT FIXES / RESOLVED, and that the validator bullet in RECENTLY COMPLETED now mentions section distance buckets and sprint rules.
+
+END MESSAGE TO AGENT

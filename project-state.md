@@ -146,6 +146,10 @@ LOCKED INVARIANTS
 - index.js is the runtime authority
 - Generator never returns null or fails silently
 - Reroll must always produce a valid workout
+- Reality Anchors are active constraints:
+  - Section distance buckets enforced for Warm up, Kick, Cool down
+  - Sprint volume caps enforced, with single line sprint blocks rejected
+  - Validation is section aware via validateSetBody(body, targetDistance, poolLen, sectionLabel)
 
 ============================================================================
 RECENTLY COMPLETED (v1)
@@ -158,8 +162,10 @@ RECENTLY COMPLETED (v1)
   Drill and Kick now use coach-plausible even counts
 - Post generation validator (2026-01-21)
   Now rejects workouts that violate: pool-length repeat multiples, unrealistic
-  rep counts, full gas caps (swim max 600m, kick max 300m), and build labeling
-  sanity (min 2 reps). Invalid workouts trigger a retry with a new seed.
+  rep counts, section distance buckets (Warm up, Kick, Cool down), sprint rules
+  (no single line sprint blocks, sprint volume caps), full gas caps (swim max
+  600m, kick max 300m), and build labeling sanity (min 2 reps). Invalid workouts
+  trigger a retry with a new seed.
   Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked
   on generator template updates that currently produce 25m repeats.
 
@@ -172,6 +178,12 @@ RECENTLY COMPLETED (v1)
 ============================================================================
 RECENT FIXES / RESOLVED (2026-01-21)
 ============================================================================
+
+- Reality Anchors enforced by validator:
+  - Blocks non coach normal section totals in Warm up, Kick, Cool down
+  - Blocks single line sprint blocks
+  - Enforces sprint volume caps by section
+  Prevents outputs like 350 kick, 650 warm up, or 2100 sprint.
 
 - Intermittent generation crash resolved:
   - Root cause: undefined references in regenerateSectionBody (sectionTemplates, helper fns)

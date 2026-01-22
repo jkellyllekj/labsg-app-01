@@ -1,6 +1,7 @@
 # Project: Swim Workout Generator
-Working title(s): SwimDice / SetRoll / PacePalette (TBD)
-Last updated: 2026-01-21 (doc sync)
+
+Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
+Last updated: 2026-01-22  
 Status: Active
 
 ============================================================================
@@ -17,8 +18,7 @@ If there is any uncertainty about:
 
 Then STOP and read this file in full before doing anything else.
 
-Chat memory is disposable.
-This file is not.
+Chat memory is disposable. This file is not.
 
 ============================================================================
 INSTRUCTION STYLE RULE
@@ -28,8 +28,8 @@ The assistant must always provide explicit, start-to-finish instructions.
 
 This means:
 - Always specify the exact file name(s)
-- Always specify exactly where to change the file (section/heading and position)
-- Always provide copy/paste-ready text blocks for additions or replacements
+- Always specify exactly where to change the file (section or heading and position)
+- Always provide copy and paste ready text blocks for additions or replacements
 - Do not say "add this somewhere" or "put this in the project state" without exact placement
 - Planning happens in chat. The agent is execution-only.
 
@@ -47,8 +47,9 @@ Make the generator produce workouts that are:
 - varied without feeling random
 
 Constraints for this phase:
-- UI is frozen
-- No visual redesigns
+- UI stability is prioritised
+- Avoid cosmetic redesigns and layout churn
+- UI changes are allowed only when they directly support generator correctness, section realism, pacing, or user control
 - No AI rewrite layer yet
 - Logic changes must be single, bounded, and testable
 
@@ -63,7 +64,7 @@ ARCHITECTURE OVERVIEW
 ============================================================================
 
 - Entire app runs from index.js (single-file logic + UI)
-- styles.css exists but is frozen during v1
+- styles.css exists
 - Workouts are generated deterministically with seeded variation
 - Manual testing is authoritative
 - The agent is execution-only
@@ -81,7 +82,6 @@ When a Pause In Action is declared:
 To resume in a new chat, provide the canonical raw links below.
 
 Canonical raw links:
-
 PROJECT: labsg-app-01
 https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/project-state.md
 https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/WORKING-METHOD-REPLIT.md
@@ -93,7 +93,6 @@ Rules:
 - The assistant cannot browse repo folders
 - Only exact raw file URLs are readable
 - After any logic change, index.js must be re-linked
-- UI remains frozen unless this file says otherwise
 
 ============================================================================
 WORKOUT STRUCTURE RULES
@@ -111,7 +110,7 @@ Rules:
 - Warm-up and cool-down are always low effort
 - Build is warm-up part two
 - Main is the primary intensity
-- Kick and Drill should appear in workouts ≥1000m
+- Kick and Drill should appear in workouts 1000m and above
 - No section may end off-wall
 
 ============================================================================
@@ -119,9 +118,9 @@ DISTANCE AND POOL RULES
 ============================================================================
 
 - All sets must end on the same wall they start
-- Set distances must be divisible by 2 × pool length
+- Set distances must be divisible by 2 times pool length
 - Slight total overshoot is allowed only to preserve wall endings
-- Custom pool lengths (e.g. 33m) are first-class citizens
+- Custom pool lengths (for example 33m) are first-class citizens
 
 ============================================================================
 EFFORT RULES
@@ -129,12 +128,12 @@ EFFORT RULES
 
 - Warm-up / Cool-down: blue or green only
 - Build: progressive (may touch orange, rarely red)
-- Drill: usually blue/green
+- Drill: usually blue or green
 - Kick: may include strong or hard
-- Main: yellow/orange/red expected
+- Main: yellow, orange, red expected
 
 Variety intent:
-- About 60–70 percent of workouts include at least one red exposure
+- About 60 to 70 percent of workouts include at least one red exposure
 - Gradients should not be overused
 - Hard efforts should sometimes stand alone
 
@@ -142,7 +141,6 @@ Variety intent:
 LOCKED INVARIANTS
 ============================================================================
 
-- No UI changes during v1
 - index.js is the runtime authority
 - Generator never returns null or fails silently
 - Reroll must always produce a valid workout
@@ -157,23 +155,23 @@ RECENTLY COMPLETED (v1)
 
 - Main Set template cooldown implemented
   Prevents reroll repetition of Main patterns
+
 - Drill and Kick rep normalisation
   Odd and prime rep counts eliminated
   Drill and Kick now use coach-plausible even counts
+
 - Post generation validator (2026-01-21)
-  Now rejects workouts that violate: pool-length repeat multiples, unrealistic
-  rep counts, section distance buckets (Warm up, Kick, Cool down), sprint rules
-  (no single line sprint blocks, sprint volume caps), full gas caps (swim max
-  600m, kick max 300m), and build labeling sanity (min 2 reps). Invalid workouts
-  trigger a retry with a new seed.
-  Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked
-  on generator template updates that currently produce 25m repeats.
+  Now rejects workouts that violate:
+  pool-length repeat multiples, unrealistic rep counts, section distance buckets (Warm up, Kick, Cool down), sprint rules (no single line sprint blocks, sprint volume caps), full gas caps (swim max 600m, kick max 300m), and build labeling sanity (min 2 reps).
+  Invalid workouts trigger a retry with a new seed.
+  Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked on generator template updates that currently produce 25m repeats.
 
 - Exact target totals enforcement (2026-01-21)
-  For standard pools (25m, 50m, 25yd), workouts now total exactly the slider
-  value (e.g., 3000m = 3000m, not 3050m). Achieved via "final balance" logic
-  that uses cooldown to absorb snapping drift, plus target lock correction
-  for edge cases. Tests: 30/30 pass for all pool types at 3000m and 2000m.
+  For standard pools (25m, 50m, 25yd), workouts now total exactly the slider value (for example 3000m equals 3000m, not 3050m).
+  Achieved via "final balance" logic that uses cooldown to absorb snapping drift, plus target lock correction for edge cases.
+
+Tests:
+- 30/30 pass for all pool types at 3000m and 2000m.
 
 ============================================================================
 RECENT FIXES / RESOLVED (2026-01-21)
@@ -192,8 +190,8 @@ RECENT FIXES / RESOLVED (2026-01-21)
 
 - 25m / 25yd rep explosion prevented:
   - Validator caps added:
-    - Main sets: Nx50 capped at N ≤ 16 for 25m / 25yd pools
-    - Drill sets: 25s ≤ 12 reps, 50s ≤ 10 reps
+  - Main sets: Nx50 capped at N 16 for 25m / 25yd pools
+  - Drill sets: 25s 12 reps, 50s 10 reps
   - Eliminates recurring 22x50, 26x50, and 14x25 drill patterns
 
 ============================================================================
@@ -201,11 +199,13 @@ TESTING / TOOLING
 ============================================================================
 
 - Added automated smoke test script: scripts/gen_smoke_test.js
+
 - Smoke test suites:
   - Suite A: crash / retry hardening
   - Suite B: rep count sanity (25m)
   - Suite C: intensity detection (enabled)
   - Suite D: 25yd parity
+
 - Latest results (2026-01-21):
   - Suite A: PASS
   - Suite B: PASS
@@ -217,10 +217,12 @@ KNOWN LIMITATIONS
 ============================================================================
 
 - API returns workouts with workoutText plus structured metadata
+
 - /generate-workout success response includes:
   - sections: array of { label, dist, body }
   - sectionMeta: array of { zone, isStriated }
   - workoutMeta: { hasRed, redSectionsCount }
+
 - This enables automated detection of:
   - red or full gas frequency
   - label and colour mismatches
@@ -253,14 +255,13 @@ the assistant must:
 
 Ideas must never rely on chat memory alone.
 If an idea is discussed and not written here, it is considered lost.
-
-
 This section exists to prevent idea loss.
+
 Items here are NOT tasks.
 They may be vague, contradictory, or long-term.
+Do not implement anything from this section without explicitly promoting it to an active step.
 
-Do not implement anything from this section without
-explicitly promoting it to an active step.
+- The following ideas describe intentional post v1 evolution and should not be partially implemented without a clear phase decision
 
 Template driven realism and workout corpus:
 - Shift from generate then ban toward template first generation
@@ -274,6 +275,12 @@ Template driven realism and workout corpus:
   - triathlon focus versus pool race focus
   - phase intent (base, build, taper, race prep)
   - equipment suitability (paddles, snorkel, fins, pull buoy)
+
+Engine architecture reset (post v1):
+- Move from monolithic index.js toward a modular engine structure
+- Keep UI and API contract stable while swapping generation internals
+- Allow parallel development of a template driven engine without breaking existing functionality
+- Treat current generator as legacy once template engine is proven
 
 User customisation and set editing (post v1 UI work):
 - Allow resizing a section card to increase or decrease that section distance
@@ -297,29 +304,26 @@ Training plans and season logic (long term):
 - Support A and B races and a target date
 - Track what the user actually completed and how it felt
 - Adapt future sessions based on compliance and feedback
-- Allow exporting plan sessions or syncing into a calendar
 
 Integrations (long term):
 - Consider export or sync targets:
   - Garmin
   - Strava
   - TrainingPeaks
-- Consider importing completed workouts from those systems for feedback loop and plan adaptation
 
 Long-distance realism:
-- Very long workouts (6k–10k) should not look like scaled-up 2k workouts
+- Very long workouts (6k to 10k) should not look like scaled-up 2k workouts
 - Long sessions may use fewer sections with larger blocks
 - Distance training should shift from endless 50s toward 100s, 200s, 400s, and occasional 800s
 
 Set construction ideas:
 - Drill sets could sometimes alternate drill/swim instead of pure drill
-- Kick–Drill–Swim composite sets may be useful later
+- Kick, Drill, Swim composite sets may be useful later
 - Main sets could include broken race or race-pace concepts
 - Alternating effort patterns (easy/hard repeats) should sometimes appear
 
 Effort semantics:
-- Negative split meaning needs tightening
-  (within-rep vs across-rep clarity)
+- Negative split meaning needs tightening (within-rep vs across-rep clarity)
 - Build sets could occasionally finish with red
 - Effort colour usage could include blue more deliberately
 - Red does not need to appear every workout, but should feel earned
@@ -347,7 +351,8 @@ KNOWN ISSUES
 - Rare odd-length leaks still observed in edge cases
 - Effort gradients slightly overrepresented
 - Full Gas still underrepresented in some runs
-- Bug (fixed 2026-01-21): displayed TOTAL and total lengths were using planned target values and could diverge from actual generated section sums after snapping and fill. Fix is to compute totals from rendered sections and retry generation if totals are not divisible by pool length.
+- Bug (fixed 2026-01-21): displayed TOTAL and total lengths were using planned target values and could diverge from actual generated section sums after snapping and fill.
+  Fix is to compute totals from rendered sections and retry generation if totals are not divisible by pool length.
 
 ============================================================================
 END OF FILE

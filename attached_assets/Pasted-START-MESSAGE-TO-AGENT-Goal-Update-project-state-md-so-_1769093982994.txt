@@ -1,0 +1,76 @@
+START MESSAGE TO AGENT
+
+Goal
+Update project-state.md so it captures the new long term product direction and the next generation engine approach.
+This is idea capture only. Do not promote any of this to an active step yet. Do not change CURRENT PHASE or NEXT SINGLE STEP.
+
+File to edit
+- project-state.md
+
+Constraints
+- Do not delete any existing text.
+- UI remains frozen during v1. These are post v1 ideas.
+- Use only hyphens for bullets.
+- Do not use em dash or en dash characters.
+
+Where to edit
+In project-state.md, find the section:
+"============================================================================ IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED) ============================================================================"
+
+Within that section, find the first existing idea bullet:
+"Long-distance realism:"
+
+Insert the following new idea blocks immediately above "Long-distance realism:".
+Do not edit the existing idea blocks below.
+
+Text to insert
+
+Template driven realism and workout corpus:
+- Shift from generate then ban toward template first generation
+- Build a library of coach normal set templates derived from real published workouts
+- Template picker chooses by section, distance bucket, and training intent
+- Templates stored primarily as length counts to support any pool length, including custom pool lengths
+- Keep validator as a backstop, but aim for near zero rejections once templates drive generation
+- Add tags on templates for:
+  - stroke mix
+  - energy system focus (aerobic, threshold, speed, skills)
+  - triathlon focus versus pool race focus
+  - phase intent (base, build, taper, race prep)
+  - equipment suitability (paddles, snorkel, fins, pull buoy)
+
+User customisation and set editing (post v1 UI work):
+- Allow resizing a section card to increase or decrease that section distance
+- Resizing changes total workout distance unless user manually adjusts other sections to compensate
+- Allow removing a section by dragging it off screen
+- Allow inserting a new section at a chosen point, then selecting a section type and distance bucket
+- Allow re rolling a single section without re rolling the entire workout
+- Allow locking a section so it is preserved while other sections are re rolled
+
+Intervals, pacing, and time budgeting (future tiers):
+- Add optional user pace inputs (for example CSS, 100 pace, 200 pace, or a simple speed slider)
+- Generate suggested intervals per set based on user pace plus rest intent
+- Show estimated duration per set using:
+  - interval time times reps
+  - plus a default transition buffer between sets (for example 60 seconds)
+- Allow user adjustments to intervals with plus or minus controls, then recompute total time estimate
+- Eventually allow toggling between interval based presentation and rest based presentation
+
+Training plans and season logic (long term):
+- Generate multi week plans, not just one off workouts
+- Support A and B races and a target date
+- Track what the user actually completed and how it felt
+- Adapt future sessions based on compliance and feedback
+- Allow exporting plan sessions or syncing into a calendar
+
+Integrations (long term):
+- Consider export or sync targets:
+  - Garmin
+  - Strava
+  - TrainingPeaks
+- Consider importing completed workouts from those systems for feedback loop and plan adaptation
+
+Finish
+After insertion, confirm the new blocks appear at the top of IDEA PARKING LOT, directly above the existing "Long-distance realism:" block.
+Do not change any other section headings.
+
+END MESSAGE TO AGENT

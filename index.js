@@ -50,6 +50,16 @@ function snapRepDistToPool(dist, poolLen) {
   if (!Number.isFinite(base) || base <= 0) return d;
   return Math.round(d / base) * base;
 }
+// Backward-compat wrappers.
+// Some parts of the codebase still call the older names.
+// If these wrappers are missing, generation throws and the UI falls back.
+function snapToPoolMultiple(dist, poolLen) {
+  return snapToPoolMultipleShared(dist, poolLen);
+}
+
+function snapRepDist(dist, poolLen) {
+  return snapRepDistToPool(dist, poolLen);
+}
 
 // ============================================================================
 // VALIDATION HELPERS - Free-tier realism guards

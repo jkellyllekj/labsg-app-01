@@ -1,7 +1,7 @@
 # Project: Swim Workout Generator
 
-Working title(s): SwimDice / SetRoll / PacePalette (TBD)
-Last updated: 2026-01-23
+Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
+Last updated: 2026-01-23  
 Status: Active
 
 ============================================================================
@@ -37,8 +37,7 @@ This means:
 PROJECT INTENT
 ============================================================================
 
-Swim Workout Generator (SwimGen) is intended to be a real, shippable consumer app,
-not a demo or internal tool.
+Swim Workout Generator (SwimGen) is intended to be a real, shippable consumer app, not a demo or internal tool.
 
 The goal is:
 - A usable, attractive, coach-plausible swim workout generator
@@ -71,6 +70,20 @@ Constraints:
 - Changes must be bounded and testable
 - Avoid speculative architecture work
 
+🆕 Recent Fix (2026-01-23):
+- Generator previously failed on 1000m and 1500m distances due to too many required sections.
+- Added section gating logic:
+  - Below 1200m: omit Drill
+  - Below 1000m: omit Kick and Drill
+- Significantly reduced fallback errors and improved short-distance stability.
+
+🆕 Next Quick Improvements:
+- Set default pool to 25m and default workout distance to 2000m
+- Add cookie (or localStorage) persistence for:
+  - Last selected pool length
+  - Last selected workout distance
+  - Applied on full page reload
+
 This phase is complete when:
 - Generator uses a finite catalogue of coach-normal set structures
 - Outputs can be swum without “why would a coach do this?” moments
@@ -99,12 +112,12 @@ When a Pause In Action is declared:
 
 To resume in a new chat, provide the canonical raw links below.
 
-Canonical raw links:
-PROJECT: labsg-app-01
-https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/project-state.md
-https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/WORKING-METHOD-REPLIT.md
-https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/COACH_DESIGN_NOTES.md
-https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/index.js
+Canonical raw links:  
+PROJECT: labsg-app-01  
+https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/project-state.md  
+https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/WORKING-METHOD-REPLIT.md  
+https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/COACH_DESIGN_NOTES.md  
+https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/index.js  
 https://raw.githubusercontent.com/jkellyllekj/labsg-app-01/main/styles.css
 
 Rules:
@@ -136,9 +149,9 @@ DISTANCE AND POOL RULES
 ============================================================================
 
 - All sets must end on the same wall they start
-- Set distances must be divisible by 2 times pool length
+- Set distances must be divisible by 2 × pool length
 - Slight total overshoot is allowed only to preserve wall endings
-- Custom pool lengths (for example 33m) are first-class citizens
+- Custom pool lengths (e.g. 33m) are first-class citizens
 
 ============================================================================
 EFFORT RULES
@@ -151,7 +164,7 @@ EFFORT RULES
 - Main: yellow, orange, red expected
 
 Variety intent:
-- About 60 to 70 percent of workouts include at least one red exposure
+- About 60–70% of workouts include at least one red exposure
 - Gradients should not be overused
 - Hard efforts should sometimes stand alone
 
@@ -215,7 +228,7 @@ UI is considered stable but not frozen.
 Rules:
 - Structural redesign is not allowed in v1
 - Additive and reversible UI changes are allowed
-- Visual variants (for example white background) may be added if they do not destabilise layout or interaction
+- Visual variants (e.g. white background) may be added if they do not destabilise layout or interaction
 - Gesture-heavy interactions are deferred
 
 The current colour-coded workout cards are a core engagement feature.
@@ -225,25 +238,12 @@ RECENTLY COMPLETED (v1)
 ============================================================================
 
 - Main set template cooldown implemented
-  Prevents reroll repetition of Main patterns
-
-- Drill and Kick rep normalisation
-  Odd and prime rep counts eliminated
-  Drill and Kick now use coach-plausible even counts
-
+- Drill and Kick rep normalisation (no odd or prime rep counts)
 - Post-generation validator (2026-01-21)
-  Rejects workouts that violate:
-  pool-length repeat multiples, unrealistic rep counts,
-  section distance buckets, sprint rules, full gas caps,
-  and build labelling sanity.
-  Invalid workouts trigger retry with new seed.
-
 - Exact target totals enforcement (2026-01-21)
-  Standard pools now total exactly the slider value.
-  Achieved via final balance logic using cooldown fill.
 
 Tests:
-- 30/30 pass for all pool types at 3000m and 2000m.
+- 30/30 pass for all pool types at 3000m and 2000m
 
 ============================================================================
 TESTING / TOOLING
@@ -261,7 +261,7 @@ Smoke test suites:
 KNOWN LIMITATIONS
 ============================================================================
 
-- API returns workouts with workoutText plus structured metadata
+- API returns workouts with workoutText + structured metadata
 - /generate-workout includes:
   - sections
   - sectionMeta
@@ -276,13 +276,15 @@ This supports detection of:
 NEXT SINGLE STEP (ACTIVE)
 ============================================================================
 
-Define and implement the v1 Base Set Catalogue:
+- Define and implement the v1 Base Set Catalogue:
+  - Finite list of coach-normal structural set shapes
+  - Grouped by section (Warm-up, Build, Kick, Drill, Main, Cool-down)
+  - No modifiers yet
+  - No gesture-based editing yet
+  - Generator must sample only from this catalogue
 
-- Finite list of coach-normal structural set shapes
-- Grouped by section (Warm-up, Build, Kick, Drill, Main, Cool-down)
-- No modifiers yet
-- No gesture-based editing yet
-- Generator must sample only from this catalogue
+🆕 - Apply default: 25m pool, 2000m distance  
+🆕 - Add cookie/localStorage support for last pool + distance setting
 
 ============================================================================
 IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED)
@@ -305,6 +307,10 @@ User customisation and editing:
 - Swipe to remove sections
 - Lock sections to preserve them across rerolls
 - Poolside interaction lock mode to prevent accidental edits
+🆕 - Manual distance rebalancing when resizing sections
+🆕 - Workout total may exceed or fall below slider after edits
+🆕 - Optional lock to preserve total and redistribute
+🆕 - Insert new section between existing blocks
 
 Visual themes:
 - White background and monochrome modes
@@ -337,6 +343,7 @@ Accounts and data:
 AI and higher tiers:
 - AI as constrained editor
 - AI-generated coaching notes
+🆕 - Optionally suggest coach rationale per set
 - Full AI generation only after validator maturity
 
 ============================================================================

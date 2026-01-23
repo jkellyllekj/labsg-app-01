@@ -1,7 +1,7 @@
 # Project: Swim Workout Generator
 
-Working title(s): SwimDice / SetRoll / PacePalette (TBD)  
-Last updated: 2026-01-22  
+Working title(s): SwimDice / SetRoll / PacePalette (TBD)
+Last updated: 2026-01-23
 Status: Active
 
 ============================================================================
@@ -29,35 +29,53 @@ The assistant must always provide explicit, start-to-finish instructions.
 This means:
 - Always specify the exact file name(s)
 - Always specify exactly where to change the file (section or heading and position)
-- Always provide copy and paste ready text blocks for additions or replacements
+- Always provide copy-and-paste-ready text blocks for additions or replacements
 - Do not say "add this somewhere" or "put this in the project state" without exact placement
 - Planning happens in chat. The agent is execution-only.
+
+============================================================================
+PROJECT INTENT
+============================================================================
+
+Swim Workout Generator (SwimGen) is intended to be a real, shippable consumer app,
+not a demo or internal tool.
+
+The goal is:
+- A usable, attractive, coach-plausible swim workout generator
+- Deployed first as a web app
+- Then wrapped and shipped to the iOS App Store
+- With monetisation from day one
+- Without architectural dead ends that require a rebuild
+
+Long-term evolution is expected (years), but v1 must stand on its own.
 
 ============================================================================
 CURRENT PHASE
 ============================================================================
 
-Phase: v1 Logic Stability and Constraint Engine
+Phase: v1 Reality Anchoring and Productisation
 
-Goal of this phase:
-Make the generator produce workouts that are:
-- mathematically correct
-- wall-safe in all pool lengths
-- coach-plausible on first generation
-- varied without feeling random
+This phase supersedes the earlier “Logic Stability” framing.
 
-Constraints for this phase:
-- UI stability is prioritised
-- Avoid cosmetic redesigns and layout churn
-- UI changes are allowed only when they directly support generator correctness, section realism, pacing, or user control
+Primary goals:
+- Generator outputs are coach-plausible on first generation
+- Set structures feel conventional and recognisable
+- Workouts are wall-safe in all pool lengths
+- The app is usable poolside
+- The product is ready for TestFlight by end of February
+
+Constraints:
+- Core generator correctness is still prioritised
+- UI redesign is not permitted, but additive UI evolution is allowed
 - No AI rewrite layer yet
-- Logic changes must be single, bounded, and testable
+- Changes must be bounded and testable
+- Avoid speculative architecture work
 
 This phase is complete when:
-- All sets end on the same wall
-- No odd or prime rep counts appear where they are unrealistic
-- Effort patterns look intentional
-- Rerolls feel meaningfully different
+- Generator uses a finite catalogue of coach-normal set structures
+- Outputs can be swum without “why would a coach do this?” moments
+- v1 feature set is complete and internally stable
+- App is ready for TestFlight distribution
 
 ============================================================================
 ARCHITECTURE OVERVIEW
@@ -66,7 +84,7 @@ ARCHITECTURE OVERVIEW
 - Entire app runs from index.js (single-file logic + UI)
 - styles.css exists
 - Workouts are generated deterministically with seeded variation
-- Manual testing is authoritative
+- Manual swimming and inspection is authoritative
 - The agent is execution-only
 - Planning, validation, and judgement happen in chat
 
@@ -145,94 +163,126 @@ LOCKED INVARIANTS
 - Generator never returns null or fails silently
 - Reroll must always produce a valid workout
 - Reality Anchors are active constraints:
-  - Section distance buckets enforced for Warm up, Kick, Cool down
-  - Sprint volume caps enforced, with single line sprint blocks rejected
-  - Validation is section aware via validateSetBody(body, targetDistance, poolLen, sectionLabel)
+  - Section distance buckets enforced for Warm-up, Kick, Cool-down
+  - Sprint volume caps enforced, with single-line sprint blocks rejected
+  - Validation is section-aware via validateSetBody(body, targetDistance, poolLen, sectionLabel)
+
+============================================================================
+PRODUCT TIERS AND MONETISATION (v1)
+============================================================================
+
+SwimGen uses a subscription-based model.
+
+Generator rerolls are deterministic and local; monetisation is not tied to generation count.
+
+Free (Ad-supported):
+- Unlimited workout generation
+- Full workout visibility
+- Standard pool lengths
+- Fixed sets (no resizing or editing)
+- Persistent ad banner at top of screen
+- Optional light interstitial ads
+
+Premium:
+- Removes all ads
+- Allows resizing workout sections
+- Allows rerolling individual sections
+- Supports custom pool lengths
+
+Pro:
+- Includes all Premium features
+- Adds pace input (CSS or equivalent)
+- Pace-aware set suggestions
+- Advanced control over effort and stroke bias
+- Intended home for future advanced features
+
+Notes:
+- No standalone “ad-removal-only” tier
+- Subscription only (monthly and yearly)
+- No lifetime unlocks
+- Free trial supported where platform allows
+
+Accounts:
+- No mandatory accounts in v1
+- Account system deferred to post-v1
+
+============================================================================
+UI EVOLUTION RULES
+============================================================================
+
+UI is considered stable but not frozen.
+
+Rules:
+- Structural redesign is not allowed in v1
+- Additive and reversible UI changes are allowed
+- Visual variants (for example white background) may be added if they do not destabilise layout or interaction
+- Gesture-heavy interactions are deferred
+
+The current colour-coded workout cards are a core engagement feature.
 
 ============================================================================
 RECENTLY COMPLETED (v1)
 ============================================================================
 
-- Main Set template cooldown implemented
+- Main set template cooldown implemented
   Prevents reroll repetition of Main patterns
 
 - Drill and Kick rep normalisation
   Odd and prime rep counts eliminated
   Drill and Kick now use coach-plausible even counts
 
-- Post generation validator (2026-01-21)
-  Now rejects workouts that violate:
-  pool-length repeat multiples, unrealistic rep counts, section distance buckets (Warm up, Kick, Cool down), sprint rules (no single line sprint blocks, sprint volume caps), full gas caps (swim max 600m, kick max 300m), and build labeling sanity (min 2 reps).
-  Invalid workouts trigger a retry with a new seed.
-  Note: Stricter "same wall per repeat" enforcement (2x pool length) is blocked on generator template updates that currently produce 25m repeats.
+- Post-generation validator (2026-01-21)
+  Rejects workouts that violate:
+  pool-length repeat multiples, unrealistic rep counts,
+  section distance buckets, sprint rules, full gas caps,
+  and build labelling sanity.
+  Invalid workouts trigger retry with new seed.
 
 - Exact target totals enforcement (2026-01-21)
-  For standard pools (25m, 50m, 25yd), workouts now total exactly the slider value (for example 3000m equals 3000m, not 3050m).
-  Achieved via "final balance" logic that uses cooldown to absorb snapping drift, plus target lock correction for edge cases.
+  Standard pools now total exactly the slider value.
+  Achieved via final balance logic using cooldown fill.
 
 Tests:
 - 30/30 pass for all pool types at 3000m and 2000m.
 
 ============================================================================
-RECENT FIXES / RESOLVED (2026-01-21)
-============================================================================
-
-- Reality Anchors enforced by validator:
-  - Blocks non coach normal section totals in Warm up, Kick, Cool down
-  - Blocks single line sprint blocks
-  - Enforces sprint volume caps by section
-  Prevents outputs like 350 kick, 650 warm up, or 2100 sprint.
-
-- Intermittent generation crash resolved:
-  - Root cause: undefined references in regenerateSectionBody (sectionTemplates, helper fns)
-  - Fix: corrected references to SECTION_TEMPLATES, replaced undefined helpers with inline fallbacks
-  - Endpoint /generate-workout now always returns HTTP 200 with fallback workout instead of 500
-
-- 25m / 25yd rep explosion prevented:
-  - Validator caps added:
-  - Main sets: Nx50 capped at N 16 for 25m / 25yd pools
-  - Drill sets: 25s 12 reps, 50s 10 reps
-  - Eliminates recurring 22x50, 26x50, and 14x25 drill patterns
-
-============================================================================
 TESTING / TOOLING
 ============================================================================
 
-- Added automated smoke test script: scripts/gen_smoke_test.js
+- Automated smoke test script: scripts/gen_smoke_test.js
 
-- Smoke test suites:
-  - Suite A: crash / retry hardening
-  - Suite B: rep count sanity (25m)
-  - Suite C: intensity detection (enabled)
-  - Suite D: 25yd parity
-
-- Latest results (2026-01-21):
-  - Suite A: PASS
-  - Suite B: PASS
-  - Suite C: TODO (enable assertions for sections, sectionMeta, workoutMeta)
-  - Suite D: PASS
+Smoke test suites:
+- Suite A: crash / retry hardening (PASS)
+- Suite B: rep count sanity (PASS)
+- Suite C: intensity detection (TODO)
+- Suite D: 25yd parity (PASS)
 
 ============================================================================
 KNOWN LIMITATIONS
 ============================================================================
 
 - API returns workouts with workoutText plus structured metadata
+- /generate-workout includes:
+  - sections
+  - sectionMeta
+  - workoutMeta
 
-- /generate-workout success response includes:
-  - sections: array of { label, dist, body }
-  - sectionMeta: array of { zone, isStriated }
-  - workoutMeta: { hasRed, redSectionsCount }
-
-- This enables automated detection of:
-  - red or full gas frequency
-  - label and colour mismatches
-  - striation patterns (odds and evens, descend, build)
+This supports detection of:
+- red presence
+- label and colour mismatches
+- striation patterns
 
 ============================================================================
 NEXT SINGLE STEP (ACTIVE)
 ============================================================================
 
-- Enable Suite C assertions for metadata contract and red presence tracking
+Define and implement the v1 Base Set Catalogue:
+
+- Finite list of coach-normal structural set shapes
+- Grouped by section (Warm-up, Build, Kick, Drill, Main, Cool-down)
+- No modifiers yet
+- No gesture-based editing yet
+- Generator must sample only from this catalogue
 
 ============================================================================
 IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED)
@@ -240,119 +290,62 @@ IDEA PARKING LOT (NOT SCHEDULED, NOT COMMITTED)
 
 Rule: Idea Capture Responsibility
 
-The user does not need to explicitly label something as an idea.
-
-If the user:
-- thinks out loud
-- describes how real coaches would do something
-- says something feels off, unrealistic, or non-standard
-- proposes alternatives without asking to implement them
-
-the assistant must:
-- recognise this as an idea
-- abstract it into a durable form
-- ensure it is added to this section before the end of the conversation
-
-Ideas must never rely on chat memory alone.
 If an idea is discussed and not written here, it is considered lost.
-This section exists to prevent idea loss.
 
-Items here are NOT tasks.
-They may be vague, contradictory, or long-term.
-Do not implement anything from this section without explicitly promoting it to an active step.
+Items below are not tasks and must not be implemented without promotion.
 
-- The following ideas describe intentional post v1 evolution and should not be partially implemented without a clear phase decision
+Template-driven realism:
+- Shift from generate-then-ban to template-first generation
+- Large corpus of coach-derived set shapes
+- Templates tagged by intent, stroke mix, energy system
 
-Template driven realism and workout corpus:
-- Shift from generate then ban toward template first generation
-- Build a library of coach normal set templates derived from real published workouts
-- Template picker chooses by section, distance bucket, and training intent
-- Templates stored primarily as length counts to support any pool length, including custom pool lengths
-- Keep validator as a backstop, but aim for near zero rejections once templates drive generation
-- Add tags on templates for:
-  - stroke mix
-  - energy system focus (aerobic, threshold, speed, skills)
-  - triathlon focus versus pool race focus
-  - phase intent (base, build, taper, race prep)
-  - equipment suitability (paddles, snorkel, fins, pull buoy)
+User customisation and editing:
+- Drag to reorder sections
+- Resize sections by dragging edges
+- Swipe to remove sections
+- Lock sections to preserve them across rerolls
+- Poolside interaction lock mode to prevent accidental edits
 
-Engine architecture reset (post v1):
-- Move from monolithic index.js toward a modular engine structure
-- Keep UI and API contract stable while swapping generation internals
-- Allow parallel development of a template driven engine without breaking existing functionality
-- Treat current generator as legacy once template engine is proven
+Visual themes:
+- White background and monochrome modes
+- Colour banding instead of full card backgrounds
+- User-selectable themes
 
-User customisation and set editing (post v1 UI work):
-- Allow resizing a section card to increase or decrease that section distance
-- Resizing changes total workout distance unless user manually adjusts other sections to compensate
-- Allow removing a section by dragging it off screen
-- Allow inserting a new section at a chosen point, then selecting a section type and distance bucket
-- Allow re rolling a single section without re rolling the entire workout
-- Allow locking a section so it is preserved while other sections are re rolled
+Pacing and timing:
+- Floating pace clock overlay
+- Standalone pace clock app
+- Interval-based and rest-based views
+- Estimated workout duration
 
-Intervals, pacing, and time budgeting (future tiers):
-- Add optional user pace inputs (for example CSS, 100 pace, 200 pace, or a simple speed slider)
-- Generate suggested intervals per set based on user pace plus rest intent
-- Show estimated duration per set using:
-  - interval time times reps
-  - plus a default transition buffer between sets (for example 60 seconds)
-- Allow user adjustments to intervals with plus or minus controls, then recompute total time estimate
-- Eventually allow toggling between interval based presentation and rest based presentation
+Video and feedback systems:
+- Drill demonstration videos linked from sets
+- Timestamped video references
+- Delayed playback poolside mirror system
+- Underwater and multi-angle feedback concepts
 
-Training plans and season logic (long term):
-- Generate multi week plans, not just one off workouts
-- Support A and B races and a target date
-- Track what the user actually completed and how it felt
-- Adapt future sessions based on compliance and feedback
+Hardware and accessories:
+- Waterproof phone cases with built-in stands
+- Poolside mounting concepts
+- Potential partnerships
 
-Integrations (long term):
-- Consider export or sync targets:
-  - Garmin
-  - Strava
-  - TrainingPeaks
+Accounts and data:
+- Optional user accounts
+- Saved preferences
+- Workout history
+- Email capture
 
-Long-distance realism:
-- Very long workouts (6k to 10k) should not look like scaled-up 2k workouts
-- Long sessions may use fewer sections with larger blocks
-- Distance training should shift from endless 50s toward 100s, 200s, 400s, and occasional 800s
-
-Set construction ideas:
-- Drill sets could sometimes alternate drill/swim instead of pure drill
-- Kick, Drill, Swim composite sets may be useful later
-- Main sets could include broken race or race-pace concepts
-- Alternating effort patterns (easy/hard repeats) should sometimes appear
-
-Effort semantics:
-- Negative split meaning needs tightening (within-rep vs across-rep clarity)
-- Build sets could occasionally finish with red
-- Effort colour usage could include blue more deliberately
-- Red does not need to appear every workout, but should feel earned
-
-Visual and representation ideas (post-v1):
-- Solid colour backgrounds (white, sepia, pastels)
-- Optional light-only colour picker
-- Colour striping to represent alternating effort patterns
-
-AI and higher tiers (future):
-- Deterministic generator as base layer
-- AI as constrained editor, not primary author
-- AI-generated coaching notes per set
-- Full AI generation only after validator is rock-solid
-
-Meta:
-- Project state must capture ideas automatically as they arise
-- No idea should rely on chat memory alone
-- Context decay is expected and designed around
+AI and higher tiers:
+- AI as constrained editor
+- AI-generated coaching notes
+- Full AI generation only after validator maturity
 
 ============================================================================
 KNOWN ISSUES
 ============================================================================
 
-- Rare odd-length leaks still observed in edge cases
+- Rare odd-length leaks in edge cases
 - Effort gradients slightly overrepresented
-- Full Gas still underrepresented in some runs
-- Bug (fixed 2026-01-21): displayed TOTAL and total lengths were using planned target values and could diverge from actual generated section sums after snapping and fill.
-  Fix is to compute totals from rendered sections and retry generation if totals are not divisible by pool length.
+- Full Gas underrepresented in some runs
 
 ============================================================================
 END OF FILE

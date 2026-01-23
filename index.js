@@ -18,7 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(express.static("public"));
+app.function buildOneSetBodyShared(...)
+use(express.static("public"));
 
 app.get("/styles.css", (req, res) => {
   const cssPath = path.join(__dirname, "styles.css");
@@ -958,7 +959,7 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   const base = poolLen;
   const target = snapToPoolMultipleShared(targetDistance, base);
   if (target <= 0) return null;
-
+  if (typeof remaining === 'undefined') remaining = 0;
   const isNonStandardPool = ![25, 50].includes(base);
   const hasThresholdPace = opts.thresholdPace && String(opts.thresholdPace).trim().length > 0;
   

@@ -1040,6 +1040,12 @@ function buildOneSetBodyShared({ label, targetDistance, poolLen, unitsShort, opt
   // WARM-UP: Simple easy swim with variety
   // Guard: warm-up must not contain hard effort keywords
   if (k.includes("warm")) {
+    // Attempt v1 base catalogue for Warm-up
+    const catPick = pickV1CatalogueBody("Warm-up", remaining, base, seed);
+    if (catPick && catPick.ok && typeof catPick.body === "string") {
+      return catPick.body;
+    }
+
     const warmDescs = [stroke + " easy", stroke + " relaxed", "easy swim", "choice easy", stroke + " loosen up"];
     const warmDesc = warmDescs[seedA % warmDescs.length];
     if (!isValidWarmupCoolLine(warmDesc)) {

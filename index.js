@@ -5186,8 +5186,8 @@ app.post("/generate-workout", (req, res) => {
     const includeKick = opts.includeKick && total >= snapToPoolMultiple(1500, base);
     const includePull = opts.includePull && total >= snapToPoolMultiple(1500, base);
 
-    const wantBuild = total >= snapToPoolMultiple(1000, base);
-    const wantDrill = true;
+    const wantBuild = total >= snapToPoolMultiple(1500, base);
+    const wantDrill = total >= snapToPoolMultiple(1500, base);
 
     // FREE PROFILE: Ranged allocation for variety
     const FREE_ALLOC_RANGES = {

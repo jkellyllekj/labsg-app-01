@@ -4011,23 +4011,23 @@ function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) 
         () => {
           const d200 = snapToPoolMultiple(200, base);
           if (d200 > 0) add(1, d200, stroke + " easy", 0);
-          const d50 = snapToPoolMultiple(50, base);
+          const d50 = snapRepDist(50, base);
           if (d50 > 0) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
-          const d25 = snapToPoolMultiple(25, base);
+          const d25 = snapRepDist(25, base);
           if (d25 > 0) add(4, d25, "kick easy", restSecondsFor("kick", d25, opts));
         },
         // 2 segments: swim + build
         () => {
           const d300 = snapToPoolMultiple(300, base);
           if (d300 > 0) add(1, d300, stroke + " easy", 0);
-          const d50 = snapToPoolMultiple(50, base);
+          const d50 = snapRepDist(50, base);
           if (d50 > 0) add(6, d50, stroke + " build", restSecondsFor("build", d50, opts));
         },
         // 3 segments: swim + kick + easy swim
         () => {
-          const d100 = snapToPoolMultiple(100, base);
+          const d100 = snapRepDist(100, base);
           if (d100 > 0) add(2, d100, stroke + " easy", 0);
-          const d50 = snapToPoolMultiple(50, base);
+          const d50 = snapRepDist(50, base);
           if (d50 > 0) add(4, d50, "kick easy", restSecondsFor("kick", d50, opts));
           if (d50 > 0) add(4, d50, stroke + " easy", 0);
         },
@@ -4038,9 +4038,9 @@ function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) 
         },
         // 2 segments: broken swim
         () => {
-          const d100 = snapToPoolMultiple(100, base);
+          const d100 = snapRepDist(100, base);
           if (d100 > 0 && remaining >= d100 * 4) add(4, d100, stroke + " easy", restSecondsFor("warm", d100, opts));
-          const d50 = snapToPoolMultiple(50, base);
+          const d50 = snapRepDist(50, base);
           if (d50 > 0 && remaining >= d50 * 4) add(4, d50, stroke + " build", restSecondsFor("build", d50, opts));
         }
       ];
@@ -4049,8 +4049,8 @@ function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) 
 
       // Fallback: if pattern didn't add anything, add a simple swim
       if (lines.length === 0 && remaining > 0) {
-        const d100 = snapToPoolMultiple(100, base);
-        const d50 = snapToPoolMultiple(50, base);
+        const d100 = snapRepDist(100, base);
+        const d50 = snapRepDist(50, base);
         if (d100 > 0 && remaining >= d100) {
           const reps = Math.min(4, Math.floor(remaining / d100));
           if (reps > 0) add(reps, d100, stroke + " easy", 0);

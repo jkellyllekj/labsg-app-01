@@ -373,6 +373,249 @@ function injectOneFullGas(sections, seed) {
 }
 
 // Section templates for coach-plausible workout blocks
+// ============================================================================
+// V1_BASE_SET_CATALOGUE_R010
+// v1 base catalogue of coach-normal set shapes.
+// This starts as data + helpers. We will wire one section at a time.
+// ============================================================================
+
+const V1_BASE_SET_CATALOGUE = {
+  "Warm-up": [
+    {
+      id: "WU_CONTINUOUS_SWIM",
+      kind: "continuous",
+      // returns a single-line body like: "400 easy swim (choice)"
+      make: (ctx) => {
+        const dist = clampToBucket(ctx.targetDist, [200, 300, 400, 500, 600], ctx.poolLen);
+        return `${dist} easy swim (choice)`;
+      },
+    },
+    {
+      id: "WU_SWIM_KICK_SWIM",
+      kind: "block3",
+      make: (ctx) => {
+        const unit = clampToBucket(ctx.targetDist, [300, 400, 500, 600], ctx.poolLen);
+        // split roughly 1/2 swim, 1/4 kick, 1/4 swim
+        const a = snapToWallSafe(Math.round(unit * 0.5), ctx.poolLen);
+        const b = snapToWallSafe(Math.round(unit * 0.25), ctx.poolLen);
+        const c = snapToWallSafe(unit - a - b, ctx.poolLen);
+        return `${a} easy swim\n${b} kick easy\n${c} easy swim`;
+      },
+    },
+    {
+      id: "WU_6_10x50_BUILD",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([6, 8, 10], ctx.seed);
+        const dist = rep * n;
+        // if target is smaller, reduce n; if bigger, we still keep the shape coach-normal
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} build (smooth to strong)`;
+      },
+    },
+    {
+      id: "WU_8_12x25_BUILD",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(25, ctx.poolLen);
+        const n = pickFrom([8, 10, 12], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} build (easy to fast)`;
+      },
+    },
+  ],
+
+  "Build": [
+    {
+      id: "BLD_6_10x50_PROGRESS",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([6, 8, 10], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} build 1 to ${Math.min(4, Math.max(2, Math.floor(n2 / 2)))} (last strong)`;
+      },
+    },
+    {
+      id: "BLD_4_6x100_PROGRESS",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(100, ctx.poolLen);
+        const n = pickFrom([4, 5, 6], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} descend (hold form)`;
+      },
+    },
+  ],
+
+  "Kick": [
+    {
+      id: "K_8_12x50_KICK",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([8, 10, 12], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} kick (odds easy, evens strong)`;
+      },
+    },
+    {
+      id: "K_8_16x25_KICK",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(25, ctx.poolLen);
+        const n = pickFrom([8, 12, 16], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} kick (25 smooth, 25 strong pattern if pool allows)`;
+      },
+    },
+  ],
+
+  "Drill": [
+    {
+      id: "D_6_10x50_DRILL_SWIM",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([6, 8, 10], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} drill to swim (25 drill, 25 swim)`;
+      },
+    },
+    {
+      id: "D_8_12x25_DRILL",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(25, ctx.poolLen);
+        const n = pickFrom([8, 10, 12], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} drill (choice)`;
+      },
+    },
+  ],
+
+  "Main": [
+    {
+      id: "M_10x100_HOLD",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(100, ctx.poolLen);
+        const n = 10;
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} hold strong (steady effort)`;
+      },
+    },
+    {
+      id: "M_5x200_STEADY",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(200, ctx.poolLen);
+        const n = pickFrom([3, 4, 5], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} steady to strong`;
+      },
+    },
+    {
+      id: "M_16x50_ODD_EVEN",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([12, 16, 20], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} odds easy, evens fast`;
+      },
+    },
+  ],
+
+  "Cool-down": [
+    {
+      id: "CD_200_400_EASY",
+      kind: "continuous",
+      make: (ctx) => {
+        const dist = clampToBucket(ctx.targetDist, [100, 200, 300, 400, 500], ctx.poolLen);
+        return `${dist} easy swim`;
+      },
+    },
+    {
+      id: "CD_4x50_EASY",
+      kind: "repeats",
+      make: (ctx) => {
+        const rep = snapToWallSafe(50, ctx.poolLen);
+        const n = pickFrom([4, 6, 8], ctx.seed);
+        const n2 = fitRepeatsToTarget(n, rep, ctx.targetDist);
+        return `${n2}x${rep} very easy`;
+      },
+    },
+  ],
+};
+
+function pickV1CatalogueBody(sectionLabel, targetDist, poolLen, seed) {
+  const list = V1_BASE_SET_CATALOGUE[sectionLabel];
+  if (!list || list.length === 0) return null;
+  const idx = seededIndex(seed, list.length);
+  const pick = list[idx];
+
+  const ctx = { sectionLabel, targetDist, poolLen, seed };
+  const body = pick.make(ctx);
+
+  return {
+    ok: true,
+    id: pick.id,
+    body,
+  };
+}
+
+// Helpers for v1 catalogue.
+// These do not change existing engine logic.
+// They are used only when we wire a section to the catalogue.
+
+function pickFrom(arr, seed) {
+  return arr[seededIndex(seed, arr.length)];
+}
+
+function seededIndex(seed, n) {
+  // seed may be float or int, keep stable
+  const x = Math.abs(Math.floor(seed * 9973)) || 1;
+  return x % n;
+}
+
+function clampToBucket(targetDist, buckets, poolLen) {
+  // pick closest bucket then snap wall-safe
+  let best = buckets[0];
+  let bestDelta = Math.abs(targetDist - best);
+  for (const b of buckets) {
+    const d = Math.abs(targetDist - b);
+    if (d < bestDelta) {
+      best = b;
+      bestDelta = d;
+    }
+  }
+  return snapToWallSafe(best, poolLen);
+}
+
+function snapToWallSafe(dist, poolLen) {
+  // enforce divisible by (2 * poolLen)
+  const unit = 2 * poolLen;
+  if (unit <= 0) return dist;
+  const snapped = Math.round(dist / unit) * unit;
+  return Math.max(unit, snapped);
+}
+
+function fitRepeatsToTarget(n, rep, targetDist) {
+  // Keep coach-normal repeat counts, but avoid blowing up smaller targets.
+  // Never returns 1 for these sections, because single repeats look weird.
+  if (rep <= 0) return n;
+  const maxN = Math.floor(targetDist / rep);
+  const n2 = Math.min(n, maxN);
+  return Math.max(2, n2);
+}
+
+// ============================================================================
+// END V1_BASE_SET_CATALOGUE_R010
+// ============================================================================
+
+
 const SECTION_TEMPLATES = {
   warmup: [
     { body: "300 easy", dist: 300 },

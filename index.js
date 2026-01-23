@@ -62,6 +62,56 @@ function snapRepDist(dist, poolLen) {
 }
 
 // ============================================================================
+// SECTION_TARGET_RESOLVER_R020
+// Shared resolver for coach-normal section target distances.
+// ============================================================================
+
+const SECTION_TARGET_BUCKETS = {
+  warmup:   [200, 300, 400, 500, 600],
+  build:    [200, 300, 400, 500],
+  kick:     [200, 300, 400, 500],
+  drill:    [200, 300, 400],
+  main:     [400, 600, 800, 1000, 1200, 1600],
+  cooldown: [100, 200, 300, 400, 500],
+};
+
+function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) {
+  const key = String(sectionLabel).toLowerCase();
+  const buckets =
+    key.includes("warm") ? SECTION_TARGET_BUCKETS.warmup :
+    key.includes("build") ? SECTION_TARGET_BUCKETS.build :
+    key.includes("kick") ? SECTION_TARGET_BUCKETS.kick :
+    key.includes("drill") ? SECTION_TARGET_BUCKETS.drill :
+    key.includes("cool") ? SECTION_TARGET_BUCKETS.cooldown :
+    SECTION_TARGET_BUCKETS.main;
+
+  const snapped = buckets
+    .map(d => snapToPoolMultiple(d, poolLen))
+    .filter(d => d > 0);
+
+  if (!snapped.length) {
+    return snapToPoolMultiple(desiredDistance, poolLen);
+  }
+
+  let best = snapped[0];
+  let bestDelta = Math.abs(best - desiredDistance);
+
+  for (const d of snapped) {
+    const delta = Math.abs(d - desiredDistance);
+    if (delta < bestDelta) {
+      best = d;
+      bestDelta = delta;
+    }
+  }
+
+  return best;
+}
+
+// ============================================================================
+// END SECTION_TARGET_RESOLVER_R020
+// ============================================================================
+
+// ============================================================================
 // VALIDATION HELPERS - Free-tier realism guards
 // ============================================================================
 
@@ -3880,75 +3930,6 @@ app.post("/reroll-set", (req, res) => {
 
     return base;
   }
-
-  // Universal snapping: 2×poolLen for section totals (home-wall finish)
-  function snapToPoolMultiple(dist, poolLen) {
-    const d = Number(dist);
-    if (!Number.isFinite(d) || d <= 0) return 0;
-    const base = Number(poolLen);
-    if (!Number.isFinite(base) || base <= 0) return d;
-    const base2 = base * 2;
-    return Math.round(d / base2) * base2;
-  }
-  
-  // For rep distances, snap to single pool length
-  function snapRepDist(dist, poolLen) {
-    const d = Number(dist);
-    if (!Number.isFinite(d) || d <= 0) return 0;
-    const base = Number(poolLen);
-    if (!Number.isFinite(base) || base <= 0) return d;
-    return Math.round(d / base) * base;
-  }
-
-// ============================================================================
-// SECTION_TARGET_RESOLVER_R020
-// Shared resolver for coach-normal section target distances.
-// ============================================================================
-
-const SECTION_TARGET_BUCKETS = {
-  warmup:   [200, 300, 400, 500, 600],
-  build:    [200, 300, 400, 500],
-  kick:     [200, 300, 400, 500],
-  drill:    [200, 300, 400],
-  main:     [400, 600, 800, 1000, 1200, 1600],
-  cooldown: [100, 200, 300, 400, 500],
-};
-
-function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) {
-  const key = String(sectionLabel).toLowerCase();
-  const buckets =
-    key.includes("warm") ? SECTION_TARGET_BUCKETS.warmup :
-    key.includes("build") ? SECTION_TARGET_BUCKETS.build :
-    key.includes("kick") ? SECTION_TARGET_BUCKETS.kick :
-    key.includes("drill") ? SECTION_TARGET_BUCKETS.drill :
-    key.includes("cool") ? SECTION_TARGET_BUCKETS.cooldown :
-    SECTION_TARGET_BUCKETS.main;
-
-  const snapped = buckets
-    .map(d => snapToPoolMultiple(d, poolLen))
-    .filter(d => d > 0);
-
-  if (!snapped.length) {
-    return snapToPoolMultiple(desiredDistance, poolLen);
-  }
-
-  let best = snapped[0];
-  let bestDelta = Math.abs(best - desiredDistance);
-
-  for (const d of snapped) {
-    const delta = Math.abs(d - desiredDistance);
-    if (delta < bestDelta) {
-      best = d;
-      bestDelta = delta;
-    }
-  }
-
-  return best;
-}
-
-// ============================================================================
-// END SECTION_TARGET_RESOLVER_R020
-// ============================================================================
 
   function buildOneSetBodyServer({ label, targetDistance, poolLen, unitsShort, opts, seed }) {
     const base = poolLen;

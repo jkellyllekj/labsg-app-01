@@ -1,0 +1,67 @@
+FILE
+index.js
+
+TASK
+Fix “Fallback Workout every time” by moving SECTION_TARGET_RESOLVER_R020 into global scope (it is currently nested inside normalizeOptionsServer, causing ReferenceError when the generator calls resolveSectionTarget).
+
+CHANGES
+
+FIND the function:
+
+function normalizeOptionsServer(payload) {
+
+Inside this function, you will see that these helper functions are incorrectly defined inside it:
+
+function snapToPoolMultiple(dist, poolLen) { ... }
+
+function snapRepDist(dist, poolLen) { ... }
+
+the whole block:
+// SECTION_TARGET_RESOLVER_R020 ... resolveSectionTarget(...) ...
+
+CUT (remove) the entire resolver block from inside normalizeOptionsServer, exactly from:
+
+// ============================================================================
+// SECTION_TARGET_RESOLVER_R020
+
+
+down to and including:
+
+// ============================================================================
+// END SECTION_TARGET_RESOLVER_R020
+// ============================================================================
+
+
+PASTE that exact resolver block into global scope near the top of the file, immediately after the function:
+
+function snapRepDistToPool(dist, poolLen) { ... }
+
+Specifically: insert it right after the closing brace of snapRepDistToPool, and before the comment line that starts:
+
+// ============================================================================ // VALIDATION HELPERS
+
+Also, in that same global location (immediately after the pasted resolver block), add these two wrapper functions (global scope):
+
+function snapToPoolMultiple(dist, poolLen) {
+  return snapToPoolMultipleShared(dist, poolLen);
+}
+
+function snapRepDist(dist, poolLen) {
+  return snapRepDistToPool(dist, poolLen);
+}
+
+
+Back inside normalizeOptionsServer, DELETE the two nested helper functions:
+
+Delete the entire nested function snapToPoolMultiple(dist, poolLen) { ... }
+
+Delete the entire nested function snapRepDist(dist, poolLen) { ... }
+
+Do not delete snapToPoolMultipleShared or snapRepDistToPool at top-level.
+
+Do not change anything else.
+
+COMMIT MESSAGE
+Fix fallback by moving resolveSectionTarget to global scope and restoring snap wrappers
+
+END

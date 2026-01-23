@@ -261,7 +261,7 @@ function validateSetBody(body, targetDistance, poolLen, sectionLabel) {
 
   // Coach-normal section totals for 25m and 25yd pools
   // These are not the only possible totals in the world, but they prevent constant weirdness.
-  const bucketWarmCool = new Set([200, 300, 400, 500, 600, 800, 1000]);
+  const bucketWarmCool = new Set([100, 200, 300, 400, 500, 600, 800, 1000]);
   const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
 
   if (label.includes("warm") || label.includes("cool")) {

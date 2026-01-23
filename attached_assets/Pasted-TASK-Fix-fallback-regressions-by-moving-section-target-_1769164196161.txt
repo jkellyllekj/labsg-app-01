@@ -1,0 +1,66 @@
+TASK
+Fix fallback regressions by moving section target resolving out of buildOneSetBodyServer and into the section planning layer, so the resolved targetDistance is used consistently for section.dist, buildOneSetBodyServer, and validateSetBody.
+
+FILE
+index.js
+
+PART A, UNDO RESOLVER INSIDE buildOneSetBodyServer
+
+LOCATION
+Inside: function buildOneSetBodyServer({ label, targetDistance, poolLen, unitsShort, opts, seed })
+
+FIND THIS BLOCK
+
+const resolvedTarget = resolveSectionTarget({
+  sectionLabel: label,
+  desiredDistance: targetDistance,
+  poolLen: base,
+  seed,
+});
+
+let remaining = resolvedTarget;
+
+
+REPLACE IT WITH
+
+let remaining = targetDistance;
+
+
+Do not change anything else inside buildOneSetBodyServer.
+
+PART B, APPLY RESOLVER WHERE SECTION TARGETS ARE DECIDED
+
+LOCATION
+Find the function that builds the workout sections array and calls buildOneSetBodyServer(...). The agent must search for the call site, for example search for:
+
+buildOneSetBodyServer({
+
+At the call site, there will be a section target distance variable being used, for example dist, or sectionDistance, or targetDistance, or plannedDist.
+
+DO THIS CHANGE AT THE CALL SITE
+
+Immediately before calling buildOneSetBodyServer, compute:
+
+const resolvedSectionDist = resolveSectionTarget({
+  sectionLabel: label,
+  desiredDistance: sectionDistance,
+  poolLen: poolLen,
+  seed: seed,
+});
+
+
+Note
+Use the actual variable names at that location, for example if poolLen is named base, use base. If the section label variable is named sectionLabel, use that. If the distance variable is named dist, use dist.
+
+Replace all uses of the original section distance for that section with resolvedSectionDist, specifically:
+
+The distance passed into buildOneSetBodyServer must become resolvedSectionDist
+
+The section.dist stored in the sections array must become resolvedSectionDist
+
+Any call to validateSetBody(body, SECTION_DISTANCE, poolLen, label) must pass resolvedSectionDist instead of the old distance
+
+Do not change any other logic.
+
+COMMIT MESSAGE
+Move section target resolving to section planner to prevent validation mismatch fallback

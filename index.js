@@ -3982,14 +3982,7 @@ function resolveSectionTarget({ sectionLabel, desiredDistance, poolLen, seed }) 
     };
 
     const lines = [];
-    const resolvedTarget = resolveSectionTarget({
-      sectionLabel: label,
-      desiredDistance: targetDistance,
-      poolLen: base,
-      seed,
-    });
-
-    let remaining = resolvedTarget;
+    let remaining = targetDistance;
 
     if (remaining <= 0) return null;
 
@@ -5353,6 +5346,17 @@ app.post("/generate-workout", (req, res) => {
       const setLabel = s.label;
       const setDist = s.dist;
 
+      // Resolve to coach-normal section target
+      const resolvedSectionDist = resolveSectionTarget({
+        sectionLabel: setLabel,
+        desiredDistance: setDist,
+        poolLen: poolLen,
+        seed: seed,
+      });
+
+      // Update section distance to resolved value
+      s.dist = resolvedSectionDist;
+
       // Set-level validation with reroll logic
       // Try up to 5 times to get a valid set body
       let body = null;
@@ -5362,7 +5366,7 @@ app.post("/generate-workout", (req, res) => {
       while (attempts < maxAttempts) {
         const candidateBody = buildOneSetBodyShared({
           label: setLabel,
-          targetDistance: setDist,
+          targetDistance: resolvedSectionDist,
           poolLen,
           unitsShort,
           opts: optsWithTotal,
@@ -5376,7 +5380,7 @@ app.post("/generate-workout", (req, res) => {
         }
         
         // Validate the generated body
-        const validation = validateSetBody(candidateBody, setDist, poolLen, setLabel);
+        const validation = validateSetBody(candidateBody, resolvedSectionDist, poolLen, setLabel);
         if (validation.valid) {
           body = candidateBody;
           break;

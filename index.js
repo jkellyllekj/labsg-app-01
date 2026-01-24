@@ -18,8 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.function buildOneSetBodyShared(...)
-use(express.static("public"));
+app.use(express.static("public"));
 
 app.get("/styles.css", (req, res) => {
   const cssPath = path.join(__dirname, "styles.css");

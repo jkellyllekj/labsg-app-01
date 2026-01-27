@@ -1,0 +1,32 @@
+START MESSAGE TO AGENT
+
+Goal
+Run the post-change regression tests for 25m short distances and reproduce the 30m “missing lengths in non-main sections” bug. Do NOT change any code. Do NOT commit.
+
+Pre-req
+Make sure the server is running at http://localhost:5000. If it is not, start it the normal Replit way for this repo, then proceed.
+
+Test 1: 25m short-distance success rate (50 runs each)
+Run this in the Replit Shell exactly:
+
+node -e "async function run(){const ds=[1000,1500,2000];for(const d of ds){let ok=0;for(let i=0;i<50;i++){const r=await fetch('http://localhost:5000/generate-workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({distance:d,poolLength:'25m'})});const j=await r.json();if(j&&j.ok&&j.workoutName!=='Fallback Workout'&&!String(j.workoutText||'').includes('Fallback Workout')) ok++;}console.log('25m',d, ok+'/50');}} run();"
+
+Then paste the 3 output lines (for 1000, 1500, 2000) into your reply.
+
+Test 2: 30m formatting repro (10 runs each, include one full sample per distance)
+Run this in the Replit Shell exactly:
+
+node -e "async function run(){for(const d of [1000,1500,2000]){for(let i=0;i<10;i++){const r=await fetch('http://localhost:5000/generate-workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({distance:d,poolLength:'30m'})});const j=await r.json();console.log('30m',d,'#'+(i+1), j.workoutName); if(i===0){console.log('--- SAMPLE WORKOUT TEXT START ---'); console.log(j.workoutText); console.log('--- SAMPLE WORKOUT TEXT END ---');}}}} run();"
+
+In your reply, also answer these checks for each sampled workout text (the i===0 sample for 1000, 1500, 2000):
+A) In Warm up: do lines include lengths? yes/no
+B) In Drill: do lines include lengths? yes/no
+C) In Kick: do lines include lengths? yes/no
+D) In Main set: do lines include lengths? yes/no
+E) In Cool down: do lines include lengths? yes/no
+F) If any section is missing lengths, paste one example line from that section that shows a distance (metres or yards) but no lengths.
+
+Stop condition
+If any command errors (fetch fails, server not up), stop and report the exact error text. Do not attempt code fixes.
+
+FINISH MESSAGE TO AGENT

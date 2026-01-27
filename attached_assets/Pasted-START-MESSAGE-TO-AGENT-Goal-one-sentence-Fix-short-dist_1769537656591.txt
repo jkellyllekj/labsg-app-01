@@ -1,0 +1,40 @@
+START MESSAGE TO AGENT
+
+Goal (one sentence)
+Fix short distance failures by allowing Target Lock to adjust Warm up or Cool down down to 4 lengths for workouts under 1500m, so 1000m, 1500m, 2000m in 25m do not return null and therefore never fall back.
+
+Files to edit (exactly these)
+- index.js
+
+Edit instructions (single micro change, one commit)
+1) Open index.js
+2) Find this exact block inside function buildWorkout(...) under the comment:
+   "TARGET LOCK: For standard pools, enforce exact match with slider value"
+
+Find these exact lines:
+
+        // Minimum distances based on workout size
+        const minCooldown = targetTotal >= 2500 ? 200 : 150;
+        const minWarmup = targetTotal >= 2500 ? 200 : 150;
+
+Replace them with this:
+
+        // Minimum distances based on workout size
+        // For short workouts we must allow 4 lengths (2 round trips) or Target Lock cannot correct
+        const minShort = base * 4;
+        const minCooldown = targetTotal >= 2500 ? 200 : (targetTotal >= 1500 ? 150 : minShort);
+        const minWarmup = targetTotal >= 2500 ? 200 : (targetTotal >= 1500 ? 150 : minShort);
+
+Tests to run (must run exactly this)
+1) In Replit shell, run this Node snippet to brute force the endpoint 50 times per distance:
+
+node -e "async function run(){const ds=[1000,1500,2000];for(const d of ds){let ok=0;for(let i=0;i<50;i++){const r=await fetch('http://localhost:5000/generate-workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({distance:d,poolLength:'25m'})});const j=await r.json();if(j&&j.ok&&j.workoutName!=='Fallback Workout'&&!String(j.workoutText||'').includes('Fallback Workout')) ok++;}console.log(d, ok+'/50');}} run();"
+
+2) Report the console output lines for 1000, 1500, 2000.
+
+Commit (one commit only)
+- Commit message: "Target lock: allow 4-length warmup/cooldown for short workouts"
+
+Do not change anything else. If any other failure appears, stop and report it without making further edits.
+
+FINISH MESSAGE TO AGENT

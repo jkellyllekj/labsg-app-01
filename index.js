@@ -5415,8 +5415,10 @@ app.post("/generate-workout", (req, res) => {
         const adjustUnit = poolLen * 2; // Prefer round trips for wall-safe
         
         // Minimum distances based on workout size
-        const minCooldown = targetTotal >= 2500 ? 200 : 150;
-        const minWarmup = targetTotal >= 2500 ? 200 : 150;
+        // For short workouts we must allow 4 lengths (2 round trips) or Target Lock cannot correct
+        const minShort = base * 4;
+        const minCooldown = targetTotal >= 2500 ? 200 : (targetTotal >= 1500 ? 150 : minShort);
+        const minWarmup = targetTotal >= 2500 ? 200 : (targetTotal >= 1500 ? 150 : minShort);
         
         // Find cooldown and warmup sections
         let cooldownIdx = -1;

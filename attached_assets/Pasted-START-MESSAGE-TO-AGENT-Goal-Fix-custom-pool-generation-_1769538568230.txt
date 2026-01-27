@@ -1,0 +1,65 @@
+START MESSAGE TO AGENT
+
+Goal
+Fix custom pool generation failure (example 30m) by skipping the hard-coded coach-normal section total bucket checks in validateSetBody unless poolLen is a standard pool (25 or 50). One micro change. One commit.
+
+Files to edit
+- index.js
+
+Edit instructions (one micro change)
+1) Open index.js
+2) Find function:
+   validateSetBody(body, targetDistance, poolLen, sectionLabel)
+
+3) Inside it, find these exact lines:
+
+  const bucketWarmCool = new Set([100, 200, 300, 400, 500, 600, 800, 1000]);
+  const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
+  if (label.includes("warm") || label.includes("cool")) {
+    if (!bucketWarmCool.has(Number(targetDistance))) {
+      return { valid: false, reason: "section distance not coach-normal: " + targetDistance };
+    }
+  }
+  if (label.includes("kick")) {
+    if (!bucketKick.has(Number(targetDistance))) {
+      return { valid: false, reason: "kick distance not coach-normal: " + targetDistance };
+    }
+  }
+
+4) Replace that entire block with this:
+
+  const isStandardPool = Number(poolLen) === 25 || Number(poolLen) === 50;
+
+  const bucketWarmCool = new Set([100, 200, 300, 400, 500, 600, 800, 1000]);
+  const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
+
+  if (isStandardPool && (label.includes("warm") || label.includes("cool"))) {
+    if (!bucketWarmCool.has(Number(targetDistance))) {
+      return { valid: false, reason: "section distance not coach-normal: " + targetDistance };
+    }
+  }
+
+  if (isStandardPool && label.includes("kick")) {
+    if (!bucketKick.has(Number(targetDistance))) {
+      return { valid: false, reason: "kick distance not coach-normal: " + targetDistance };
+    }
+  }
+
+Tests to run (must run exactly this)
+1) 25m short-distance success rate (50 runs each):
+
+node -e "async function run(){const ds=[1000,1500,2000];for(const d of ds){let ok=0;for(let i=0;i<50;i++){const r=await fetch('http://localhost:5000/generate-workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({distance:d,poolLength:'25m'})});const j=await r.json();if(j&&j.ok&&j.workoutName!=='Fallback Workout'&&!String(j.workoutText||'').includes('Fallback Workout')) ok++;}console.log('25m',d, ok+'/50');}} run();"
+
+2) 30m generation sanity (10 runs each). This assumes UI sends poolLength:'custom' plus customPoolLength. Use this exact request shape:
+
+node -e "async function run(){for(const d of [1000,1500,2000]){let ok=0;for(let i=0;i<10;i++){const r=await fetch('http://localhost:5000/generate-workout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({distance:d,poolLength:'custom',poolLengthUnit:'meters',customPoolLength:30})});const j=await r.json();const good=j&&j.ok&&j.workoutName!=='Fallback Workout'&&!String(j.workoutText||'').includes('Fallback Workout');if(good) ok++;if(i===0){console.log('--- 30m SAMPLE '+d+' START ---');console.log(j.workoutText);console.log('--- 30m SAMPLE '+d+' END ---');}}console.log('30m',d,ok+'/10');}} run();"
+
+3) In your reply, include:
+- The three 25m lines
+- The three 30m ok lines
+- Whether the 30m sample shows lengths in Warm up, Drill, Kick, Cool down: yes or no for each section
+
+Commit
+- Commit message: "Validation: skip coach-normal bucket totals for non-standard pools"
+
+FINISH MESSAGE TO AGENT

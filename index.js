@@ -261,16 +261,18 @@ function validateSetBody(body, targetDistance, poolLen, sectionLabel) {
 
   // Coach-normal section totals for 25m and 25yd pools
   // These are not the only possible totals in the world, but they prevent constant weirdness.
+  const isStandardPool = Number(poolLen) === 25 || Number(poolLen) === 50;
+
   const bucketWarmCool = new Set([100, 200, 300, 400, 500, 600, 800, 1000]);
   const bucketKick = new Set([200, 300, 400, 500, 600, 800]);
 
-  if (label.includes("warm") || label.includes("cool")) {
+  if (isStandardPool && (label.includes("warm") || label.includes("cool"))) {
     if (!bucketWarmCool.has(Number(targetDistance))) {
       return { valid: false, reason: "section distance not coach-normal: " + targetDistance };
     }
   }
 
-  if (label.includes("kick")) {
+  if (isStandardPool && label.includes("kick")) {
     if (!bucketKick.has(Number(targetDistance))) {
       return { valid: false, reason: "kick distance not coach-normal: " + targetDistance };
     }
